@@ -2,17 +2,16 @@
 Corso Informatica ITT
 
 ARGOMENTI : 
-- C++
+- in [Section `C++`](#c++)
 - Python
 - Javascript
 - HTML e CSS
 
 
   VERIFICHE :
-  ANNO 2025
-  in [Section `Features`](#feature)
+ 
 
-## Feature
+## C++
 
 
 
