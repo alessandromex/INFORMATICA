@@ -2,16 +2,26 @@
 Corso Informatica ITT
 
 ARGOMENTI : 
-- in [Section `C++`](#c++)
-- Python
+- in [`C++`](#c++)
+-  [`Python`](#Python)
 - Javascript
-- HTML e CSS
+-  [`HTML & CSS `](#HTML)
 
 
   VERIFICHE :
  
 
 ## C++
+
+
+
+## Python
+
+
+## Javascript 
+
+
+## HTML  
 
 
 
