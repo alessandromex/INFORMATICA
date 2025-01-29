@@ -8,11 +8,15 @@ ARGOMENTI :
 -  [`HTML & CSS `](#HTML)
 
 
-  VERIFICHE :
+
  
 
 ## C++
-[Verifica funzioni]()
+- if..Else
+- istruzione For
+- istruzione While, Do...While
+- Array
+- Puntatori
 
 
 ## Python
