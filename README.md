@@ -12,7 +12,7 @@ ARGOMENTI :
  
 
 ## C++
-
+[Verifica funzioni]()
 
 
 ## Python
