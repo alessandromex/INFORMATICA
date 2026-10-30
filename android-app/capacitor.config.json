@@ -1,0 +1,14 @@
+{
+  "appId": "it.bordocampo.app",
+  "appName": "Bordocampo",
+  "webDir": "www",
+  "android": {
+    "backgroundColor": "#0d1912"
+  },
+  "plugins": {
+    "SystemBars": {
+      "insetsHandling": "native",
+      "initialViewportFitValueHint": "cover"
+    }
+  }
+}

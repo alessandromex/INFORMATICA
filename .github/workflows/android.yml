@@ -1,0 +1,76 @@
+name: App Android
+
+on:
+  push:
+    branches: [main]
+    paths: ["partita/**", "android-app/**", ".github/workflows/android.yml"]
+  pull_request:
+    paths: ["partita/**", "android-app/**", ".github/workflows/android.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: android-app/package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      - name: Android SDK
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;36.0.0" > /dev/null
+
+      - name: Copia la web app nel progetto Android
+        working-directory: android-app
+        run: |
+          npm ci
+          npm run sync
+
+      - name: Chiave di firma
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/bordocampo.keystore"
+            echo "BC_KEYSTORE=$RUNNER_TEMP/bordocampo.keystore" >> "$GITHUB_ENV"
+          else
+            echo "::warning::Segreto ANDROID_KEYSTORE_BASE64 assente: APK firmato con una chiave temporanea, per aggiornarlo bisogna disinstallare la versione precedente."
+          fi
+
+      - name: Compila l'APK
+        working-directory: android-app/android
+        env:
+          BC_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          ./gradlew assembleRelease --no-daemon
+          cp app/build/outputs/apk/release/app-release.apk "$GITHUB_WORKSPACE/Bordocampo.apk"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Bordocampo-apk
+          path: Bordocampo.apk
+
+      - name: Pubblica la release
+        if: github.event_name != 'pull_request'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: android-${{ github.run_number }}
+          name: Bordocampo Android 1.0.${{ github.run_number }}
+          files: Bordocampo.apk
+          make_latest: true
+          body: |
+            Per installare: apri questa pagina dal telefono Android, scarica **Bordocampo.apk** e aprilo.
+            La prima volta Android chiede di consentire l'installazione da questa fonte (Chrome o File): consentila e tocca Installa.
+            Le versioni successive si installano sopra la precedente senza perdere le partite salvate.

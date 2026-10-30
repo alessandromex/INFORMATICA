@@ -180,7 +180,7 @@ input[type=text] {
 .ev { display: grid; grid-template-columns: 1fr 64px 1fr; align-items: center; gap: 6px; padding: 10px 0; border-bottom: 1px solid var(--line); width: 100%; text-align: left; }
 .ev .side { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .ev .side.r { flex-direction: row-reverse; text-align: right; }
-.ev .who { font-weight: 600; overflow-wrap: anywhere; min-width: 0; }
+.ev .who { font-weight: 600; overflow-wrap: break-word; min-width: 0; }
 .ev .who small { display: block; font-weight: 500; color: var(--muted); font-size: 13px; }
 .ev .min { font-family: var(--font-display); font-weight: 700; font-size: 20px; text-align: center; font-variant-numeric: tabular-nums; }
 .ico { flex: none; width: 22px; height: 22px; display: grid; place-items: center; }
@@ -223,6 +223,14 @@ input[type=text] {
 .textout { width: 100%; min-height: 160px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); padding: 12px; font: 15px/1.45 var(--font-body); }
 .toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 18px; border-radius: 999px; font-weight: 600; z-index: 40; }
 
+/* diretta */
+.live-link { font: 600 15px/1.3 var(--font-body); min-height: 46px; }
+.live-st { font-size: 14px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+.live-st .dot { flex: none; }
+.live-st.ok .dot { background: var(--accent); }
+.live-st.err { color: var(--danger); }
+.live-st.err .dot { background: var(--danger); }
+
 @media (max-width: 380px) {
   .clock { font-size: 70px; }
   .score { font-size: 64px; }
@@ -255,7 +263,8 @@ function load() {
   } catch (e) {}
   return d;
 }
-function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+function store() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+function save() { store(); liveSchedule(); }
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
 function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
 
@@ -333,6 +342,7 @@ function finishMatch() {
   releaseWake();
   ui = { view: "summary", id: m.id, sheet: null, confirm: null, share: null, newPlayer: "" };
   render();
+  liveSchedule();
 }
 
 /* ---------- testo del risultato ---------- */
@@ -376,6 +386,101 @@ function resultText(m) {
   if (y.length) L.push("", "🟨 Ammoniti:", y.join("\n"));
   if (r.length) L.push("", "🟥 Espulsi:", r.join("\n"));
   return L.join("\n");
+}
+
+/* ---------- diretta ---------- */
+// La diretta passa da ntfy.sh (servizio di messaggi gratuito, senza account): a ogni modifica
+// l'app pubblica lo stato della partita su un canale con nome casuale, e la pagina diretta.html
+// lo legge in tempo reale. ntfy.sh conserva i messaggi per 12 ore.
+var NTFY = "https://ntfy.sh/";
+var PAGES = "https://alessandromex.github.io/INFORMATICA/partita/";
+var liveTimer = null, liveRetry = null;
+function liveTopic() {
+  var a = new Uint8Array(16), out = "bordocampo-";
+  try { crypto.getRandomValues(a); } catch (e) { for (var i = 0; i < a.length; i++) a[i] = Math.random() * 256; }
+  for (var k = 0; k < a.length; k++) out += "abcdefghijkmnpqrstuvwxyz23456789"[a[k] % 32];
+  return out;
+}
+function liveURL(m) {
+  var base = /github\.io$/.test(location.hostname) ? new URL("diretta.html", location.href).href.split("?")[0] : PAGES + "diretta.html";
+  return base + "?id=" + m.live.topic;
+}
+function snap(m) {
+  return {
+    v: 1, h: m.home, a: m.away, s: m.mySide, P: m.periods, M: m.minutes, pe: m.period, st: m.status,
+    sd: m.started ? 1 : 0, p: m.acc + (m.run ? Date.now() - m.run : 0), r: m.run ? 1 : 0, t: Date.now(), d: m.date,
+    e: sorted(m).map(function (e) {
+      return [e.type[0], e.team === "home" ? 0 : 1, e.period, e.sec, e.player || "", e.kind === "rigore" ? "r" : e.kind === "autogol" ? "o" : ""];
+    })
+  };
+}
+function liveTarget() {
+  if (S.match && S.match.live) return S.match;
+  if (ui.view === "summary") { var m = findMatch(ui.id); if (m && m.live) return m; }
+  return null;
+}
+function liveSchedule() { if (liveTarget()) { clearTimeout(liveTimer); liveTimer = setTimeout(livePush, 700); } }
+function livePush() {
+  var m = liveTarget();
+  if (!m) return;
+  clearTimeout(liveRetry);
+  m.live.state = "sending"; liveStatus();
+  fetch(NTFY + m.live.topic, { method: "POST", body: JSON.stringify(snap(m)) })
+    .then(function (r) {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      m.live.state = "ok"; m.live.sent = Date.now(); store(); liveStatus();
+    })
+    .catch(function () {
+      m.live.state = "err"; liveStatus();
+      liveRetry = setTimeout(livePush, 15000);
+    });
+}
+function liveStatusText(m) {
+  if (m.live.state === "err") return "Nessuna connessione: riprovo tra poco. La partita resta salvata sul telefono.";
+  if (m.live.state === "sending") return "Invio aggiornamento…";
+  if (m.live.sent) return "Aggiornata alle " + new Date(m.live.sent).toLocaleTimeString("it-IT");
+  return "In attesa del primo invio";
+}
+function liveStatus() {
+  var el = document.getElementById("live-st"), m = liveTarget();
+  if (!el || !m) return;
+  el.className = "live-st " + (m.live.state || "");
+  el.lastChild.textContent = liveStatusText(m);
+}
+function livePanel(m) {
+  if (!m.live) {
+    return '<section class="panel"><h2>Diretta per i genitori</h2>' +
+      '<div class="note">Crea un link da mandare nel gruppo della squadra: chi lo apre vede risultato, minuto e marcatori in tempo reale, senza installare niente.</div>' +
+      '<button class="btn primary block" data-a="live-on">Crea link della diretta</button></section>';
+  }
+  return '<section class="panel"><h2>Diretta per i genitori</h2>' +
+    '<input type="text" class="live-link" id="live-link" readonly value="' + esc(liveURL(m)) + '" aria-label="Link della diretta">' +
+    '<div class="controls"><button class="btn primary" data-a="live-copy">Copia link</button><button class="btn" data-a="live-share">Condividi</button></div>' +
+    '<div class="live-st ' + (m.live.state || "") + '" id="live-st"><i class="dot"></i><span>' + esc(liveStatusText(m)) + "</span></div>" +
+    '<div class="note">Il link resta attivo per 12 ore dall’ultimo aggiornamento.</div></section>';
+}
+
+/* ---------- condivisione ---------- */
+// Nell'app Android usa il pannello di condivisione di sistema (plugin Share di Capacitor),
+// nel browser la Web Share API, altrimenti mostra il testo da copiare.
+function shareText(text, title) {
+  var show = function () { ui.share = text; renderLayer(); };
+  try {
+    var C = window.Capacitor;
+    if (C && C.isNativePlatform && C.isNativePlatform() && C.nativePromise) {
+      C.nativePromise("Share", "share", { text: text, dialogTitle: title || "Condividi" }).catch(show);
+      return;
+    }
+    if (navigator.share) {
+      navigator.share({ text: text }).catch(function (err) { if (!err || err.name !== "AbortError") show(); });
+      return;
+    }
+  } catch (e) {}
+  show();
+}
+function copyText(text, done) {
+  var fallback = function () { ui.share = text; renderLayer(); };
+  try { navigator.clipboard.writeText(text).then(function () { toast(done); }, fallback); } catch (e) { fallback(); }
 }
 
 /* ---------- icone ---------- */
@@ -532,6 +637,7 @@ function vLive() {
       '<button data-a="adj" data-d="10">+10″</button><button data-a="adj" data-d="60">+1′</button></div>' +
       '<div class="adj-label">Correggi il cronometro</div></div></div>';
   }
+  h += livePanel(m);
   h += '<section class="panel"><h2>Cronaca</h2><div class="tl">' + timeline(m) + "</div></section>";
   return h;
 }
@@ -554,6 +660,7 @@ function vSummary() {
     h += "</section>";
   }
   h += '<div class="controls"><button class="btn primary" data-a="copy">Copia risultato</button><button class="btn" data-a="share">Condividi</button></div>';
+  if (m.live) h += livePanel(m);
   h += '<section class="panel"><h2>Cronaca</h2><div class="note">Tocca un evento per correggere marcatore, tipo o minuto.</div><div class="tl">' + timeline(m) + "</div></section>";
   h += '<button class="btn danger block" data-a="del-match">Elimina partita</button>';
   return h;
@@ -655,7 +762,7 @@ function tick(force) {
 }
 setInterval(tick, 250);
 document.addEventListener("visibilitychange", function () {
-  if (document.visibilityState === "visible") { tick(); if (S.match && S.match.run) holdWake(); }
+  if (document.visibilityState === "visible") { tick(); if (S.match && S.match.run) holdWake(); if (liveTarget()) livePush(); }
 });
 
 /* ---------- azioni ---------- */
@@ -754,16 +861,13 @@ document.addEventListener("click", function (ev) {
     case "c-yes": { var fn = ui.confirm.fn; ui.confirm = null; renderLayer(); fn(); break; }
     case "c-no": ui.confirm = null; renderLayer(); break;
 
-    case "copy": {
-      var txt = resultText(findMatch(ui.id));
-      var fallback = function () { ui.share = txt; renderLayer(); };
-      try { navigator.clipboard.writeText(txt).then(function () { toast("Risultato copiato"); }, fallback); } catch (e) { fallback(); }
-      break;
-    }
-    case "share": {
-      var t2 = resultText(findMatch(ui.id));
-      var show = function () { ui.share = t2; renderLayer(); };
-      try { if (navigator.share) navigator.share({ text: t2 }).catch(function (err) { if (!err || err.name !== "AbortError") show(); }); else show(); } catch (e) { show(); }
+    case "copy": copyText(resultText(findMatch(ui.id)), "Risultato copiato"); break;
+    case "share": shareText(resultText(findMatch(ui.id)), "Condividi il risultato"); break;
+    case "live-on": m.live = { topic: liveTopic() }; save(); render(); break;
+    case "live-copy": copyText(liveURL(liveTarget()), "Link copiato"); break;
+    case "live-share": {
+      var lm = liveTarget();
+      shareText("Segui in diretta " + lm.home + " - " + lm.away + ": " + liveURL(lm), "Condividi la diretta");
       break;
     }
     case "share-close": ui.share = null; renderLayer(); break;
@@ -789,9 +893,17 @@ document.addEventListener("keydown", function (ev) {
 
 render();
 if (S.match && S.match.run) holdWake();
+// Tasto "indietro" di Android: chiude il foglio aperto o torna al menu; 0 = lascia uscire dall'app.
+window.bcBack = function () {
+  if (ui.confirm || ui.share || ui.sheet) { ui.confirm = null; ui.share = null; ui.sheet = null; render(); return 1; }
+  if (ui.view !== "home") { ui.view = "home"; render(); window.scrollTo(0, 0); return 1; }
+  return 0;
+};
+if (liveTarget()) livePush();
+window.addEventListener("online", function () { if (liveTarget()) livePush(); });
 
 try {
-  if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register("sw.js").catch(function () {});
+  if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol) && !window.Capacitor) navigator.serviceWorker.register("sw.js").catch(function () {});
 } catch (e) {}
 })();
 </script>
