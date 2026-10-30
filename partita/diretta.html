@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bordocampo Diretta</title>
+<meta name="theme-color" content="#0d1912">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Barlow:wght@400;500;600;700&display=swap">
+<style>
+/* Pagina di sola lettura per chi segue la partita: stesso tabellone dell'app, senza comandi. */
+:root {
+  --bg: #e9efea; --surface: #ffffff; --ink: #0f1a14; --muted: #5a6a61; --line: #d3ddd6; --accent: #13804a;
+  --board: #0d1912; --board-ink: #f1f6f2; --board-muted: #8fa597; --led: #ffcf3a;
+  --yellow: #f2c200; --red: #d7263d; --danger: #b3192d;
+  --font-display: "Barlow Condensed", "Arial Narrow", "Helvetica Neue", sans-serif;
+  --font-body: "Barlow", -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --r: 14px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #08100b; --surface: #111c15; --ink: #e7efe9; --muted: #92a398; --line: #233229; --accent: #2fbf71;
+    --board: #050a07; --danger: #ff5a6e; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #08100b; --surface: #111c15; --ink: #e7efe9; --muted: #92a398; --line: #233229; --accent: #2fbf71;
+  --board: #050a07; --danger: #ff5a6e; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.4 var(--font-body); -webkit-text-size-adjust: 100%; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--board); }
+main {
+  max-width: 560px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: calc(16px + env(safe-area-inset-top, 0px)) calc(28px + env(safe-area-inset-bottom, 0px));
+}
+h1, h2 { font-family: var(--font-display); margin: 0; }
+h2 { font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.brand { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.brand h1 { font-size: 24px; font-weight: 800; text-transform: uppercase; letter-spacing: .02em; }
+.upd { font-size: 14px; color: var(--muted); text-align: right; }
+.upd.err { color: var(--danger); }
+.board { background: var(--board); color: var(--board-ink); border-radius: 20px; padding: 16px 14px 18px; display: flex; flex-direction: column; gap: 14px; }
+.board-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-family: var(--font-display); text-transform: uppercase; letter-spacing: .08em; font-weight: 600; font-size: 15px; color: var(--board-muted); }
+.pill { display: inline-flex; align-items: center; gap: 6px; }
+.dot { width: 9px; height: 9px; border-radius: 50%; background: var(--board-muted); }
+.pill.on { color: #5fe39a; }
+.pill.on .dot { background: #5fe39a; animation: blink 1.2s infinite; }
+.pill.over { color: var(--led); }
+.pill.over .dot { background: var(--led); }
+@keyframes blink { 50% { opacity: .25; } }
+@media (prefers-reduced-motion: reduce) { .pill.on .dot { animation: none; } }
+.clock { font-family: var(--font-display); font-weight: 700; font-size: 72px; line-height: 1; color: var(--led); font-variant-numeric: tabular-nums; text-align: center; }
+.clock small { font-size: 30px; margin-left: 8px; }
+.scoreline { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; }
+.tname { font-family: var(--font-display); font-weight: 700; font-size: 20px; text-transform: uppercase; letter-spacing: .03em; text-align: center; line-height: 1.05; overflow-wrap: anywhere; min-width: 0; }
+.score { font-family: var(--font-display); font-weight: 800; font-size: 72px; line-height: 1; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.partials { text-align: center; color: var(--board-muted); font-family: var(--font-display); letter-spacing: .06em; font-size: 16px; text-transform: uppercase; font-variant-numeric: tabular-nums; }
+.scorers { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 14px; }
+.scorers > div { min-width: 0; overflow-wrap: anywhere; }
+.scorers .r { text-align: right; }
+.scorers p { margin: 0 0 4px; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.empty { color: var(--muted); }
+.tl-period { font-family: var(--font-display); text-transform: uppercase; letter-spacing: .08em; font-weight: 700; font-size: 14px; color: var(--muted); padding: 10px 2px 6px; border-bottom: 1px solid var(--line); }
+.ev { display: grid; grid-template-columns: 1fr 64px 1fr; align-items: center; gap: 6px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.side { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.side.r { flex-direction: row-reverse; text-align: right; }
+.who { font-weight: 600; overflow-wrap: break-word; min-width: 0; }
+.who small { display: block; font-weight: 500; color: var(--muted); font-size: 13px; }
+.min { font-family: var(--font-display); font-weight: 700; font-size: 20px; text-align: center; font-variant-numeric: tabular-nums; }
+.ico { flex: none; width: 22px; height: 22px; display: grid; place-items: center; }
+.ico svg { width: 22px; height: 22px; }
+.ballsvg .w { fill: var(--surface); }
+.ballsvg .k { fill: var(--ink); }
+.ballsvg .s, .ballsvg .ring { stroke: var(--ink); }
+.card { width: 14px; height: 19px; border-radius: 2px; display: block; }
+.card.y { background: var(--yellow); }
+.card.r { background: var(--red); }
+.card.yr { background: linear-gradient(135deg, var(--yellow) 50%, var(--red) 50%); }
+.foot { font-size: 13px; color: var(--muted); text-align: center; }
+@media (max-width: 380px) { .clock { font-size: 60px; } .score { font-size: 60px; } .tname { font-size: 17px; } }
+</style>
+</head>
+<body>
+<main>
+  <div class="brand"><h1>Bordocampo</h1><span class="upd" id="upd">Collegamento&hellip;</span></div>
+  <div id="view"><section class="panel"><div class="empty">Collegamento alla diretta in corso&hellip;</div></section></div>
+  <div class="foot">Pagina in sola lettura. Si aggiorna da sola: non serve ricaricare.</div>
+</main>
+<script>
+(function () {
+"use strict";
+var id = (new URLSearchParams(location.search).get("id") || location.hash.slice(1) || "").replace(/[^A-Za-z0-9_-]/g, "");
+var view = document.getElementById("view"), upd = document.getElementById("upd");
+var S = null, lastAt = 0, connected = false;
+
+function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+function two(n) { return (n < 10 ? "0" : "") + n; }
+function mmss(sec) { sec = Math.max(0, sec); return two(Math.floor(sec / 60)) + ":" + two(sec % 60); }
+function minuteLabel(pe, sec) {
+  var len = S.M * 60, base = (pe - 1) * S.M;
+  if (sec < len) return (base + Math.floor(sec / 60) + 1) + "′";
+  return (base + S.M) + "+" + (Math.floor((sec - len) / 60) + 1) + "′";
+}
+function name(t) { return t === 0 ? S.h : S.a; }
+function score(t, upto) { return S.e.filter(function (e) { return e[0] === "g" && e[1] === t && (!upto || e[2] <= upto); }).length; }
+function secondYellow(i) {
+  var e = S.e[i];
+  if (e[0] !== "y" || !e[4]) return false;
+  for (var k = 0; k < i; k++) if (S.e[k][0] === "y" && S.e[k][1] === e[1] && S.e[k][4] === e[4]) return true;
+  return false;
+}
+function periodSec() { return Math.floor((S.p + (S.r ? Math.max(0, Date.now() - S.t) : 0)) / 1000); }
+function ball() {
+  return '<svg class="ballsvg" viewBox="0 0 40 40" aria-hidden="true"><circle class="w ring" cx="20" cy="20" r="18" stroke-width="2"/>' +
+    '<path class="k" d="M20 11.5l7.6 5.5-2.9 9h-9.4l-2.9-9z"/><path class="s" fill="none" stroke-width="2" d="M20 11.5V4M27.6 17l7.2-2.4M24.7 26l4.4 6.2M15.3 26l-4.4 6.2M12.4 17l-7.2-2.4"/>' +
+    '<path class="k" d="M20 2.2l4.6 2.3-4.6 2.6-4.6-2.6zM37.6 14.6l-.4 5.4-3.9-2.6.9-4.6zM31.2 34.4l-5.1 1.6 1-4.6 4.7-.9zM8.8 34.4l5.1 1.6-1-4.6-4.7-.9zM2.4 14.6l.4 5.4 3.9-2.6-.9-4.6z"/></svg>';
+}
+function scorers(t) {
+  var groups = [], by = {};
+  S.e.forEach(function (e) {
+    if (e[0] !== "g" || e[1] !== t) return;
+    var n = e[4] || "Marcatore non indicato";
+    if (!by[n]) { by[n] = []; groups.push(n); }
+    by[n].push(minuteLabel(e[2], e[3]) + (e[5] === "r" ? " (rig.)" : e[5] === "o" ? " (aut.)" : ""));
+  });
+  return groups.map(function (n) { return "<p>" + esc(n + " " + by[n].join(", ")) + "</p>"; }).join("");
+}
+
+function render() {
+  if (!S) return;
+  var h = '<section class="board"><div class="board-top"><span id="per"></span><span class="pill" id="pill"><i class="dot"></i><span id="pill-t"></span></span></div>';
+  if (S.st !== "ended") h += '<div class="clock" id="clk"></div>';
+  h += '<div class="scoreline"><span class="tname">' + esc(S.h) + '</span><span class="score">' + score(0) + " - " + score(1) + '</span><span class="tname">' + esc(S.a) + "</span></div>";
+  if (S.P > 1 && (S.pe > 1 || S.st === "ended")) {
+    var parts = [];
+    for (var p = 1; p <= Math.min(S.pe, S.P); p++) parts.push(p + "°T " + score(0, p) + "-" + score(1, p));
+    h += '<div class="partials">' + parts.join(" · ") + "</div>";
+  }
+  var sh = scorers(0), sa = scorers(1);
+  if (sh || sa) h += '<div class="scorers"><div>' + sh + '</div><div class="r">' + sa + "</div></div>";
+  h += "</section>";
+
+  h += '<section class="panel"><h2>Cronaca</h2>';
+  if (!S.e.length) h += '<div class="empty">Ancora nessun gol o cartellino.</div>';
+  var cur = 0;
+  S.e.forEach(function (e, i) {
+    if (e[2] !== cur) { cur = e[2]; if (S.P > 1) h += '<div class="tl-period">' + cur + "° tempo</div>"; }
+    var icon, sub;
+    if (e[0] === "g") { icon = ball(); sub = e[5] === "r" ? "Rigore" : e[5] === "o" ? "Autogol" : "Gol"; }
+    else if (e[0] === "r") { icon = '<i class="card r"></i>'; sub = "Espulsione"; }
+    else { var dy = secondYellow(i); icon = '<i class="card ' + (dy ? "yr" : "y") + '"></i>'; sub = dy ? "2ª ammonizione, espulso" : "Ammonizione"; }
+    var who = e[4] ? esc(e[4]) + "<small>" + sub + "</small>" : sub + "<small>" + (e[0] === "g" ? "marcatore non indicato" : "giocatore non indicato") + "</small>";
+    var side = '<span class="side' + (e[1] === 1 ? " r" : "") + '"><span class="ico">' + icon + '</span><span class="who">' + who + "</span></span>";
+    h += '<div class="ev">' + (e[1] === 0 ? side : "<span></span>") + '<span class="min">' + minuteLabel(e[2], e[3]) + "</span>" + (e[1] === 1 ? side : "<span></span>") + "</div>";
+  });
+  h += "</section>";
+  view.innerHTML = h;
+  document.title = S.h + " " + score(0) + "-" + score(1) + " " + S.a;
+  tick();
+}
+
+function tick() {
+  if (!S) return;
+  var per = document.getElementById("per"), pill = document.getElementById("pill"), pt = document.getElementById("pill-t"), clk = document.getElementById("clk");
+  if (!per) return;
+  var sec = periodSec(), len = S.M * 60, base = (S.pe - 1) * len;
+  if (clk) clk.innerHTML = mmss(base + Math.min(sec, len)) + (sec > len ? "<small>+" + mmss(sec - len) + "</small>" : "");
+  if (S.st === "ended") { per.textContent = "Finale"; pill.className = "pill"; pt.textContent = "Terminata"; }
+  else if (S.st === "break") { per.textContent = "Fine " + S.pe + "° tempo"; pill.className = "pill"; pt.textContent = "Intervallo"; }
+  else {
+    per.textContent = S.pe + "° tempo";
+    if (S.r) { pill.className = "pill " + (sec >= len ? "over" : "on"); pt.textContent = sec >= len ? "Recupero" : "In diretta"; }
+    else { pill.className = "pill"; pt.textContent = S.sd ? "In pausa" : "Non ancora iniziata"; }
+  }
+  var ago = lastAt ? Math.round((Date.now() - lastAt) / 60000) : null;
+  if (!connected) { upd.className = "upd err"; upd.textContent = "Riconnessione…"; }
+  else { upd.className = "upd"; upd.textContent = lastAt ? "Aggiornata " + (ago < 1 ? "ora" : ago === 1 ? "1 minuto fa" : ago + " minuti fa") : "In attesa di aggiornamenti"; }
+}
+
+function accept(data) {
+  try {
+    var s = typeof data === "string" ? JSON.parse(data) : data;
+    if (!s || s.v !== 1 || !Array.isArray(s.e)) return;
+    if (S && s.t < S.t) return;
+    S = s; lastAt = s.t; render();
+  } catch (e) {}
+}
+function onMessage(m) {
+  if (!m || m.event !== "message") return;
+  if (m.attachment && m.attachment.url) fetch(m.attachment.url).then(function (r) { return r.text(); }).then(accept).catch(function () {});
+  else accept(m.message);
+}
+function waiting() {
+  if (S) return;
+  view.innerHTML = '<section class="panel"><h2>In attesa</h2><div class="empty">La diretta non ha ancora dati. Appena l’allenatore avvia la partita qui compaiono risultato, minuto e marcatori. Se la partita è finita da più di 12 ore il link non è più attivo.</div></section>';
+}
+
+if (!id) {
+  view.innerHTML = '<section class="panel"><h2>Link incompleto</h2><div class="empty">Apri il link completo che ti è stato mandato: deve finire con <b>?id=</b> seguito da un codice.</div></section>';
+  upd.textContent = "";
+  return;
+}
+
+var url = "https://ntfy.sh/" + encodeURIComponent(id);
+if (window.EventSource) {
+  var es = new EventSource(url + "/sse?since=all");
+  es.addEventListener("open", function () { connected = true; tick(); setTimeout(waiting, 2500); });
+  es.onmessage = function (ev) { connected = true; try { onMessage(JSON.parse(ev.data)); } catch (e) {} };
+  es.onerror = function () { connected = false; tick(); };
+} else {
+  var poll = function () {
+    fetch(url + "/json?poll=1&since=all").then(function (r) { return r.text(); }).then(function (t) {
+      connected = true;
+      t.split("\n").forEach(function (line) { if (line) try { onMessage(JSON.parse(line)); } catch (e) {} });
+      waiting(); tick();
+    }).catch(function () { connected = false; tick(); });
+  };
+  poll(); setInterval(poll, 10000);
+}
+setInterval(tick, 500);
+})();
+</script>
+</body>
+</html>
