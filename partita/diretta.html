@@ -82,6 +82,13 @@ h2 { font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacin
 .card.y { background: var(--yellow); }
 .card.r { background: var(--red); }
 .card.yr { background: linear-gradient(135deg, var(--yellow) 50%, var(--red) 50%); }
+.subsvg .up { stroke: var(--accent); }
+.subsvg .down { stroke: var(--danger); }
+.who .on, .who .off { display: block; }
+.who .on::before, .who .off::before { display: inline-block; width: 1.1em; font-size: .8em; }
+.who .on::before { content: "\25B2"; color: var(--accent); }
+.who .off::before { content: "\25BC"; color: var(--danger); }
+.who .off { font-weight: 500; color: var(--muted); }
 .foot { font-size: 13px; color: var(--muted); text-align: center; }
 @media (max-width: 380px) { .clock { font-size: 60px; } .score { font-size: 60px; } .tname { font-size: 17px; } }
 </style>
@@ -147,7 +154,7 @@ function render() {
   h += "</section>";
 
   h += '<section class="panel"><h2>Cronaca</h2>';
-  if (!S.e.length) h += '<div class="empty">Ancora nessun gol o cartellino.</div>';
+  if (!S.e.length) h += '<div class="empty">Ancora nessun gol, cartellino o cambio.</div>';
   var cur = 0;
   S.e.forEach(function (e, i) {
     if (e[2] !== cur) { cur = e[2]; if (S.P > 1) h += '<div class="tl-period">' + cur + "° tempo</div>"; }
@@ -156,6 +163,11 @@ function render() {
     else if (e[0] === "r") { icon = '<i class="card r"></i>'; sub = "Espulsione"; }
     else { var dy = secondYellow(i); icon = '<i class="card ' + (dy ? "yr" : "y") + '"></i>'; sub = dy ? "2ª ammonizione, espulso" : "Ammonizione"; }
     var who = e[4] ? esc(e[4]) + "<small>" + sub + "</small>" : sub + "<small>" + (e[0] === "g" ? "marcatore non indicato" : "giocatore non indicato") + "</small>";
+    if (e[0] === "s") {
+      // cambio: [4] = chi esce, [6] = chi entra
+      icon = '<svg class="subsvg" viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="up" d="M8 20V5M3.5 9.5L8 5l4.5 4.5"/><path class="down" d="M16 4v15M11.5 14.5L16 19l4.5-4.5"/></svg>';
+      who = e[4] || e[6] ? '<span class="on">' + esc(e[6] || "non indicato") + '</span><span class="off">' + esc(e[4] || "non indicato") + "</span>" : "Cambio<small>giocatori non indicati</small>";
+    }
     var side = '<span class="side' + (e[1] === 1 ? " r" : "") + '"><span class="ico">' + icon + '</span><span class="who">' + who + "</span></span>";
     h += '<div class="ev">' + (e[1] === 0 ? side : "<span></span>") + '<span class="min">' + minuteLabel(e[2], e[3]) + "</span>" + (e[1] === 1 ? side : "<span></span>") + "</div>";
   });
