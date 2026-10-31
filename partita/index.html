@@ -37,6 +37,12 @@
   --font-display: "Barlow Condensed", "Arial Narrow", "Helvetica Neue", sans-serif;
   --font-body: "Barlow", -apple-system, "Helvetica Neue", Arial, sans-serif;
   --r: 14px;
+  --grass-1: #2e8b4f;
+  --grass-2: #287c46;
+  --chalk: rgba(255,255,255,.6);
+  --kit: #ffffff;
+  --kit-ink: #0d1912;
+  --kit-gk: #ffcf3a;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -215,6 +221,7 @@ input[type=text] {
 }
 @keyframes up { from { transform: translateY(30px); opacity: .6; } }
 @media (prefers-reduced-motion: reduce) { .sheet { animation: none; } }
+.sheet > * { flex-shrink: 0; }
 .grab { width: 40px; height: 5px; border-radius: 3px; background: var(--line); align-self: center; }
 .sh-head { display: flex; align-items: center; gap: 10px; }
 .sh-head h3 { font-size: 26px; font-weight: 800; text-transform: uppercase; flex: 1; min-width: 0; overflow-wrap: anywhere; }
@@ -232,6 +239,47 @@ input[type=text] {
 .scorers p { margin: 0 0 4px; }
 .textout { width: 100%; min-height: 160px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); padding: 12px; font: 15px/1.45 var(--font-body); }
 .toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 18px; border-radius: 999px; font-weight: 600; z-index: 40; }
+
+/* campo della formazione: stesso aspetto in tema chiaro e scuro */
+.pitch {
+  position: relative; width: 100%; max-width: 100%; aspect-ratio: 68 / 78; border-radius: 12px; overflow: hidden;
+  background: repeating-linear-gradient(180deg, var(--grass-1) 0 12.5%, var(--grass-2) 12.5% 25%);
+  box-shadow: inset 0 0 0 2px var(--chalk);
+}
+.pitch.mini { aspect-ratio: 68 / 62; }
+.pitch > i { position: absolute; border: 2px solid var(--chalk); }
+.pitch .pl-box { left: 22%; right: 22%; bottom: -2px; height: 16%; }
+.pitch .pl-six { left: 38%; right: 38%; bottom: -2px; height: 6%; }
+.pitch .pl-arc { left: 50%; top: 0; width: 28%; aspect-ratio: 1; border-radius: 50%; transform: translate(-50%, -50%); }
+.pp { position: absolute; z-index: 1; transform: translate(-50%, -50%); max-width: 84px; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 0; }
+.shirt {
+  position: relative; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--kit); color: var(--kit-ink); font: 800 17px/1 var(--font-display); font-variant-numeric: tabular-nums;
+  box-shadow: 0 2px 5px rgba(0,0,0,.35);
+}
+.pp.gk .shirt { background: var(--kit-gk); }
+.pp.empty .shirt { background: rgba(255,255,255,.14); color: #fff; box-shadow: inset 0 0 0 2px rgba(255,255,255,.75); font-size: 22px; font-weight: 500; }
+.pp.out .shirt { opacity: .45; }
+.pp[aria-pressed=true] .shirt { box-shadow: 0 0 0 3px var(--led), 0 2px 5px rgba(0,0,0,.35); }
+.pn { max-width: 100%; padding: 1px 5px; border-radius: 4px; background: rgba(0,0,0,.5); color: #fff; font: 700 12px/1.25 var(--font-display); text-transform: uppercase; letter-spacing: .03em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pn:empty { display: none; }
+.bd { position: absolute; top: -5px; left: calc(50% + 11px); display: flex; gap: 2px; align-items: center; }
+.bd i { display: block; font-style: normal; }
+.b-ball { position: relative; width: 15px; height: 15px; }
+.b-ball svg { width: 15px; height: 15px; }
+.b-ball b { position: absolute; right: -6px; bottom: -5px; font: 800 11px/1 var(--font-display); color: #fff; text-shadow: 0 0 2px #000, 0 0 2px #000; }
+.b-card { width: 9px; height: 12px; border-radius: 1.5px; box-shadow: 0 0 0 1px rgba(0,0,0,.3); }
+.b-card.y { background: var(--yellow); }
+.b-card.r { background: var(--red); }
+.b-card.yr { background: linear-gradient(135deg, var(--yellow) 50%, var(--red) 50%); }
+.b-in { color: #5fe39a; font-size: 11px; line-height: 1; text-shadow: 0 0 2px #000, 0 0 2px #000; }
+.pitch.mini .shirt { width: 34px; height: 34px; font-size: 15px; }
+.pitch .ballsvg .w { fill: #fff; }
+.pitch .ballsvg .k { fill: #101512; }
+.pitch .ballsvg .s, .pitch .ballsvg .ring { stroke: #101512; }
+.bench { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 14px; }
+.bench .bp { padding: 3px 10px; border-radius: 999px; background: var(--bg); border: 1px solid var(--line); }
+.bench .bp small { color: var(--muted); margin-left: 4px; }
 
 /* diretta */
 .live-link { font: 600 15px/1.3 var(--font-body); min-height: 46px; }
@@ -327,7 +375,8 @@ function newMatch(f) {
     id: uid(), date: new Date().toISOString(),
     home: f.side === "home" ? mine : opp, away: f.side === "home" ? opp : mine, mySide: f.side,
     periods: f.periods, minutes: f.minutes, period: 1, acc: 0, run: null, status: "play", started: false,
-    events: [], opp: [], seq: 0
+    events: [], opp: [], seq: 0,
+    lineup: (S.settings.lineupSlots || []).some(Boolean) ? newLineup() : null
   };
   save();
 }
@@ -354,6 +403,112 @@ function finishMatch() {
   ui = { view: "summary", id: m.id, sheet: null, confirm: null, share: null, newPlayer: {} };
   render();
   liveSchedule();
+}
+
+/* ---------- formazione ---------- */
+// Moduli per numero di giocatori in campo (portiere escluso dalla sigla).
+var MODULI = {
+  5: ["2-2", "1-2-1", "2-1-1"],
+  7: ["2-3-1", "3-2-1", "3-1-2", "2-1-2-1"],
+  8: ["3-3-1", "2-3-2", "3-2-2"],
+  9: ["3-3-2", "3-2-3", "4-3-1", "3-4-1"],
+  11: ["4-4-2", "4-3-3", "3-5-2", "4-2-3-1", "3-4-3", "5-3-2"]
+};
+function modSize(mod) { return 1 + mod.split("-").reduce(function (a, b) { return a + +b; }, 0); }
+function fitSlots(slots, n) { slots = slots.slice(0, n); while (slots.length < n) slots.push(""); return slots; }
+function newLineup() {
+  var mod = S.settings.lineupMod || "4-4-2", roster = S.settings.roster;
+  var slots = (S.settings.lineupSlots || []).map(function (n) { return roster.indexOf(n) >= 0 ? n : ""; });
+  return { mod: mod, slots: fitSlots(slots, modSize(mod)) };
+}
+function rememberLineup(L) { S.settings.lineupMod = L.mod; S.settings.lineupSlots = L.slots.slice(); }
+// Chi è in campo e con quali eventi (gol, cartellini, ingresso), applicando i cambi in ordine.
+// Con before si ferma all'evento indicato: serve a scegliere i giocatori nel foglio di quell'evento.
+function fieldState(m, before) {
+  var L = m.lineup;
+  if (!L) return null;
+  var cur = L.slots.slice(), stats = {};
+  var st = function (n) { return stats[n] || (stats[n] = { g: 0, y: 0, r: false, inAt: "", outAt: "" }); };
+  var list = sorted(m);
+  for (var i = 0; i < list.length && list[i] !== before; i++) {
+    var e = list[i];
+    if (e.type === "goal" && e.team === m.mySide && e.kind !== "autogol" && e.player) st(e.player).g++;
+    if (e.team !== m.mySide) continue;
+    if (e.type === "yellow" && e.player) { var y = st(e.player); y.y++; if (y.y >= 2) y.r = true; }
+    if (e.type === "red" && e.player) st(e.player).r = true;
+    if (e.type === "sub" && e.off && e.on) {
+      var k = cur.indexOf(e.off);
+      if (k >= 0) { cur[k] = e.on; st(e.on).inAt = st(e.off).outAt = minuteLabel(m, e.period, e.sec); }
+    }
+  }
+  return { mod: L.mod, slots: cur, stats: stats };
+}
+function hasLineup(m) { return !!(m.lineup && m.lineup.slots.some(Boolean)); }
+function shirtOf(name) {
+  var r = /^(\d{1,3})\s+(.+)$/.exec(name || "");
+  if (r) return { n: r[1], s: r[2] };
+  var w = String(name || "").trim().split(/\s+/);
+  return { n: w.map(function (x) { return x.charAt(0); }).join("").slice(0, 2).toUpperCase(), s: name };
+}
+// Disegna il campo: righe dal portiere (in basso) agli attaccanti (in alto), come nelle presentazioni TV.
+// opt.pick = campo dell'evento da riempire toccando un giocatore; opt.edit = editor della formazione.
+function pitchHTML(mod, slots, stats, opt) {
+  opt = opt || {};
+  var rows = [1].concat(mod.split("-").map(Number)), i = 0;
+  var h = '<div class="pitch' + (opt.mini ? " mini" : "") + '"><i class="pl-box"></i><i class="pl-six"></i><i class="pl-arc"></i>';
+  rows.forEach(function (n, r) {
+    var y = 88 - r * (74 / (rows.length - 1));
+    for (var j = 0; j < n; j++, i++) {
+      var name = slots[i] || "", s = (stats && name && stats[name]) || {}, sh = shirtOf(name);
+      var cls = "pp" + (i === 0 ? " gk" : "") + (name ? "" : " empty") + (s.r ? " out" : "");
+      var attr = ' style="left:' + ((j + 1) * 100 / (n + 1)).toFixed(1) + "%;top:" + y.toFixed(1) + "%;width:calc(" + (100 / n).toFixed(1) + '% - 4px)"';
+      var b = "";
+      if (s.g) b += '<i class="b-ball">' + ballSVG() + (s.g > 1 ? "<b>" + s.g + "</b>" : "") + "</i>";
+      if (s.r) b += '<i class="b-card ' + (s.y >= 2 ? "yr" : "r") + '"></i>';
+      else if (s.y) b += '<i class="b-card y"></i>';
+      if (s.inAt) b += '<i class="b-in">▲</i>';
+      var inner = '<span class="shirt">' + (name ? esc(sh.n) : "+") + (b ? '<span class="bd">' + b + "</span>" : "") + "</span>" +
+        '<span class="pn">' + esc(name ? sh.s : opt.edit ? roleOf(mod, i) : "") + "</span>";
+      if (opt.edit) h += '<button class="' + cls + '" data-a="lu-slot" data-i="' + i + '" aria-pressed="' + (opt.sel === i) + '" aria-label="' + esc(roleOf(mod, i) + (name ? ": " + name : "")) + '"' + attr + ">" + inner + "</button>";
+      else if (opt.pick && name) h += '<button class="' + cls + '" data-a="pick" data-f="' + opt.pick + '" data-v="' + esc(name) + '" aria-pressed="' + (opt.cur === name) + '"' + attr + ">" + inner + "</button>";
+      else h += '<div class="' + cls + '"' + attr + ">" + inner + "</div>";
+    }
+  });
+  return h + "</div>";
+}
+function roleOf(mod, i) {
+  if (i === 0) return "Portiere";
+  var lines = mod.split("-").map(Number), k = i - 1;
+  for (var l = 0; l < lines.length; l++) {
+    if (k < lines[l]) return l === 0 ? "Difensore" : l === lines.length - 1 ? "Attaccante" : "Centrocampista";
+    k -= lines[l];
+  }
+  return "";
+}
+function benchHTML(m, st) {
+  var bench = S.settings.roster.filter(function (p) { return st.slots.indexOf(p) < 0; });
+  if (!bench.length) return "";
+  return '<div class="bench"><span class="muted small">Panchina</span>' + bench.map(function (p) {
+    var s = st.stats[p];
+    return '<span class="bp">' + esc(p) + (s && s.outAt ? "<small>\u25BC " + s.outAt + "</small>" : "") + "</span>";
+  }).join("") + "</div>";
+}
+function lineupPanel(m) {
+  if (!hasLineup(m)) {
+    return '<section class="panel"><h2>Formazione</h2><div class="note">Schiera i titolari di ' + esc(teamName(m, m.mySide)) +
+      " sul campo: poi negli eventi li scegli con un tocco.</div>" +
+      '<button class="btn block" data-a="lu-open" data-mid="' + m.id + '">Prepara la formazione</button></section>';
+  }
+  var st = fieldState(m);
+  return '<section class="panel"><div class="row"><h2 class="grow">Formazione \u00b7 ' + esc(st.mod) + "</h2>" +
+    '<button class="link" data-a="lu-open" data-mid="' + m.id + '">Modifica</button></div>' +
+    pitchHTML(st.mod, st.slots, st.stats) + benchHTML(m, st) + "</section>";
+}
+function lineupText(m) {
+  if (!hasLineup(m)) return "";
+  var rows = [1].concat(m.lineup.mod.split("-").map(Number)), i = 0, out = [];
+  rows.forEach(function (n) { var r = []; for (var j = 0; j < n; j++, i++) r.push(m.lineup.slots[i] || "\u2014"); out.push(r.join(", ")); });
+  return "Formazione " + teamName(m, m.mySide) + " (" + m.lineup.mod + "): " + out.join("; ");
 }
 
 /* ---------- testo del risultato ---------- */
@@ -395,6 +550,7 @@ function resultText(m) {
   L.push(teamName(m, "home") + " " + score(m, "home") + " - " + score(m, "away") + " " + teamName(m, "away"));
   L.push(dateLabel(m.date) + " · " + m.periods + " tempi da " + m.minutes + "'");
   if (m.periods > 1) L.push("Parziali: " + partials(m).join(" · "));
+  if (hasLineup(m)) L.push("", lineupText(m));
   ["home", "away"].forEach(function (t) {
     var s = scorersOf(m, t);
     if (s.length) L.push("", "⚽ " + teamName(m, t) + ":", s.join("\n"));
@@ -427,6 +583,7 @@ function liveURL(m) {
 function snap(m) {
   return {
     v: 1, h: m.home, a: m.away, s: m.mySide, P: m.periods, M: m.minutes, pe: m.period, st: m.status,
+    f: hasLineup(m) ? { m: m.lineup.mod, s: m.lineup.slots } : null,
     sd: m.started ? 1 : 0, p: m.acc + (m.run ? Date.now() - m.run : 0), r: m.run ? 1 : 0, t: Date.now(), d: m.date,
     e: sorted(m).map(function (e) {
       // nel cambio chi esce va in [4] e chi entra in [6]
@@ -542,8 +699,9 @@ var app = document.getElementById("app"), layer = document.getElementById("layer
 function render() {
   var v = ui.view;
   if (v === "live" && !S.match) v = ui.view = "home";
-  app.innerHTML = v === "setup" ? vSetup() : v === "roster" ? vRoster() : v === "live" ? vLive() : v === "summary" ? vSummary() : vHome();
+  app.innerHTML = v === "setup" ? vSetup() : v === "roster" ? vRoster() : v === "lineup" ? vLineup() : v === "live" ? vLive() : v === "summary" ? vSummary() : vHome();
   renderLayer();
+  filterAll();
   tick(true);
 }
 
@@ -668,9 +826,42 @@ function vLive() {
       '<button data-a="adj" data-d="10">+10″</button><button data-a="adj" data-d="60">+1′</button></div>' +
       '<div class="adj-label">Correggi il cronometro</div></div></div>';
   }
+  h += lineupPanel(m);
   h += livePanel(m);
   h += '<section class="panel"><h2>Cronaca</h2><div class="tl">' + timeline(m) + "</div></section>";
   return h;
+}
+
+// Editor della formazione: modulo, poi tocchi un ruolo e scegli il giocatore.
+function vLineup() {
+  var m = findMatch(ui.lmid);
+  if (!m || !m.lineup) { ui.view = "home"; return vHome(); }
+  var L = m.lineup, size = modSize(L.mod), sel = ui.luSlot, roster = S.settings.roster;
+  var h = '<div class="top"><button class="link" data-a="lu-done">\u2039 Indietro</button><span class="title">Formazione</span><span style="width:70px"></span></div>';
+  h += '<section class="panel"><h2>Giocatori in campo</h2><div class="seg">' + Object.keys(MODULI).map(function (n) {
+    return '<button data-a="lu-size" data-v="' + n + '" aria-pressed="' + (+n === size) + '">' + n + "</button>";
+  }).join("") + '</div><div class="chips">' + (MODULI[size] || [L.mod]).map(function (mod) {
+    return '<button class="chip" data-a="lu-mod" data-v="' + mod + '" aria-pressed="' + (mod === L.mod) + '">' + mod + "</button>";
+  }).join("") + "</div></section>";
+  h += pitchHTML(L.mod, L.slots, null, { edit: true, sel: sel });
+  if (sel != null) {
+    h += '<section class="panel"><h2>' + roleOf(L.mod, sel) + (L.slots[sel] ? ": " + esc(L.slots[sel]) : "") + "</h2>" +
+      '<div class="row"><input type="text" id="lu-q" class="grow" autocomplete="off" placeholder="Cerca o scrivi un nome" value="' + esc(ui.luQ || "") + '">' +
+      '<button class="btn" data-a="lu-add">Aggiungi</button></div>' +
+      '<div class="chips" data-picker="lu">' + roster.map(function (p) {
+        var k = L.slots.indexOf(p);
+        return '<button class="chip" data-a="lu-pick" data-v="' + esc(p) + '" aria-pressed="' + (k === sel) + '">' + esc(p) + (k >= 0 && k !== sel ? " \u00b7 in campo" : "") + "</button>";
+      }).join("") + "</div>" +
+      (roster.length ? "" : '<div class="note">La rosa è vuota: scrivi il nome e tocca Aggiungi.</div>') +
+      (L.slots[sel] ? '<button class="btn danger" data-a="lu-clear">Togli dal campo</button>' : "") + "</section>";
+  } else {
+    h += '<div class="note">Tocca un ruolo sul campo per scegliere il giocatore. Chi non è in campo resta in panchina.</div>';
+  }
+  var bench = roster.filter(function (p) { return L.slots.indexOf(p) < 0; });
+  if (bench.length) h += '<section class="panel"><h2>Panchina</h2><div class="chips">' + bench.map(function (p) {
+    return '<button class="chip" data-a="lu-pick" data-v="' + esc(p) + '">' + esc(p) + "</button>";
+  }).join("") + "</div></section>";
+  return h + '<button class="btn primary big block" data-a="lu-done">Fatto</button>';
 }
 
 function vSummary() {
@@ -691,6 +882,7 @@ function vSummary() {
     h += "</section>";
   }
   var subs = subsOf(m);
+  if (hasLineup(m)) h += lineupPanel(m);
   if (subs.length) h += '<section class="panel"><h2>Cambi</h2><div class="list">' + subs.map(function (x) { return '<div class="item"><span class="ico">' + subSVG() + '</span><span class="grow">' + esc(x) + "</span></div>"; }).join("") + "</div></section>";
   h += '<div class="controls"><button class="btn primary" data-a="copy">Copia risultato</button><button class="btn" data-a="share">Condividi</button></div>';
   if (m.live) h += livePanel(m);
@@ -720,18 +912,39 @@ function renderLayer() {
       '<button class="btn primary block" data-a="share-close">Chiudi</button></div>';
   }
   layer.innerHTML = h;
+  filterAll();
   var ta = document.getElementById("share-text");
   if (ta) { ta.focus(); ta.select(); }
 }
 
-// Nomi da toccare + campo per un nome nuovo; field è la proprietà dell'evento da riempire.
-function pickerHTML(e, field, label, names) {
+// Nomi da toccare + campo per cercare o aggiungere un nome; field è la proprietà dell'evento da riempire.
+// Con searchOnly i nomi compaiono solo mentre si scrive (per elenchi lunghi).
+function pickerHTML(e, field, label, names, searchOnly) {
   var cur = e[field] || "";
+  if (cur && names.indexOf(cur) < 0) names = [cur].concat(names);
   return "<h2>" + label + "</h2>" +
-    '<div class="chips"><button class="chip" data-a="pick" data-f="' + field + '" data-v="" aria-pressed="' + (!cur) + '">Non indicato</button>' +
-    names.map(function (p) { return '<button class="chip" data-a="pick" data-f="' + field + '" data-v="' + esc(p) + '" aria-pressed="' + (cur === p) + '">' + esc(p) + "</button>"; }).join("") + "</div>" +
-    '<div class="row"><input type="text" id="new-' + field + '" class="grow" autocomplete="off" placeholder="Nuovo nome" value="' + esc(ui.newPlayer[field] || "") + '">' +
-    '<button class="btn" data-a="pick-new" data-f="' + field + '">Aggiungi</button></div>';
+    '<div class="row"><input type="text" id="new-' + field + '" class="grow" autocomplete="off" placeholder="Cerca o scrivi un nome" value="' + esc(ui.newPlayer[field] || "") + '">' +
+    '<button class="btn" data-a="pick-new" data-f="' + field + '">Aggiungi</button></div>' +
+    '<div class="chips' + (searchOnly ? " srch" : "") + '" data-picker="' + field + '"><button class="chip" data-a="pick" data-f="' + field + '" data-v="" aria-pressed="' + (!cur) + '">Non indicato</button>' +
+    names.map(function (p) { return '<button class="chip" data-a="pick" data-f="' + field + '" data-v="' + esc(p) + '" aria-pressed="' + (cur === p) + '">' + esc(p) + "</button>"; }).join("") + "</div>";
+}
+// Mostra solo i nomi che contengono il testo cercato.
+function filterChips(key, q) {
+  var box = document.querySelector('[data-picker="' + key + '"]');
+  if (!box) return;
+  q = (q || "").trim().toLowerCase();
+  var srch = box.classList.contains("srch");
+  Array.prototype.forEach.call(box.querySelectorAll(".chip[data-v]"), function (c) {
+    var v = c.getAttribute("data-v");
+    if (!v) return;
+    c.hidden = q ? v.toLowerCase().indexOf(q) < 0 : srch && c.getAttribute("aria-pressed") !== "true";
+  });
+}
+function filterAll() {
+  Array.prototype.forEach.call(document.querySelectorAll("[data-picker]"), function (box) {
+    var key = box.getAttribute("data-picker"), inp = document.getElementById(key === "lu" ? "lu-q" : "new-" + key);
+    filterChips(key, inp ? inp.value : "");
+  });
 }
 function sheetHTML(m, e) {
   var pt = playerTeam(e), names = playersOf(m, pt);
@@ -748,11 +961,26 @@ function sheetHTML(m, e) {
   } else {
     h += '<div class="note">' + esc(teamName(m, e.team)) + "</div>";
   }
+  // Per la mia squadra con la formazione: si tocca il giocatore sul campo (com'era al momento dell'evento).
+  var fs = pt === m.mySide && hasLineup(m) ? fieldState(m, e) : null;
+  var notOnField = function (p) { return !fs || fs.slots.indexOf(p) < 0; };
   if (e.type === "sub") {
-    h += pickerHTML(e, "on", "Entra", names.filter(function (p) { return p !== e.off; }));
-    h += pickerHTML(e, "off", "Esce", names.filter(function (p) { return p !== e.on; }));
+    if (fs) {
+      h += "<h2>Esce \u00b7 tocca il giocatore in campo</h2>" + pitchHTML(fs.mod, fs.slots, fs.stats, { mini: true, pick: "off", cur: e.off });
+      h += pickerHTML(e, "off", "Oppure cercalo per nome", names.filter(function (p) { return p !== e.on; }), true);
+      h += pickerHTML(e, "on", "Entra \u00b7 dalla panchina", names.filter(function (p) { return notOnField(p) && p !== e.off; }));
+    } else {
+      h += pickerHTML(e, "on", "Entra", names.filter(function (p) { return p !== e.off; }));
+      h += pickerHTML(e, "off", "Esce", names.filter(function (p) { return p !== e.on; }));
+    }
   } else {
-    h += pickerHTML(e, "player", e.kind === "autogol" ? "Autore dell'autogol (" + esc(teamName(m, pt)) + ")" : "Giocatore" + (e.type === "goal" ? " che ha segnato" : ""), names);
+    var label = e.kind === "autogol" ? "Autore dell'autogol (" + esc(teamName(m, pt)) + ")" : "Giocatore" + (e.type === "goal" ? " che ha segnato" : "");
+    if (fs) {
+      h += "<h2>" + label + " \u00b7 tocca in campo</h2>" + pitchHTML(fs.mod, fs.slots, fs.stats, { mini: true, pick: "player", cur: e.player });
+      h += pickerHTML(e, "player", "Oppure cercalo per nome", names, true);
+    } else {
+      h += pickerHTML(e, "player", label, names);
+    }
   }
   h += '<div class="row" style="justify-content:space-between"><span class="muted small">Minuto</span><div class="stepper">' +
     '<button data-a="ev-min" data-d="-60" aria-label="Un minuto prima">−</button><span class="v tabnum" style="font-size:26px;min-width:84px">' + minuteLabel(m, e.period, e.sec) + '</span><button data-a="ev-min" data-d="60" aria-label="Un minuto dopo">+</button></div></div>';
@@ -918,6 +1146,41 @@ document.addEventListener("click", function (ev) {
       break;
     }
     case "share-close": ui.share = null; renderLayer(); break;
+
+    case "lu-open": {
+      var lm = findMatch(el.getAttribute("data-mid"));
+      if (!lm.lineup) lm.lineup = newLineup();
+      ui.back = ui.view; ui.lmid = lm.id; ui.luQ = "";
+      var empty = lm.lineup.slots.indexOf("");
+      ui.luSlot = empty >= 0 ? empty : null;
+      ui.view = "lineup"; save(); render(); window.scrollTo(0, 0); break;
+    }
+    case "lu-done": ui.view = ui.back || "live"; ui.luSlot = null; render(); window.scrollTo(0, 0); break;
+    case "lu-size": case "lu-mod": {
+      var L = findMatch(ui.lmid).lineup;
+      L.mod = a === "lu-size" ? MODULI[el.getAttribute("data-v")][0] : el.getAttribute("data-v");
+      L.slots = fitSlots(L.slots, modSize(L.mod));
+      if (ui.luSlot != null && ui.luSlot >= L.slots.length) ui.luSlot = null;
+      rememberLineup(L); save(); render(); break;
+    }
+    case "lu-slot": { var si = +el.getAttribute("data-i"); ui.luSlot = ui.luSlot === si ? null : si; ui.luQ = ""; render(); break; }
+    case "lu-pick": case "lu-add": {
+      var L2 = findMatch(ui.lmid).lineup, who = el.getAttribute("data-v");
+      if (a === "lu-add") {
+        who = (document.getElementById("lu-q").value || "").trim();
+        if (!who) { document.getElementById("lu-q").focus(); break; }
+        addToRoster(S.settings.roster, who);
+      }
+      if (ui.luSlot == null) ui.luSlot = L2.slots.indexOf("");
+      if (ui.luSlot < 0) { ui.luSlot = null; toast("Tocca prima un ruolo sul campo"); break; }
+      var was = L2.slots.indexOf(who);
+      if (was >= 0 && was !== ui.luSlot) L2.slots[was] = L2.slots[ui.luSlot];  // scambio di ruolo
+      L2.slots[ui.luSlot] = who;
+      var next = L2.slots.indexOf("");
+      ui.luSlot = next >= 0 ? next : null; ui.luQ = "";
+      rememberLineup(L2); save(); render(); break;
+    }
+    case "lu-clear": { var L3 = findMatch(ui.lmid).lineup; L3.slots[ui.luSlot] = ""; rememberLineup(L3); save(); render(); break; }
     case "del-match":
       ask("Eliminare la partita?", "Il risultato e la cronaca vengono cancellati da questo telefono.", "Elimina", function () {
         S.history = S.history.filter(function (x) { return x.id !== ui.id; }); save(); ui.view = "home"; render();
@@ -926,7 +1189,17 @@ document.addEventListener("click", function (ev) {
   }
 });
 
-document.addEventListener("input", function (ev) { if (/^new-/.test(ev.target.id)) ui.newPlayer[ev.target.id.slice(4)] = ev.target.value; });
+document.addEventListener("input", function (ev) {
+  var id = ev.target.id;
+  if (/^new-/.test(id)) { ui.newPlayer[id.slice(4)] = ev.target.value; filterChips(id.slice(4), ev.target.value); }
+  if (id === "lu-q") { ui.luQ = ev.target.value; filterChips("lu", ev.target.value); }
+});
+// Invio: se la ricerca trova un solo nome lo sceglie, altrimenti aggiunge il nome scritto.
+function enterPick(key, addSel) {
+  var box = document.querySelector('[data-picker="' + key + '"]');
+  var hits = box ? Array.prototype.filter.call(box.querySelectorAll(".chip[data-v]"), function (c) { return c.getAttribute("data-v") && !c.hidden; }) : [];
+  (hits.length === 1 ? hits[0] : document.querySelector(addSel)).click();
+}
 document.addEventListener("change", function (ev) {
   if (ev.target.id === "r-team") { S.settings.team = ev.target.value.trim(); save(); }
 });
@@ -934,7 +1207,8 @@ document.addEventListener("keydown", function (ev) {
   if (ev.key !== "Enter") return;
   var id = ev.target.id;
   if (id === "r-new") { ev.preventDefault(); document.querySelector('[data-a="r-add"]').click(); }
-  if (/^new-/.test(id)) { ev.preventDefault(); document.querySelector('[data-a="pick-new"][data-f="' + id.slice(4) + '"]').click(); }
+  if (/^new-/.test(id) && ev.target.value.trim()) { ev.preventDefault(); enterPick(id.slice(4), '[data-a="pick-new"][data-f="' + id.slice(4) + '"]'); }
+  if (id === "lu-q" && ev.target.value.trim()) { ev.preventDefault(); enterPick("lu", '[data-a="lu-add"]'); }
   if (id === "r-team") ev.target.blur();
 });
 
@@ -943,6 +1217,7 @@ if (S.match && S.match.run) holdWake();
 // Tasto "indietro" di Android: chiude il foglio aperto o torna al menu; 0 = lascia uscire dall'app.
 window.bcBack = function () {
   if (ui.confirm || ui.share || ui.sheet) { ui.confirm = null; ui.share = null; ui.sheet = null; render(); return 1; }
+  if (ui.view === "lineup") { ui.view = ui.back || "live"; ui.luSlot = null; render(); return 1; }
   if (ui.view !== "home") { ui.view = "home"; render(); window.scrollTo(0, 0); return 1; }
   return 0;
 };

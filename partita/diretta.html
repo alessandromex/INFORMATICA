@@ -19,6 +19,8 @@
   --font-display: "Barlow Condensed", "Arial Narrow", "Helvetica Neue", sans-serif;
   --font-body: "Barlow", -apple-system, "Helvetica Neue", Arial, sans-serif;
   --r: 14px;
+  --grass-1: #2e8b4f; --grass-2: #287c46; --chalk: rgba(255,255,255,.6);
+  --kit: #ffffff; --kit-ink: #0d1912; --kit-gk: #ffcf3a;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -89,6 +91,46 @@ h2 { font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacin
 .who .on::before { content: "\25B2"; color: var(--accent); }
 .who .off::before { content: "\25BC"; color: var(--danger); }
 .who .off { font-weight: 500; color: var(--muted); }
+/* campo della formazione: stesso aspetto in tema chiaro e scuro */
+.pitch {
+  position: relative; width: 100%; max-width: 100%; aspect-ratio: 68 / 78; border-radius: 12px; overflow: hidden;
+  background: repeating-linear-gradient(180deg, var(--grass-1) 0 12.5%, var(--grass-2) 12.5% 25%);
+  box-shadow: inset 0 0 0 2px var(--chalk);
+}
+.pitch.mini { aspect-ratio: 68 / 62; }
+.pitch > i { position: absolute; border: 2px solid var(--chalk); }
+.pitch .pl-box { left: 22%; right: 22%; bottom: -2px; height: 16%; }
+.pitch .pl-six { left: 38%; right: 38%; bottom: -2px; height: 6%; }
+.pitch .pl-arc { left: 50%; top: 0; width: 28%; aspect-ratio: 1; border-radius: 50%; transform: translate(-50%, -50%); }
+.pp { position: absolute; z-index: 1; transform: translate(-50%, -50%); max-width: 84px; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 0; }
+.shirt {
+  position: relative; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--kit); color: var(--kit-ink); font: 800 17px/1 var(--font-display); font-variant-numeric: tabular-nums;
+  box-shadow: 0 2px 5px rgba(0,0,0,.35);
+}
+.pp.gk .shirt { background: var(--kit-gk); }
+.pp.empty .shirt { background: rgba(255,255,255,.14); color: #fff; box-shadow: inset 0 0 0 2px rgba(255,255,255,.75); font-size: 22px; font-weight: 500; }
+.pp.out .shirt { opacity: .45; }
+.pp[aria-pressed=true] .shirt { box-shadow: 0 0 0 3px var(--led), 0 2px 5px rgba(0,0,0,.35); }
+.pn { max-width: 100%; padding: 1px 5px; border-radius: 4px; background: rgba(0,0,0,.5); color: #fff; font: 700 12px/1.25 var(--font-display); text-transform: uppercase; letter-spacing: .03em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pn:empty { display: none; }
+.bd { position: absolute; top: -5px; left: calc(50% + 11px); display: flex; gap: 2px; align-items: center; }
+.bd i { display: block; font-style: normal; }
+.b-ball { position: relative; width: 15px; height: 15px; }
+.b-ball svg { width: 15px; height: 15px; }
+.b-ball b { position: absolute; right: -6px; bottom: -5px; font: 800 11px/1 var(--font-display); color: #fff; text-shadow: 0 0 2px #000, 0 0 2px #000; }
+.b-card { width: 9px; height: 12px; border-radius: 1.5px; box-shadow: 0 0 0 1px rgba(0,0,0,.3); }
+.b-card.y { background: var(--yellow); }
+.b-card.r { background: var(--red); }
+.b-card.yr { background: linear-gradient(135deg, var(--yellow) 50%, var(--red) 50%); }
+.b-in { color: #5fe39a; font-size: 11px; line-height: 1; text-shadow: 0 0 2px #000, 0 0 2px #000; }
+.pitch.mini .shirt { width: 34px; height: 34px; font-size: 15px; }
+.pitch .ballsvg .w { fill: #fff; }
+.pitch .ballsvg .k { fill: #101512; }
+.pitch .ballsvg .s, .pitch .ballsvg .ring { stroke: #101512; }
+.bench { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 14px; }
+.bench .bp { padding: 3px 10px; border-radius: 999px; background: var(--bg); border: 1px solid var(--line); }
+.bench .bp small { color: var(--muted); margin-left: 4px; }
 .foot { font-size: 13px; color: var(--muted); text-align: center; }
 @media (max-width: 380px) { .clock { font-size: 60px; } .score { font-size: 60px; } .tname { font-size: 17px; } }
 </style>
@@ -139,6 +181,63 @@ function scorers(t) {
   return groups.map(function (n) { return "<p>" + esc(n + " " + by[n].join(", ")) + "</p>"; }).join("");
 }
 
+var ballSVG = ball;
+function shirtOf(name) {
+  var r = /^(\d{1,3})\s+(.+)$/.exec(name || "");
+  if (r) return { n: r[1], s: r[2] };
+  var w = String(name || "").trim().split(/\s+/);
+  return { n: w.map(function (x) { return x.charAt(0); }).join("").slice(0, 2).toUpperCase(), s: name };
+}
+// Disegna il campo: righe dal portiere (in basso) agli attaccanti (in alto), come nelle presentazioni TV.
+// opt.pick = campo dell'evento da riempire toccando un giocatore; opt.edit = editor della formazione.
+function pitchHTML(mod, slots, stats, opt) {
+  opt = opt || {};
+  var rows = [1].concat(mod.split("-").map(Number)), i = 0;
+  var h = '<div class="pitch' + (opt.mini ? " mini" : "") + '"><i class="pl-box"></i><i class="pl-six"></i><i class="pl-arc"></i>';
+  rows.forEach(function (n, r) {
+    var y = 88 - r * (74 / (rows.length - 1));
+    for (var j = 0; j < n; j++, i++) {
+      var name = slots[i] || "", s = (stats && name && stats[name]) || {}, sh = shirtOf(name);
+      var cls = "pp" + (i === 0 ? " gk" : "") + (name ? "" : " empty") + (s.r ? " out" : "");
+      var attr = ' style="left:' + ((j + 1) * 100 / (n + 1)).toFixed(1) + "%;top:" + y.toFixed(1) + "%;width:calc(" + (100 / n).toFixed(1) + '% - 4px)"';
+      var b = "";
+      if (s.g) b += '<i class="b-ball">' + ballSVG() + (s.g > 1 ? "<b>" + s.g + "</b>" : "") + "</i>";
+      if (s.r) b += '<i class="b-card ' + (s.y >= 2 ? "yr" : "r") + '"></i>';
+      else if (s.y) b += '<i class="b-card y"></i>';
+      if (s.inAt) b += '<i class="b-in">▲</i>';
+      var inner = '<span class="shirt">' + (name ? esc(sh.n) : "+") + (b ? '<span class="bd">' + b + "</span>" : "") + "</span>" +
+        '<span class="pn">' + esc(name ? sh.s : opt.edit ? roleOf(mod, i) : "") + "</span>";
+      if (opt.edit) h += '<button class="' + cls + '" data-a="lu-slot" data-i="' + i + '" aria-pressed="' + (opt.sel === i) + '" aria-label="' + esc(roleOf(mod, i) + (name ? ": " + name : "")) + '"' + attr + ">" + inner + "</button>";
+      else if (opt.pick && name) h += '<button class="' + cls + '" data-a="pick" data-f="' + opt.pick + '" data-v="' + esc(name) + '" aria-pressed="' + (opt.cur === name) + '"' + attr + ">" + inner + "</button>";
+      else h += '<div class="' + cls + '"' + attr + ">" + inner + "</div>";
+    }
+  });
+  return h + "</div>";
+}
+function roleOf(mod, i) {
+  if (i === 0) return "Portiere";
+  var lines = mod.split("-").map(Number), k = i - 1;
+  for (var l = 0; l < lines.length; l++) {
+    if (k < lines[l]) return l === 0 ? "Difensore" : l === lines.length - 1 ? "Attaccante" : "Centrocampista";
+    k -= lines[l];
+  }
+  return "";
+}
+// Formazione attuale: titolari con i cambi applicati, più gol, cartellini e ingressi
+// (eventi compatti: [tipo, squadra, tempo, secondi, giocatore o chi esce, tipo di gol, chi entra]).
+function fieldState() {
+  if (!S.f || !S.f.s) return null;
+  var cur = S.f.s.slice(), st = {}, mine = S.s === "away" ? 1 : 0;
+  var g = function (n) { return st[n] || (st[n] = { g: 0, y: 0, r: false, inAt: "" }); };
+  S.e.forEach(function (e) {
+    if (e[0] === "g" && e[1] === mine && e[5] !== "o" && e[4]) g(e[4]).g++;
+    if (e[1] !== mine) return;
+    if (e[0] === "y" && e[4]) { var y = g(e[4]); y.y++; if (y.y >= 2) y.r = true; }
+    if (e[0] === "r" && e[4]) g(e[4]).r = true;
+    if (e[0] === "s" && e[4] && e[6]) { var k = cur.indexOf(e[4]); if (k >= 0) { cur[k] = e[6]; g(e[6]).inAt = "1"; } }
+  });
+  return { mod: S.f.m, slots: cur, stats: st };
+}
 function render() {
   if (!S) return;
   var h = '<section class="board"><div class="board-top"><span id="per"></span><span class="pill" id="pill"><i class="dot"></i><span id="pill-t"></span></span></div>';
@@ -153,6 +252,8 @@ function render() {
   if (sh || sa) h += '<div class="scorers"><div>' + sh + '</div><div class="r">' + sa + "</div></div>";
   h += "</section>";
 
+  var fs = fieldState();
+  if (fs) h += '<section class="panel"><h2>Formazione ' + esc(name(S.s === "away" ? 1 : 0)) + " \u00b7 " + esc(fs.mod) + "</h2>" + pitchHTML(fs.mod, fs.slots, fs.stats) + "</section>";
   h += '<section class="panel"><h2>Cronaca</h2>';
   if (!S.e.length) h += '<div class="empty">Ancora nessun gol, cartellino o cambio.</div>';
   var cur = 0;

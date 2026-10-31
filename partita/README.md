@@ -17,6 +17,8 @@ App per iPhone per seguire le partite di calcio della propria squadra: cronometr
 - **Avvia / Pausa / Riprendi**: il cronometro mostra il minuto di gioco (es. 2° tempo parte da 45:00), sotto c'è quanto manca alla fine del tempo. Allo scadere parte il recupero (+mm:ss) e suona un fischio. I pulsanti ±10″ e ±1′ correggono il cronometro.
 - **Gol**: tocca il pallone sotto il nome della squadra. Il minuto viene registrato subito; poi, se vuoi, scegli il marcatore dalla lista o scrivi un nome nuovo, e il tipo (su azione, rigore, autogol). Puoi anche chiudere senza dettagli.
 - **Cartellini**: tocca il cartellino giallo o rosso sotto la squadra. Il secondo giallo allo stesso giocatore viene segnato come espulsione.
+- **Formazione**: nella schermata della partita tocca **Prepara la formazione**. Scegli quanti giocano (5, 7, 8, 9 o 11) e il modulo, poi tocca un ruolo sul campo e il giocatore dalla rosa (o cercalo per nome). La formazione viene riproposta alla partita successiva. Durante la partita il campo si aggiorna con cambi, gol e cartellini.
+- **Scegliere i giocatori negli eventi**: con la formazione pronta, per gol, cartellini e cambi della tua squadra basta toccare il giocatore sul campo; chi entra si sceglie dalla panchina. In alternativa si cerca per nome.
 - **Cambi**: tocca il pulsante con le due frecce sotto la squadra. Il minuto viene registrato subito; poi scegli chi entra e chi esce dalla lista o scrivi un nome nuovo. I cambi compaiono nella cronaca, nel risultato finale e nella diretta.
 - **Fine tempo / Fine partita**: a fine partita vedi il risultato con parziali, marcatori e minuti, ammoniti ed espulsi. Puoi copiarlo o condividerlo (WhatsApp, ecc.).
 - Ogni evento si corregge toccandolo nella cronaca, anche a partita finita.
