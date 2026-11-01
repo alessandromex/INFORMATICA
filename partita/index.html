@@ -114,6 +114,7 @@ h2 { font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacin
 .empty { color: var(--muted); padding: 8px 2px; }
 
 /* form */
+label.btn { cursor: pointer; }
 label.f { display: flex; flex-direction: column; gap: 6px; font-weight: 600; font-size: 14px; color: var(--muted); }
 input[type=text] {
   width: 100%; min-height: 50px; padding: 0 14px; border-radius: 12px;
@@ -834,6 +835,96 @@ function vSetup() {
 }
 
 // Rosa: scheda della mia squadra e scheda degli avversari (una rosa per ogni squadra avversaria).
+/* ---------- salvare e caricare le rose ---------- */
+// File JSON leggibile: { app, tipo: "rose", rose: [{ squadra, mia, giocatori }] }.
+// Serve anche a passare le rose da un dispositivo all'altro (telefono, app installata, PC).
+function filePanel(r) {
+  var name = ui.rTab === "opp" ? (ui.rOpp && (S.oppLabels[ui.rOpp] || ui.rOpp)) : (S.settings.team || "La mia squadra");
+  return '<section class="panel"><h2>Salva e carica</h2>' +
+    '<div class="note">Salva le rose in un file sul dispositivo, con il nome della squadra, e caricale in un secondo momento: anche su un altro telefono o sul PC.</div>' +
+    '<div class="controls">' + (r ? '<button class="btn" data-a="r-save"' + (r.length ? "" : " disabled") + ">Salva " + esc(name) + "</button>" : "<span></span>") +
+    '<button class="btn" data-a="r-saveall">Salva tutte le rose</button></div>' +
+    '<label class="btn block" for="r-file">Carica rose da file</label>' +
+    '<input type="file" id="r-file" accept=".json,.txt,.csv,application/json,text/plain" hidden>' +
+    '<div class="note">Puoi caricare anche un file di testo con un nome per riga: i giocatori vanno nella rosa aperta.</div></section>';
+}
+function rosterEntries(all) {
+  var mine = { squadra: S.settings.team || "La mia squadra", mia: true, giocatori: S.settings.roster.slice() };
+  if (!all) {
+    if (ui.rTab !== "opp") return [mine];
+    return [{ squadra: S.oppLabels[ui.rOpp] || ui.rOpp, mia: false, giocatori: S.oppRosters[ui.rOpp].slice() }];
+  }
+  return [mine].concat(Object.keys(S.oppRosters).sort().map(function (k) {
+    return { squadra: S.oppLabels[k] || k, mia: false, giocatori: S.oppRosters[k].slice() };
+  }));
+}
+function fileName(s) { return String(s).replace(/[\\/:*?"<>|]+/g, "").trim() || "rosa"; }
+// Nell'app Android scrive il file e apre la condivisione (Salva su Drive, File…); su telefono la
+// condivisione di sistema (iPhone: Salva in File); sul PC lo scarica nella cartella Download.
+function saveFile(name, text) {
+  var C = window.Capacitor;
+  if (C && C.isNativePlatform && C.isNativePlatform() && C.nativePromise) {
+    C.nativePromise("Filesystem", "writeFile", { path: name, data: text, directory: "CACHE", encoding: "utf8" })
+      .then(function (r) { return C.nativePromise("Share", "share", { title: name, url: r.uri, dialogTitle: "Salva il file delle rose" }); })
+      .catch(function (err) { if (!/cancel/i.test((err && err.message) || "")) toast("Non è stato possibile salvare il file"); });
+    return;
+  }
+  var file = null;
+  try { file = new File([text], name, { type: "application/json" }); } catch (e) {}
+  var phone = window.matchMedia && matchMedia("(pointer: coarse)").matches;
+  if (file && phone && navigator.canShare && navigator.canShare({ files: [file] })) {
+    navigator.share({ files: [file], title: name }).catch(function (err) { if (!err || err.name !== "AbortError") downloadFile(name, text); });
+    return;
+  }
+  downloadFile(name, text);
+}
+function downloadFile(name, text) {
+  var a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([text], { type: "application/json" }));
+  a.download = name;
+  document.body.appendChild(a); a.click();
+  setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  toast("File salvato: " + name);
+}
+function saveRosters(all) {
+  var entries = rosterEntries(all);
+  var text = JSON.stringify({ app: "bordocampo", tipo: "rose", salvato: new Date().toISOString(), rose: entries }, null, 2);
+  saveFile(fileName(all ? "Bordocampo rose " + new Date().toISOString().slice(0, 10) : "Rosa " + entries[0].squadra) + ".json", text);
+}
+// Carica un file: le rose del JSON vanno nella mia rosa (mia: true) o in quella dell'avversario
+// con lo stesso nome; un file di testo va nella rosa aperta. I nomi già presenti non si duplicano.
+function loadRosters(text, fname) {
+  var data = null, entries;
+  try { data = JSON.parse(text); } catch (e) {}
+  if (data && Array.isArray(data.rose)) entries = data.rose;
+  else if (data && Array.isArray(data.giocatori)) entries = [data];
+  else {
+    var opp = ui.rTab === "opp";
+    var label = opp ? (ui.rOpp ? S.oppLabels[ui.rOpp] || ui.rOpp : String(fname || "").replace(/\.[^.]+$/, "").replace(/^rosa\s+/i, "")) : S.settings.team;
+    entries = [{ squadra: label, mia: !opp, giocatori: splitNames(text) }];
+  }
+  var done = [];
+  entries.forEach(function (r) {
+    var label = String((r && r.squadra) || "").trim(), list;
+    var names = ((r && r.giocatori) || []).map(function (x) { return String(x).trim(); }).filter(Boolean);
+    if (r && r.mia) {
+      list = S.settings.roster;
+      if (!S.settings.team && label) S.settings.team = label;
+      label = label || S.settings.team || "La mia squadra";
+    } else {
+      if (!label) return;
+      var k = label.toLowerCase();
+      if (!S.oppRosters[k]) S.oppRosters[k] = [];
+      if (!S.oppLabels[k]) S.oppLabels[k] = label;
+      list = S.oppRosters[k];
+    }
+    var n = 0;
+    names.forEach(function (p) { if (list.indexOf(p) < 0) { list.push(p); n++; } });
+    done.push(label + " +" + n);
+  });
+  save(); render();
+  toast(done.length ? "Rose caricate: " + done.join(", ") : "Nel file non ci sono rose da caricare", 3500);
+}
 function rosterList() { return ui.rTab === "opp" ? (ui.rOpp && S.oppRosters[ui.rOpp]) : S.settings.roster; }
 function vRoster() {
   var tab = ui.rTab === "opp" ? "opp" : "mine";
@@ -852,7 +943,7 @@ function vRoster() {
       }).join("") + "</div>" : '<div class="empty">Nessuna squadra avversaria salvata.</div>') +
       '<div class="row"><input type="text" id="r-oppname" class="grow" autocomplete="off" placeholder="Nome della squadra, es. Virtus"><button class="btn" data-a="r-oppnew">Nuova</button></div>' +
       '<div class="note">La rosa di un avversario viene proposta in automatico quando giochi contro una squadra con lo stesso nome.</div></section>';
-    if (!r) return h;
+    if (!r) return h + filePanel(null);
     h += '<h1 style="font-size:28px;text-transform:uppercase">' + esc(S.oppLabels[ui.rOpp] || ui.rOpp) + "</h1>";
   }
   h += '<section class="panel"><h2>Aggiungi giocatori</h2><div class="row"><input type="text" id="r-new" class="grow" autocomplete="off" placeholder="Es. 10 Rossi"><button class="btn primary" data-a="r-add">Aggiungi</button></div>' +
@@ -864,7 +955,7 @@ function vRoster() {
     r.forEach(function (p, i) { h += '<div class="item"><span class="grow t">' + esc(p) + '</span><button class="link danger" data-a="r-del" data-i="' + i + '" aria-label="Rimuovi ' + esc(p) + '">Rimuovi</button></div>'; });
     h += "</div>";
   }
-  return h + "</section>";
+  return h + "</section>" + filePanel(r);
 }
 
 function teamCol(m, t) {
@@ -1120,9 +1211,9 @@ function sheetHTML(m, e) {
 }
 
 function ask(title, text, ok, fn, danger) { ui.confirm = { title: title, text: text, ok: ok, fn: fn, danger: danger }; renderLayer(); }
-function toast(msg) {
+function toast(msg, ms) {
   var t = document.createElement("div"); t.className = "toast"; t.textContent = msg; document.body.appendChild(t);
-  setTimeout(function () { t.remove(); }, 1800);
+  setTimeout(function () { t.remove(); }, ms || 1800);
 }
 
 /* ---------- schermo acceso e segnale di fine tempo ---------- */
@@ -1273,6 +1364,8 @@ document.addEventListener("click", function (ev) {
       break;
     }
     case "r-del": rosterList().splice(+el.getAttribute("data-i"), 1); save(); render(); break;
+    case "r-save": saveRosters(false); break;
+    case "r-saveall": saveRosters(true); break;
 
     case "toggle":
       unlockAudio();
@@ -1386,6 +1479,13 @@ function enterPick(key) {
 }
 document.addEventListener("change", function (ev) {
   if (ev.target.id === "r-team") { S.settings.team = ev.target.value.trim(); save(); }
+  if (ev.target.id === "r-file" && ev.target.files && ev.target.files[0]) {
+    var f = ev.target.files[0], rd = new FileReader();
+    rd.onload = function () { loadRosters(String(rd.result || ""), f.name); };
+    rd.onerror = function () { toast("Non riesco a leggere il file"); };
+    rd.readAsText(f);
+    ev.target.value = "";
+  }
   if (ev.target.id === "ev-minute" && ui.sheet) {
     var mm = findMatch(ui.sheet.mid), ee = mm && mm.events.filter(function (x) { return x.id === ui.sheet.eid; })[0];
     if (ee && setMinute(mm, ee, ev.target.value)) { save(); render(); } else toast("Scrivi il minuto, es. 38 o 45+2");

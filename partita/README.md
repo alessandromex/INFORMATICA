@@ -13,6 +13,7 @@ App per iPhone per seguire le partite di calcio della propria squadra: cronometr
 ## Come si usa
 
 - **Rosa**: nella scheda **La mia squadra** inserisci il nome della squadra e i giocatori (anche più nomi insieme separati da virgola). Nella scheda **Avversari** crei una rosa per ogni squadra avversaria: viene proposta in automatico quando giochi contro una squadra con lo stesso nome.
+- **Salvare e caricare le rose**: in Rosa, nel riquadro **Salva e carica**, salvi la rosa aperta in un file col nome della squadra (es. «Rosa Aurora.json») oppure tutte le rose insieme, e con **Carica rose da file** le ricarichi più tardi, anche su un altro dispositivo. Su iPhone il file si salva in File, su Android tramite la condivisione (Drive, File…), sul PC nella cartella Download. Si può caricare anche un file di testo con un nome per riga.
 - **Nuova partita**: avversario (scelto con un tocco tra le squadre salvate in Rosa → Avversari, oppure scritto se è nuovo), casa/trasferta, numero di tempi e minuti per tempo.
 - **Avvia / Pausa / Riprendi**: il cronometro mostra il minuto di gioco (es. 2° tempo parte da 45:00), sotto c'è quanto manca alla fine del tempo. Allo scadere parte il recupero (+mm:ss) e suona un fischio. I pulsanti ±10″ e ±1′ correggono il cronometro.
 - **Gol**: tocca il pallone sotto il nome della squadra. Il minuto viene registrato subito; poi, se vuoi, scegli il marcatore dalla lista o scrivi un nome nuovo, e il tipo (su azione, rigore, autogol). Puoi anche chiudere senza dettagli.
