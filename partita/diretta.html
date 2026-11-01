@@ -225,18 +225,36 @@ function roleOf(mod, i) {
 }
 // Formazione attuale: titolari con i cambi applicati, più gol, cartellini e ingressi
 // (eventi compatti: [tipo, squadra, tempo, secondi, giocatore o chi esce, tipo di gol, chi entra]).
-function fieldState() {
-  if (!S.f || !S.f.s) return null;
-  var cur = S.f.s.slice(), st = {}, mine = S.s === "away" ? 1 : 0;
-  var g = function (n) { return st[n] || (st[n] = { g: 0, y: 0, r: false, inAt: "" }); };
+function fieldState(ti) {
+  // S.F = formazioni per squadra (0 = casa, 1 = ospiti); S.f = versione precedente, solo la mia squadra
+  var F = S.F ? S.F[ti] : S.f && ti === (S.s === "away" ? 1 : 0) ? S.f : null;
+  if (!F || !F.s) return null;
+  var cur = F.s.slice(), bench = (F.b || []).slice(), st = {};
+  var g = function (n) { return st[n] || (st[n] = { g: 0, y: 0, r: false, inAt: "", outAt: "" }); };
   S.e.forEach(function (e) {
-    if (e[0] === "g" && e[1] === mine && e[5] !== "o" && e[4]) g(e[4]).g++;
-    if (e[1] !== mine) return;
+    if (e[0] === "g" && e[1] === ti && e[5] !== "o" && e[4]) g(e[4]).g++;
+    if (e[1] !== ti) return;
     if (e[0] === "y" && e[4]) { var y = g(e[4]); y.y++; if (y.y >= 2) y.r = true; }
     if (e[0] === "r" && e[4]) g(e[4]).r = true;
-    if (e[0] === "s" && e[4] && e[6]) { var k = cur.indexOf(e[4]); if (k >= 0) { cur[k] = e[6]; g(e[6]).inAt = "1"; } }
+    if (e[0] === "s" && e[4] && e[6]) {
+      var k = cur.indexOf(e[4]);
+      if (k >= 0) {
+        cur[k] = e[6]; g(e[6]).inAt = g(e[4]).outAt = minuteLabel(e[2], e[3]);
+        bench = bench.filter(function (n) { return n !== e[6]; });
+        if (bench.indexOf(e[4]) < 0) bench.push(e[4]);
+      }
+    }
   });
-  return { mod: S.f.m, slots: cur, stats: st };
+  return { mod: F.m, slots: cur, bench: bench, stats: st };
+}
+function lineupHTML(ti) {
+  var fs = fieldState(ti);
+  if (!fs) return "";
+  return '<section class="panel"><h2>Formazione ' + esc(name(ti)) + " \u00b7 " + esc(fs.mod) + "</h2>" + pitchHTML(fs.mod, fs.slots, fs.stats) +
+    (fs.bench.length ? '<div class="bench"><span class="empty">Panchina</span>' + fs.bench.map(function (p) {
+      var o = fs.stats[p] && fs.stats[p].outAt;
+      return '<span class="bp">' + esc(p) + (o ? "<small>\u25BC " + o + "</small>" : "") + "</span>";
+    }).join("") + "</div>" : "") + "</section>";
 }
 function render() {
   if (!S) return;
@@ -252,8 +270,7 @@ function render() {
   if (sh || sa) h += '<div class="scorers"><div>' + sh + '</div><div class="r">' + sa + "</div></div>";
   h += "</section>";
 
-  var fs = fieldState();
-  if (fs) h += '<section class="panel"><h2>Formazione ' + esc(name(S.s === "away" ? 1 : 0)) + " \u00b7 " + esc(fs.mod) + "</h2>" + pitchHTML(fs.mod, fs.slots, fs.stats) + "</section>";
+  h += lineupHTML(0) + lineupHTML(1);
   h += '<section class="panel"><h2>Cronaca</h2>';
   if (!S.e.length) h += '<div class="empty">Ancora nessun gol, cartellino o cambio.</div>';
   var cur = 0;
