@@ -58,6 +58,7 @@
   --board-ink: #f1f6f2; --board-muted: #8fa597; --led: #ffcf3a; --danger: #ff5a6e; --ball: #ffffff;
   color-scheme: dark;
 }
+[hidden] { display: none !important; }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { min-height: 100%; }
 body {
@@ -131,6 +132,7 @@ input[type=text] {
 .pick input[type=text] { width: 100%; }
 .grp { display: flex; flex-direction: column; gap: 6px; }
 .grp h4 { margin: 0; font: 600 13px/1.2 var(--font-body); color: var(--muted); }
+.stepper input.minute { width: 84px; min-width: 0; flex: none; height: 50px; text-align: center; border: 1px solid var(--line); border-radius: 12px; background: var(--bg); color: var(--ink); font-family: var(--font-display); font-size: 26px; font-weight: 700; padding: 0; }
 .chip.on { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
 
 /* tabellone */
@@ -396,16 +398,33 @@ function newMatch(f) {
   if (mem && (mem.slots || []).some(Boolean)) m.oppLineup = newLineup(m, ot);
   save();
 }
-function addEvent(type, team) {
-  var m = S.match;
-  if (!m || m.status !== "play") return;
-  var e = { id: uid(), n: ++m.seq, type: type, team: team, period: m.period, sec: periodSec(m), player: "", kind: type === "goal" ? "azione" : "" };
+// A partita in corso l'evento prende il minuto attuale; a partita finita parte dal 1' e il minuto si scrive nel foglio.
+function addEvent(type, team, m) {
+  m = m || S.match;
+  if (!m || (m.status !== "play" && m.status !== "ended")) return;
+  var ended = m.status === "ended";
+  if (m.seq == null) m.seq = m.events.length;
+  var e = { id: uid(), n: ++m.seq, type: type, team: team, period: ended ? 1 : m.period, sec: ended ? 0 : periodSec(m), player: "", kind: type === "goal" ? "azione" : "" };
   if (type === "sub") { e.on = ""; e.off = ""; }
   m.events.push(e);
   save();
   ui.sheet = { mid: m.id, eid: e.id, fresh: true };
   ui.newPlayer = {};
   render();
+}
+// Minuto scritto a mano: "38" oppure "45+2" (recupero); calcola tempo e secondi.
+function setMinute(m, e, str) {
+  var r = /^\s*(\d+)\s*(?:\+\s*(\d+))?\s*$/.exec(str || "");
+  if (!r) return false;
+  var M = Math.max(1, +r[1]), extra = r[2] ? +r[2] : 0;
+  if (extra) {
+    e.period = Math.min(m.periods, Math.max(1, Math.round(M / m.minutes)));
+    e.sec = m.minutes * 60 + (extra - 1) * 60;
+  } else {
+    e.period = Math.min(m.periods, Math.floor((M - 1) / m.minutes) + 1);
+    e.sec = (M - 1 - (e.period - 1) * m.minutes) * 60;
+  }
+  return true;
 }
 function finishMatch() {
   var m = S.match;
@@ -781,6 +800,17 @@ function vHome() {
 }
 
 var form = null;
+// Squadre avversarie salvate in Rosa → Avversari, da scegliere con un tocco.
+function oppChooser() {
+  var keys = Object.keys(S.oppRosters).sort(), cur = (form.opp || "").trim().toLowerCase();
+  var h = keys.length ? '<div class="chips">' + keys.map(function (k) {
+    return '<button class="chip" data-a="f-opp-pick" data-v="' + esc(S.oppLabels[k] || k) + '" aria-pressed="' + (k === cur) + '">' + esc(S.oppLabels[k] || k) +
+      " \u00b7 " + S.oppRosters[k].length + "</button>";
+  }).join("") + "</div>" : "";
+  var note = cur && S.oppRosters[cur] ? "Rosa di " + (S.oppLabels[cur] || cur) + ": " + S.oppRosters[cur].length + " giocatori."
+    : keys.length ? "Scegli una squadra salvata oppure scrivi il nome di una nuova." : "Le squadre avversarie inserite in Rosa \u2192 Avversari compariranno qui.";
+  return h + '<div class="row"><span class="note grow">' + esc(note) + '</span><button class="link" data-a="f-opp-roster">Rosa avversari</button></div>';
+}
 function vSetup() {
   if (!form) form = { team: S.settings.team || "", opp: "", side: S.settings.side || "home", periods: S.settings.periods || 2, minutes: S.settings.minutes || 45 };
   var presets = [10, 15, 20, 25, 30, 35, 40, 45];
@@ -788,6 +818,7 @@ function vSetup() {
     '<section class="panel">' +
     '<label class="f">La mia squadra<input type="text" id="f-team" autocomplete="off" value="' + esc(form.team) + '" placeholder="Es. Pulcini 2016"></label>' +
     '<label class="f">Avversario<input type="text" id="f-opp" autocomplete="off" value="' + esc(form.opp) + '" placeholder="Es. Virtus"></label>' +
+    oppChooser() +
     '<div class="f" style="display:flex;flex-direction:column;gap:6px"><span class="muted small" style="font-weight:600">Giochiamo</span><div class="seg">' +
     '<button data-a="f-side" data-v="home" aria-pressed="' + (form.side === "home") + '">In casa</button>' +
     '<button data-a="f-side" data-v="away" aria-pressed="' + (form.side === "away") + '">In trasferta</button></div></div>' +
@@ -942,6 +973,13 @@ function vSummary() {
     (m.periods > 1 ? '<div class="partials">' + partials(m).join(" · ") + "</div>" : "") +
     ((sh.length || sa.length) ? '<div class="scorers"><div>' + sh.map(function (s) { return "<p>" + esc(s) + "</p>"; }).join("") + '</div><div class="r">' + sa.map(function (s) { return "<p>" + esc(s) + "</p>"; }).join("") + "</div></div>" : "") +
     "</section>";
+  h += '<section class="panel"><h2>Correggi il risultato</h2>' +
+    '<div class="note">Aggiungi un evento dimenticato, oppure tocca un evento nella cronaca per cambiarne giocatore o minuto, assegnarlo all\u2019altra squadra o eliminarlo.</div>' +
+    ["home", "away"].map(function (t) {
+      var b = function (c, l) { return '<button class="chip" data-a="past-add" data-c="' + c + '" data-t="' + t + '">' + l + "</button>"; };
+      return '<div class="grp"><h4>' + esc(teamName(m, t)) + " \u00b7 " + score(m, t) + " gol</h4>" +
+        '<div class="chips">' + b("goal", "+ Gol") + b("yellow", "+ Ammonizione") + b("red", "+ Espulsione") + b("sub", "+ Cambio") + "</div></div>";
+    }).join("") + "</section>";
   var y = cardsOf(m, "yellow"), r = cardsOf(m, "red");
   if (y.length || r.length) {
     h += '<section class="panel">';
@@ -1072,8 +1110,11 @@ function sheetHTML(m, e) {
       h += pickerHTML(m, e, "player", label, [["Rosa", names]], pt);
     }
   }
-  h += '<div class="row" style="justify-content:space-between"><span class="muted small">Minuto</span><div class="stepper">' +
-    '<button data-a="ev-min" data-d="-60" aria-label="Un minuto prima">−</button><span class="v tabnum" style="font-size:26px;min-width:84px">' + minuteLabel(m, e.period, e.sec) + '</span><button data-a="ev-min" data-d="60" aria-label="Un minuto dopo">+</button></div></div>';
+  h += '<div class="row" style="justify-content:space-between"><label class="muted small" for="ev-minute">Minuto</label><div class="stepper">' +
+    '<button data-a="ev-min" data-d="-60" aria-label="Un minuto prima">−</button>' +
+    '<input type="text" id="ev-minute" class="v tabnum minute" inputmode="numeric" autocomplete="off" value="' + minuteLabel(m, e.period, e.sec).replace("\u2032", "") + '" aria-label="Minuto, es. 38 o 45+2">' +
+    '<button data-a="ev-min" data-d="60" aria-label="Un minuto dopo">+</button></div></div>';
+  h += '<button class="btn" data-a="ev-team">Assegna a ' + esc(teamName(m, other(e.team))) + "</button>";
   h += '<div class="sh-foot"><button class="btn danger" data-a="ev-del">Elimina</button><button class="btn primary" data-a="sheet-close">' + (ui.sheet.fresh ? "Fatto" : "Salva") + "</button></div></div>";
   return h;
 }
@@ -1214,6 +1255,14 @@ document.addEventListener("click", function (ev) {
     case "f-per": readForm(); form.periods = Math.min(8, Math.max(1, form.periods + +el.getAttribute("data-d"))); render(); break;
     case "f-min": readForm(); form.minutes = Math.min(90, Math.max(1, form.minutes + +el.getAttribute("data-d"))); render(); break;
     case "f-preset": readForm(); form.minutes = +el.getAttribute("data-v"); render(); break;
+    case "f-opp-pick": readForm(); form.opp = el.getAttribute("data-v"); render(); break;
+    case "f-opp-roster": {
+      readForm();
+      var fk = (form.opp || "").trim().toLowerCase();
+      if (fk && !S.oppRosters[fk]) { S.oppRosters[fk] = []; S.oppLabels[fk] = form.opp.trim(); save(); }
+      ui.rTab = "opp"; ui.rOpp = fk || ui.rOpp; ui.rBack = { view: "setup", sheet: null };
+      ui.view = "roster"; render(); window.scrollTo(0, 0); break;
+    }
     case "start": readForm(); newMatch(form); form = null; ui.view = "live"; render(); window.scrollTo(0, 0); break;
 
     case "r-add": {
@@ -1274,6 +1323,14 @@ document.addEventListener("click", function (ev) {
       se[fld] = name; ui.newPlayer[fld] = ""; save(); render(); break;
     }
     case "ev-min": se.sec = Math.max(0, se.sec + +el.getAttribute("data-d")); save(); render(); break;
+    case "ev-team": {
+      // evento registrato sulla squadra sbagliata: lo sposta sull'altra; i giocatori scelti erano dell'altra rosa
+      var pBefore = playerTeam(se);
+      se.team = other(se.team);
+      if (playerTeam(se) !== pBefore) { se.player = ""; if (se.type === "sub") { se.on = ""; se.off = ""; } }
+      save(); render(); toast("Assegnato a " + teamName(sm, se.team)); break;
+    }
+    case "past-add": addEvent(el.getAttribute("data-c"), el.getAttribute("data-t"), findMatch(ui.id)); break;
     case "ev-del": {
       var id = se.id;
       sm.events = sm.events.filter(function (x) { return x.id !== id; });
@@ -1329,6 +1386,10 @@ function enterPick(key) {
 }
 document.addEventListener("change", function (ev) {
   if (ev.target.id === "r-team") { S.settings.team = ev.target.value.trim(); save(); }
+  if (ev.target.id === "ev-minute" && ui.sheet) {
+    var mm = findMatch(ui.sheet.mid), ee = mm && mm.events.filter(function (x) { return x.id === ui.sheet.eid; })[0];
+    if (ee && setMinute(mm, ee, ev.target.value)) { save(); render(); } else toast("Scrivi il minuto, es. 38 o 45+2");
+  }
 });
 document.addEventListener("keydown", function (ev) {
   if (ev.key !== "Enter") return;
@@ -1338,7 +1399,7 @@ document.addEventListener("keydown", function (ev) {
   if (id === "lu-q" && ev.target.value.trim()) { ev.preventDefault(); enterPick("lu"); }
   if (id === "r-oppname") { ev.preventDefault(); document.querySelector('[data-a="r-oppnew"]').click(); }
   if (id === "lu-new") { ev.preventDefault(); document.querySelector('[data-a="lu-many"]').click(); }
-  if (id === "r-team") ev.target.blur();
+  if (id === "r-team" || id === "ev-minute") ev.target.blur();
 });
 
 render();
