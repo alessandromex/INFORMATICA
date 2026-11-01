@@ -12,13 +12,13 @@ App per iPhone per seguire le partite di calcio della propria squadra: cronometr
 
 ## Come si usa
 
-- **Rosa**: inserisci il nome della squadra e i giocatori (anche più nomi insieme separati da virgola).
+- **Rosa**: nella scheda **La mia squadra** inserisci il nome della squadra e i giocatori (anche più nomi insieme separati da virgola). Nella scheda **Avversari** crei una rosa per ogni squadra avversaria: viene proposta in automatico quando giochi contro una squadra con lo stesso nome.
 - **Nuova partita**: avversario, casa/trasferta, numero di tempi e minuti per tempo.
 - **Avvia / Pausa / Riprendi**: il cronometro mostra il minuto di gioco (es. 2° tempo parte da 45:00), sotto c'è quanto manca alla fine del tempo. Allo scadere parte il recupero (+mm:ss) e suona un fischio. I pulsanti ±10″ e ±1′ correggono il cronometro.
 - **Gol**: tocca il pallone sotto il nome della squadra. Il minuto viene registrato subito; poi, se vuoi, scegli il marcatore dalla lista o scrivi un nome nuovo, e il tipo (su azione, rigore, autogol). Puoi anche chiudere senza dettagli.
 - **Cartellini**: tocca il cartellino giallo o rosso sotto la squadra. Il secondo giallo allo stesso giocatore viene segnato come espulsione.
 - **Formazioni**: nella schermata della partita, nel riquadro **Formazioni**, scegli la squadra (la tua o l'avversaria) e tocca **Prepara la formazione**. Scegli quanti giocano (5, 7, 8, 9 o 11) e il modulo, poi tocca un ruolo sul campo e il giocatore. Chi metti in campo sparisce dall'elenco; se lo togli dal campo torna in panchina. Sotto il campo scegli chi è in **panchina** (a disposizione) e chi non è convocato. Per l'avversario puoi scrivere tutti i nomi insieme, separati da virgola: rosa e formazione dell'avversario vengono ricordate e riproposte la volta che lo incontri di nuovo. Le formazioni si aggiornano con cambi, gol e cartellini e compaiono anche nella diretta.
-- **Scegliere i giocatori negli eventi**: con la formazione pronta, per gol, cartellini e cambi basta toccare il giocatore sul campo; nei cambi chi entra è proposto dalla panchina. Ogni elenco ha una ricerca per nome che trova anche il resto della rosa.
+- **Scegliere i giocatori negli eventi**: in gol, cartellini e cambi compaiono sempre i nomi della rosa della squadra, divisi in gruppi (in campo, panchina, altri della rosa); con la formazione pronta puoi anche toccare il giocatore sul campo. La ricerca filtra i nomi; se cerchi un nome che non c'è compare il pulsante «Aggiungi … alla rosa». Se la rosa della squadra è vuota, il foglio offre di inserirla subito.
 - **Cambi**: tocca il pulsante con le due frecce sotto la squadra. Il minuto viene registrato subito; poi scegli chi entra e chi esce dalla lista o scrivi un nome nuovo. I cambi compaiono nella cronaca, nel risultato finale e nella diretta.
 - **Fine tempo / Fine partita**: a fine partita vedi il risultato con parziali, marcatori e minuti, ammoniti ed espulsi. Puoi copiarlo o condividerlo (WhatsApp, ecc.).
 - Ogni evento si corregge toccandolo nella cronaca, anche a partita finita.

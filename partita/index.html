@@ -127,6 +127,10 @@ input[type=text] {
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .chip { min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg); font-weight: 600; font-size: 15px; }
 .chip[aria-pressed=true] { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+.pick { display: flex; flex-direction: column; gap: 10px; }
+.pick input[type=text] { width: 100%; }
+.grp { display: flex; flex-direction: column; gap: 6px; }
+.grp h4 { margin: 0; font: 600 13px/1.2 var(--font-body); color: var(--muted); }
 .chip.on { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
 
 /* tabellone */
@@ -309,7 +313,7 @@ input[type=text] {
 /* ---------- dati ---------- */
 var KEY = "bordocampo-v1";
 var S = load();
-function fresh() { return { settings: { team: "", roster: [], periods: 2, minutes: 45, side: "home" }, match: null, history: [], oppRosters: {}, oppLineups: {} }; }
+function fresh() { return { settings: { team: "", roster: [], periods: 2, minutes: 45, side: "home" }, match: null, history: [], oppRosters: {}, oppLabels: {}, oppLineups: {} }; }
 function load() {
   var d = fresh();
   try {
@@ -319,17 +323,14 @@ function load() {
       d.match = raw.match || null;
       d.history = Array.isArray(raw.history) ? raw.history : [];
       if (raw.oppRosters) d.oppRosters = raw.oppRosters;
+      if (raw.oppLabels) d.oppLabels = raw.oppLabels;
       if (raw.oppLineups) d.oppLineups = raw.oppLineups;
     }
   } catch (e) {}
   return d;
 }
 function store() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
-function save() {
-  // la rosa dell'avversario resta salvata col suo nome, per la prossima volta che lo incontri
-  if (S.match && S.match.opp && S.match.opp.length) S.oppRosters[oppKey(S.match)] = S.match.opp.slice();
-  store(); liveSchedule();
-}
+function save() { store(); liveSchedule(); }
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
 function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
 
@@ -357,10 +358,14 @@ function sorted(m) { return m.events.slice().sort(function (a, b) { return a.per
 function score(m, t, upto) { return m.events.filter(function (e) { return e.type === "goal" && e.team === t && (!upto || e.period <= upto); }).length; }
 // Squadra del giocatore coinvolto: nell'autogol il giocatore è della squadra avversaria.
 function playerTeam(e) { return e.type === "goal" && e.kind === "autogol" ? other(e.team) : e.team; }
+// Rosa di una squadra della partita: la mia, oppure quella salvata col nome dell'avversario
+// (le partite salvate prima avevano i nomi avversari solo in m.opp).
 function playersOf(m, t) {
   if (t === m.mySide) return S.settings.roster;
-  if (!m.opp) m.opp = [];
-  return m.opp;
+  var k = oppKey(m);
+  if (!S.oppRosters[k]) S.oppRosters[k] = (m.opp || []).slice();
+  if (!S.oppLabels[k]) S.oppLabels[k] = teamName(m, t);
+  return S.oppRosters[k];
 }
 function secondYellow(m, e) {
   if (e.type !== "yellow" || !e.player) return false;
@@ -385,7 +390,6 @@ function newMatch(f) {
     events: [], opp: [], seq: 0, lineup: null, oppLineup: null
   };
   var m = S.match, ot = other(m.mySide);
-  m.opp = (S.oppRosters[oppKey(m)] || []).slice();
   // ripropone le formazioni dell'ultima volta (la mia e quella di questo avversario)
   if ((S.settings.lineupSlots || []).some(Boolean)) m.lineup = newLineup(m, m.mySide);
   var mem = S.oppLineups[oppKey(m)];
@@ -798,14 +802,32 @@ function vSetup() {
     '<button class="btn primary big block" data-a="start">Vai in campo</button>';
 }
 
+// Rosa: scheda della mia squadra e scheda degli avversari (una rosa per ogni squadra avversaria).
+function rosterList() { return ui.rTab === "opp" ? (ui.rOpp && S.oppRosters[ui.rOpp]) : S.settings.roster; }
 function vRoster() {
-  var r = S.settings.roster;
-  var h = '<div class="top"><button class="link" data-a="home">‹ Indietro</button><span class="title">Rosa</span><span style="width:70px"></span></div>' +
-    '<section class="panel"><label class="f">Nome della squadra<input type="text" id="r-team" autocomplete="off" value="' + esc(S.settings.team) + '" placeholder="La mia squadra"></label></section>' +
-    '<section class="panel"><h2>Aggiungi giocatori</h2><div class="row"><input type="text" id="r-new" class="grow" autocomplete="off" placeholder="Es. 10 Rossi"><button class="btn primary" data-a="r-add">Aggiungi</button></div>' +
-    '<div class="note">Puoi inserirne tanti insieme separandoli con una virgola. I nomi scritti durante la partita finiscono qui da soli.</div></section>' +
+  var tab = ui.rTab === "opp" ? "opp" : "mine";
+  if (tab === "opp" && !ui.rOpp && S.match) { playersOf(S.match, other(S.match.mySide)); ui.rOpp = oppKey(S.match); }
+  var r = rosterList();
+  var h = '<div class="top"><button class="link" data-a="r-back">\u2039 Indietro</button><span class="title">Rosa</span><span style="width:70px"></span></div>' +
+    '<div class="seg"><button data-a="r-tab" data-v="mine" aria-pressed="' + (tab === "mine") + '">La mia squadra</button>' +
+    '<button data-a="r-tab" data-v="opp" aria-pressed="' + (tab === "opp") + '">Avversari</button></div>';
+  if (tab === "mine") {
+    h += '<section class="panel"><label class="f">Nome della squadra<input type="text" id="r-team" autocomplete="off" value="' + esc(S.settings.team) + '" placeholder="La mia squadra"></label></section>';
+  } else {
+    var keys = Object.keys(S.oppRosters).sort();
+    h += '<section class="panel"><h2>Squadra avversaria</h2>' +
+      (keys.length ? '<div class="chips">' + keys.map(function (k) {
+        return '<button class="chip" data-a="r-opp" data-v="' + esc(k) + '" aria-pressed="' + (k === ui.rOpp) + '">' + esc(S.oppLabels[k] || k) + " \u00b7 " + S.oppRosters[k].length + "</button>";
+      }).join("") + "</div>" : '<div class="empty">Nessuna squadra avversaria salvata.</div>') +
+      '<div class="row"><input type="text" id="r-oppname" class="grow" autocomplete="off" placeholder="Nome della squadra, es. Virtus"><button class="btn" data-a="r-oppnew">Nuova</button></div>' +
+      '<div class="note">La rosa di un avversario viene proposta in automatico quando giochi contro una squadra con lo stesso nome.</div></section>';
+    if (!r) return h;
+    h += '<h1 style="font-size:28px;text-transform:uppercase">' + esc(S.oppLabels[ui.rOpp] || ui.rOpp) + "</h1>";
+  }
+  h += '<section class="panel"><h2>Aggiungi giocatori</h2><div class="row"><input type="text" id="r-new" class="grow" autocomplete="off" placeholder="Es. 10 Rossi"><button class="btn primary" data-a="r-add">Aggiungi</button></div>' +
+    '<div class="note">Puoi inserirne tanti insieme separandoli con una virgola. Scrivi il numero di maglia prima del nome per vederlo sul campo.</div></section>' +
     '<section class="panel"><h2>' + r.length + " giocatori</h2>";
-  if (!r.length) h += '<div class="empty">La rosa è vuota. Aggiungi i nomi per sceglierli con un tocco quando segnano.</div>';
+  if (!r.length) h += '<div class="empty">La rosa è vuota. Aggiungi i nomi per sceglierli con un tocco in formazione, gol, cartellini e cambi.</div>';
   else {
     h += '<div class="list">';
     r.forEach(function (p, i) { h += '<div class="item"><span class="grow t">' + esc(p) + '</span><button class="link danger" data-a="r-del" data-i="' + i + '" aria-label="Rimuovi ' + esc(p) + '">Rimuovi</button></div>'; });
@@ -892,11 +914,9 @@ function vLineup() {
   h += pitchHTML(L.mod, L.slots, null, { edit: true, sel: sel });
   if (sel != null) {
     h += '<section class="panel"><h2>' + roleOf(L.mod, sel) + (L.slots[sel] ? ": " + esc(L.slots[sel]) : "") + "</h2>" +
-      '<div class="row"><input type="text" id="lu-q" class="grow" autocomplete="off" placeholder="Cerca o scrivi un nome" value="' + esc(ui.luQ || "") + '">' +
-      '<button class="btn" data-a="lu-add">Aggiungi</button></div>' +
-      '<div class="chips" data-picker="lu">' + bench.map(function (p) { return chip(p, "lu-pick"); }).join("") +
-      out.map(function (p) { return chip(p, "lu-pick", " x"); }).join("") + "</div>" +
-      '<div class="note">' + (bench.length ? "Sono proposti i giocatori in panchina; cerca per nome gli altri della rosa." : roster.length ? "Cerca per nome un giocatore della rosa." : "La rosa è vuota: scrivi il nome e tocca Aggiungi.") + "</div>" +
+      chooserHTML({ key: "lu", input: "lu-q", q: ui.luQ, groups: [["Panchina", bench], ["Non convocati", out]], act: "lu-pick", attrs: "",
+        cur: "", add: "lu-add", team: teamName(m, t) }) +
+      (roster.length ? "" : '<div class="note">La rosa è vuota: scrivi i nomi qui sotto, separati da virgola.</div>') +
       '<div class="controls">' + (L.slots[sel] ? '<button class="btn danger" data-a="lu-clear">Togli dal campo</button>' : "<span></span>") +
       '<button class="btn" data-a="lu-slot" data-i="' + sel + '">Chiudi</button></div></section>';
   } else {
@@ -965,34 +985,52 @@ function renderLayer() {
   if (ta) { ta.focus(); ta.select(); }
 }
 
-// Nomi proposti + campo per cercare o aggiungere un nome; field è la proprietà dell'evento da riempire.
-// I nomi in extra compaiono solo cercandoli (il resto della rosa).
-function pickerHTML(e, field, label, names, extra) {
-  var cur = e[field] || "";
-  extra = (extra || []).filter(function (p) { return names.indexOf(p) < 0; });
-  if (cur && names.indexOf(cur) < 0 && extra.indexOf(cur) < 0) names = [cur].concat(names);
-  var chip = function (p, x) { return '<button class="chip' + x + '" data-a="pick" data-f="' + field + '" data-v="' + esc(p) + '" aria-pressed="' + (cur === p) + '">' + esc(p) + "</button>"; };
-  return "<h2>" + label + "</h2>" +
-    '<div class="row"><input type="text" id="new-' + field + '" class="grow" autocomplete="off" placeholder="Cerca o scrivi un nome" value="' + esc(ui.newPlayer[field] || "") + '">' +
-    '<button class="btn" data-a="pick-new" data-f="' + field + '">Aggiungi</button></div>' +
-    '<div class="chips" data-picker="' + field + '"><button class="chip" data-a="pick" data-f="' + field + '" data-v="" aria-pressed="' + (!cur) + '">Non indicato</button>' +
-    names.map(function (p) { return chip(p, ""); }).join("") + extra.map(function (p) { return chip(p, " x"); }).join("") + "</div>";
+// Elenco per scegliere un giocatore: i nomi della rosa sono tutti visibili, divisi in gruppi
+// (es. Panchina / Altri della rosa); la ricerca li filtra. Un nome nuovo si aggiunge alla rosa
+// solo col pulsante esplicito, che compare quando il nome cercato non è in elenco.
+// o: { key, input, q, groups: [[titolo, nomi]], act, attrs, cur, none, add, team }
+function chooserHTML(o) {
+  var seen = {}, chip = function (p) {
+    seen[p] = 1;
+    return '<button class="chip" data-a="' + o.act + '"' + o.attrs + ' data-v="' + esc(p) + '" aria-pressed="' + (o.cur === p) + '">' + esc(p) + "</button>";
+  };
+  var h = '<div class="pick" data-picker="' + o.key + '" data-input="' + o.input + '">' +
+    '<input type="text" id="' + o.input + '" autocomplete="off" placeholder="Cerca nella rosa di ' + esc(o.team) + '" value="' + esc(o.q || "") + '">';
+  if (o.none) h += '<div class="chips"><button class="chip" data-a="' + o.act + '"' + o.attrs + ' data-v="" aria-pressed="' + (!o.cur) + '">Non indicato</button></div>';
+  o.groups.forEach(function (g) {
+    var names = g[1].filter(function (p) { return p && !seen[p]; });
+    if (names.length) h += '<div class="grp"><h4>' + g[0] + '</h4><div class="chips">' + names.map(chip).join("") + "</div></div>";
+  });
+  if (o.cur && !seen[o.cur]) h += '<div class="grp"><h4>Scelto</h4><div class="chips">' + chip(o.cur) + "</div></div>";
+  return h + '<button class="btn add" data-a="' + o.add + '"' + o.attrs + " hidden></button></div>";
 }
-// Mostra solo i nomi che contengono il testo cercato; quelli "x" solo quando si cerca.
+function pickerHTML(m, e, field, label, groups, team) {
+  var roster = playersOf(m, team), h = "<h2>" + label + "</h2>";
+  if (!roster.length) {
+    h += '<div class="note">La rosa di ' + esc(teamName(m, team)) + " è vuota.</div>" +
+      '<button class="btn" data-a="roster-open" data-t="' + team + '">Inserisci la rosa di ' + esc(teamName(m, team)) + "</button>";
+  }
+  return h + chooserHTML({ key: field, input: "new-" + field, q: ui.newPlayer[field], groups: groups, act: "pick", attrs: ' data-f="' + field + '"',
+    cur: e[field] || "", none: true, add: "pick-new", team: teamName(m, team) });
+}
+// Filtra i nomi col testo cercato e mostra "Aggiungi … alla rosa" se il nome non c'è.
 function filterChips(key, q) {
   var box = document.querySelector('[data-picker="' + key + '"]');
   if (!box) return;
-  q = (q || "").trim().toLowerCase();
-  Array.prototype.forEach.call(box.querySelectorAll(".chip[data-v]"), function (c) {
-    var v = c.getAttribute("data-v");
-    if (!v) return;
-    c.hidden = q ? v.toLowerCase().indexOf(q) < 0 : c.classList.contains("x") && c.getAttribute("aria-pressed") !== "true";
+  var raw = (q || "").trim(), lq = raw.toLowerCase(), exact = false;
+  Array.prototype.forEach.call(box.querySelectorAll(".grp .chip[data-v]"), function (c) {
+    var v = c.getAttribute("data-v").toLowerCase();
+    c.hidden = !!lq && v.indexOf(lq) < 0;
+    if (v === lq) exact = true;
   });
+  Array.prototype.forEach.call(box.querySelectorAll(".grp"), function (g) { g.hidden = !g.querySelector(".chip:not([hidden])"); });
+  var add = box.querySelector(".add");
+  if (add) { add.hidden = !raw || exact; add.textContent = "Aggiungi \u00ab" + raw + "\u00bb alla rosa"; }
 }
 function filterAll() {
   Array.prototype.forEach.call(document.querySelectorAll("[data-picker]"), function (box) {
-    var key = box.getAttribute("data-picker"), inp = document.getElementById(key === "lu" ? "lu-q" : "new-" + key);
-    filterChips(key, inp ? inp.value : "");
+    var inp = document.getElementById(box.getAttribute("data-input"));
+    filterChips(box.getAttribute("data-picker"), inp ? inp.value : "");
   });
 }
 function sheetHTML(m, e) {
@@ -1010,26 +1048,28 @@ function sheetHTML(m, e) {
   } else {
     h += '<div class="note">' + esc(teamName(m, e.team)) + "</div>";
   }
-  // Con la formazione della squadra si tocca il giocatore sul campo (com'era al momento dell'evento).
+  // Con la formazione della squadra si tocca il giocatore sul campo (com'era al momento dell'evento);
+  // sotto, sempre i nomi della rosa.
   var fs = hasLineup(m, pt) ? fieldState(m, e, pt) : null;
-  var not = function () { var x = [].slice.call(arguments); return function (p) { return x.indexOf(p) < 0; }; };
+  var but = function (list) { var x = [].slice.call(arguments, 1); return list.filter(function (p) { return x.indexOf(p) < 0; }); };
   if (e.type === "sub") {
     if (fs) {
-      var onField = fs.slots.filter(Boolean);
+      var onField = fs.slots.filter(Boolean), rest = but.apply(null, [names].concat(onField, fs.bench));
       h += "<h2>Esce \u00b7 tocca il giocatore in campo</h2>" + pitchHTML(fs.mod, fs.slots, fs.stats, { mini: true, pick: "off", cur: e.off });
-      h += pickerHTML(e, "off", "Oppure scegli o cerca", onField.filter(not(e.on)), names.filter(not(e.on)));
-      h += pickerHTML(e, "on", "Entra \u00b7 dalla panchina", fs.bench.filter(not(e.off)), names.filter(function (p) { return p !== e.off && onField.indexOf(p) < 0; }));
+      h += pickerHTML(m, e, "off", "Oppure scegli chi esce", [["In campo", but(onField, e.on)], ["Panchina", but(fs.bench, e.on)], ["Altri della rosa", but(rest, e.on)]], pt);
+      h += pickerHTML(m, e, "on", "Entra", [["Panchina", but(fs.bench, e.off)], ["Altri della rosa", but(rest, e.off)]], pt);
     } else {
-      h += pickerHTML(e, "on", "Entra", names.filter(not(e.off)));
-      h += pickerHTML(e, "off", "Esce", names.filter(not(e.on)));
+      h += pickerHTML(m, e, "off", "Esce", [["Rosa", but(names, e.on)]], pt);
+      h += pickerHTML(m, e, "on", "Entra", [["Rosa", but(names, e.off)]], pt);
     }
   } else {
     var label = e.kind === "autogol" ? "Autore dell'autogol (" + esc(teamName(m, pt)) + ")" : "Giocatore" + (e.type === "goal" ? " che ha segnato" : "");
     if (fs) {
+      var off = fs.slots.filter(Boolean);
       h += "<h2>" + label + " \u00b7 tocca in campo</h2>" + pitchHTML(fs.mod, fs.slots, fs.stats, { mini: true, pick: "player", cur: e.player });
-      h += pickerHTML(e, "player", "Oppure cercalo per nome", [], names);
+      h += pickerHTML(m, e, "player", "Oppure scegli dall'elenco", [["In campo", off], ["Panchina", fs.bench], ["Altri della rosa", names]], pt);
     } else {
-      h += pickerHTML(e, "player", label, names);
+      h += pickerHTML(m, e, "player", label, [["Rosa", names]], pt);
     }
   }
   h += '<div class="row" style="justify-content:space-between"><span class="muted small">Minuto</span><div class="stepper">' +
@@ -1103,7 +1143,7 @@ function lineupAction(a, el) {
     if (ui.luSlot != null && ui.luSlot >= L.slots.length) ui.luSlot = null;
   }
   if (a === "lu-add") {
-    v = (document.getElementById("lu-q").value || "").trim();
+    v = (document.getElementById("lu-q").value || "").trim();  // solo dal pulsante "Aggiungi … alla rosa"
     if (!v) { document.getElementById("lu-q").focus(); return; }
     addToRoster(roster, v);
   }
@@ -1144,7 +1184,30 @@ document.addEventListener("click", function (ev) {
     case "home": ui.view = "home"; render(); window.scrollTo(0, 0); break;
     case "setup": form = null; ui.view = "setup"; render(); break;
     case "resume": ui.view = "live"; render(); break;
-    case "roster": ui.view = "roster"; render(); break;
+    case "roster": ui.rBack = null; ui.view = "roster"; render(); break;
+    case "roster-open": {
+      // dal foglio di un evento: apre la rosa di quella squadra e poi ci riporta
+      var rm = findMatch(ui.sheet.mid), rt = el.getAttribute("data-t");
+      ui.rTab = rt === rm.mySide ? "mine" : "opp";
+      if (ui.rTab === "opp") { playersOf(rm, rt); ui.rOpp = oppKey(rm); }
+      ui.rBack = { view: ui.view, sheet: ui.sheet }; ui.sheet = null;
+      ui.view = "roster"; render(); window.scrollTo(0, 0); break;
+    }
+    case "r-back":
+      if (ui.rBack) { ui.view = ui.rBack.view; ui.sheet = ui.rBack.sheet; ui.rBack = null; }
+      else ui.view = "home";
+      render(); window.scrollTo(0, 0); break;
+    case "r-tab": ui.rTab = el.getAttribute("data-v"); render(); break;
+    case "r-opp": ui.rOpp = el.getAttribute("data-v"); render(); break;
+    case "r-oppnew": {
+      var on = document.getElementById("r-oppname").value.trim();
+      if (!on) { document.getElementById("r-oppname").focus(); break; }
+      var ok = on.toLowerCase();
+      if (!S.oppRosters[ok]) S.oppRosters[ok] = [];
+      S.oppLabels[ok] = on; ui.rOpp = ok; save(); render();
+      var rn = document.getElementById("r-new"); if (rn) rn.focus();
+      break;
+    }
     case "open": ui.view = "summary"; ui.id = el.getAttribute("data-id"); render(); window.scrollTo(0, 0); break;
 
     case "f-side": readForm(); form.side = el.getAttribute("data-v"); render(); break;
@@ -1155,12 +1218,12 @@ document.addEventListener("click", function (ev) {
 
     case "r-add": {
       var inp = document.getElementById("r-new");
-      splitNames(inp.value).forEach(function (n) { addToRoster(S.settings.roster, n); });
+      splitNames(inp.value).forEach(function (n) { addToRoster(rosterList(), n); });
       save(); render();
       var again = document.getElementById("r-new"); if (again) again.focus();
       break;
     }
-    case "r-del": S.settings.roster.splice(+el.getAttribute("data-i"), 1); save(); render(); break;
+    case "r-del": rosterList().splice(+el.getAttribute("data-i"), 1); save(); render(); break;
 
     case "toggle":
       unlockAudio();
@@ -1258,11 +1321,11 @@ document.addEventListener("input", function (ev) {
   if (/^new-/.test(id)) { ui.newPlayer[id.slice(4)] = ev.target.value; filterChips(id.slice(4), ev.target.value); }
   if (id === "lu-q") { ui.luQ = ev.target.value; filterChips("lu", ev.target.value); }
 });
-// Invio: se la ricerca trova un solo nome lo sceglie, altrimenti aggiunge il nome scritto.
-function enterPick(key, addSel) {
+// Invio: se la ricerca trova un solo nome lo sceglie. Un nome nuovo si aggiunge solo col pulsante.
+function enterPick(key) {
   var box = document.querySelector('[data-picker="' + key + '"]');
-  var hits = box ? Array.prototype.filter.call(box.querySelectorAll(".chip[data-v]"), function (c) { return c.getAttribute("data-v") && !c.hidden; }) : [];
-  (hits.length === 1 ? hits[0] : document.querySelector(addSel)).click();
+  var hits = box ? Array.prototype.filter.call(box.querySelectorAll(".grp .chip[data-v]"), function (c) { return !c.hidden; }) : [];
+  if (hits.length === 1) hits[0].click();
 }
 document.addEventListener("change", function (ev) {
   if (ev.target.id === "r-team") { S.settings.team = ev.target.value.trim(); save(); }
@@ -1271,8 +1334,9 @@ document.addEventListener("keydown", function (ev) {
   if (ev.key !== "Enter") return;
   var id = ev.target.id;
   if (id === "r-new") { ev.preventDefault(); document.querySelector('[data-a="r-add"]').click(); }
-  if (/^new-/.test(id) && ev.target.value.trim()) { ev.preventDefault(); enterPick(id.slice(4), '[data-a="pick-new"][data-f="' + id.slice(4) + '"]'); }
-  if (id === "lu-q" && ev.target.value.trim()) { ev.preventDefault(); enterPick("lu", '[data-a="lu-add"]'); }
+  if (/^new-/.test(id) && ev.target.value.trim()) { ev.preventDefault(); enterPick(id.slice(4)); }
+  if (id === "lu-q" && ev.target.value.trim()) { ev.preventDefault(); enterPick("lu"); }
+  if (id === "r-oppname") { ev.preventDefault(); document.querySelector('[data-a="r-oppnew"]').click(); }
   if (id === "lu-new") { ev.preventDefault(); document.querySelector('[data-a="lu-many"]').click(); }
   if (id === "r-team") ev.target.blur();
 });
@@ -1283,6 +1347,7 @@ if (S.match && S.match.run) holdWake();
 window.bcBack = function () {
   if (ui.confirm || ui.share || ui.sheet) { ui.confirm = null; ui.share = null; ui.sheet = null; render(); return 1; }
   if (ui.view === "lineup") { ui.view = ui.back || "live"; ui.luSlot = null; render(); return 1; }
+  if (ui.view === "roster" && ui.rBack) { ui.view = ui.rBack.view; ui.sheet = ui.rBack.sheet; ui.rBack = null; render(); return 1; }
   if (ui.view !== "home") { ui.view = "home"; render(); window.scrollTo(0, 0); return 1; }
   return 0;
 };
