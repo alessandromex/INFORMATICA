@@ -5,7 +5,7 @@ from pathlib import Path
 from PIL import Image, ImageDraw
 
 RES = Path(__file__).resolve().parent.parent / "android/app/src/main/res"
-BG, LINE, INK, WHITE = (13, 25, 18), (36, 64, 47), (16, 21, 18), (255, 255, 255)
+BG, LINE, INK, WHITE = (28, 90, 52), (60, 120, 82), (16, 21, 18), (255, 255, 255)
 
 
 def ball(d, cx, cy, r, w):

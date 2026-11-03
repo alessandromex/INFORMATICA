@@ -3,7 +3,7 @@
   "appName": "Bordocampo",
   "webDir": "www",
   "android": {
-    "backgroundColor": "#0d1912"
+    "backgroundColor": "#1c5a34"
   },
   "plugins": {
     "SystemBars": {
