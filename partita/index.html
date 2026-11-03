@@ -9,7 +9,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Bordocampo">
-<meta name="theme-color" content="#0d1912">
+<meta name="theme-color" content="#1c5a34">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -17,18 +17,26 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Barlow:wght@400;500;600;700&display=swap">
 <style>
 /* Layout: una colonna da telefono; il tabellone scuro in alto resta sempre leggibile a bordocampo, sotto comandi e cronologia. */
+/* Layout: una colonna, sfondo a campo verde (come la grafica di Bordocampo); ogni schermata ha poche
+   cose grandi da toccare: schede bianche con icona, testo e freccia. Tema unico, pensato per l'esterno. */
 :root {
-  --bg: #e9efea;
+  --field: #1c5a34;
+  --field-2: #19532f;
+  --on-field: #ffffff;
+  --on-field-muted: rgba(255,255,255,.78);
+  --brand: #f5c518;
+  --brand-ink: #13201a;
+  --soft: #eef2ef;
   --surface: #ffffff;
-  --ink: #0f1a14;
+  --ink: #13201a;
   --muted: #5a6a61;
-  --line: #d3ddd6;
+  --line: #d6dfd9;
   --accent: #13804a;
   --accent-ink: #ffffff;
-  --board: #0d1912;
-  --board-2: #15251b;
+  --board: #0b2416;
+  --board-2: #143522;
   --board-ink: #f1f6f2;
-  --board-muted: #8fa597;
+  --board-muted: #9fb8a8;
   --led: #ffcf3a;
   --yellow: #f2c200;
   --red: #d7263d;
@@ -43,30 +51,24 @@
   --kit: #ffffff;
   --kit-ink: #0d1912;
   --kit-gk: #ffcf3a;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #08100b; --surface: #111c15; --ink: #e7efe9; --muted: #92a398; --line: #233229;
-    --accent: #2fbf71; --accent-ink: #04130a; --board: #050a07; --board-2: #0f1b13;
-    --board-ink: #f1f6f2; --board-muted: #8fa597; --led: #ffcf3a; --danger: #ff5a6e; --ball: #ffffff;
-    color-scheme: dark;
-  }
-}
-:root[data-theme="dark"] {
-  --bg: #08100b; --surface: #111c15; --ink: #e7efe9; --muted: #92a398; --line: #233229;
-  --accent: #2fbf71; --accent-ink: #04130a; --board: #050a07; --board-2: #0f1b13;
-  --board-ink: #f1f6f2; --board-muted: #8fa597; --led: #ffcf3a; --danger: #ff5a6e; --ball: #ffffff;
-  color-scheme: dark;
+  color-scheme: light;
 }
 [hidden] { display: none !important; }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { min-height: 100%; }
 body {
-  margin: 0; background: var(--bg); color: var(--ink);
+  margin: 0; color: var(--on-field);
+  background: var(--field) repeating-linear-gradient(180deg, transparent 0 96px, rgba(0,0,0,.07) 96px 192px);
   font-family: var(--font-body); font-size: 16px; line-height: 1.4;
   -webkit-text-size-adjust: 100%;
 }
-body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--board); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--field); }
+/* linee del campo sullo sfondo: metà campo e cerchio di centrocampo in basso */
+.lines { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+.lines i { position: absolute; display: block; border: 2px solid rgba(255,255,255,.13); }
+.lines .c { left: 50%; bottom: -150px; width: 300px; height: 300px; border-radius: 50%; transform: translateX(-50%); }
+.lines .h { left: 0; right: 0; bottom: 0; height: 0; border-width: 2px 0 0; }
+.lines .v { top: 0; bottom: 0; left: 50%; width: 0; border-width: 0 0 0 2px; opacity: .6; }
 button, input { font: inherit; color: inherit; }
 button { cursor: pointer; border: 0; background: none; touch-action: manipulation; }
 button:focus-visible, input:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
@@ -75,8 +77,11 @@ button:focus-visible, input:focus-visible { outline: 3px solid var(--accent); ou
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
   padding-block: calc(12px + env(safe-area-inset-top, 0px)) calc(28px + env(safe-area-inset-bottom, 0px));
-  display: flex; flex-direction: column; gap: 16px;
+  display: flex; flex-direction: column; gap: 16px; position: relative; z-index: 1;
 }
+.panel, .sheet, .tile { color: var(--ink); }
+#app > .note { color: var(--on-field-muted); }
+#app > h1 { color: var(--on-field); }
 .tabnum { font-variant-numeric: tabular-nums; }
 h1, h2, h3 { font-family: var(--font-display); margin: 0; text-wrap: balance; letter-spacing: .01em; }
 h2 { font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
@@ -84,8 +89,13 @@ h2 { font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacin
 .small { font-size: 14px; }
 
 /* barra superiore */
-.top { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 40px; }
-.top .title { font-family: var(--font-display); font-weight: 800; font-size: 26px; text-transform: uppercase; letter-spacing: .02em; }
+.top { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; min-height: 44px; }
+.top > :first-child { justify-self: start; }
+.top > :last-child { justify-self: end; }
+.top .title { font-family: var(--font-display); font-weight: 800; font-size: 24px; text-transform: uppercase; letter-spacing: .03em; text-align: center; }
+.top .link { color: var(--on-field); font-size: 17px; padding: 10px 6px 10px 0; }
+.lead { margin: 0; font: 700 30px/1.05 var(--font-display); text-transform: uppercase; letter-spacing: .02em; color: var(--on-field); text-wrap: balance; }
+.lead small { display: block; font: 500 16px/1.3 var(--font-body); text-transform: none; letter-spacing: 0; color: var(--on-field-muted); margin-top: 4px; }
 .link { color: var(--accent); font-weight: 600; padding: 8px 4px; }
 .link.danger { color: var(--danger); }
 
@@ -93,9 +103,10 @@ h2 { font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacin
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
   min-height: 52px; padding: 0 18px; border-radius: var(--r);
-  background: var(--surface); border: 1px solid var(--line); font-weight: 600; font-size: 17px;
+  background: var(--surface); color: var(--ink); border: 1px solid var(--line); font-weight: 600; font-size: 17px;
 }
-.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+.btn.primary { background: var(--brand); color: var(--brand-ink); border-color: transparent; }
+.btn.ghost { background: rgba(255,255,255,.12); color: var(--on-field); border-color: rgba(255,255,255,.35); }
 .btn.big { min-height: 64px; font-size: 20px; font-family: var(--font-display); font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
 .btn.danger { color: var(--danger); }
 .btn.block { width: 100%; }
@@ -118,22 +129,22 @@ label.btn { cursor: pointer; }
 label.f { display: flex; flex-direction: column; gap: 6px; font-weight: 600; font-size: 14px; color: var(--muted); }
 input[type=text] {
   width: 100%; min-height: 50px; padding: 0 14px; border-radius: 12px;
-  border: 1px solid var(--line); background: var(--bg); color: var(--ink); font-size: 17px;
+  border: 1px solid var(--line); background: var(--soft); color: var(--ink); font-size: 17px;
 }
-.seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 4px; gap: 4px; }
+.seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; background: var(--soft); border: 1px solid var(--line); border-radius: 12px; padding: 4px; gap: 4px; }
 .seg button { min-height: 44px; border-radius: 9px; font-weight: 600; color: var(--muted); }
 .seg button[aria-pressed=true] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,.18); }
 .stepper { display: flex; align-items: center; gap: 12px; }
-.stepper button { width: 50px; height: 50px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg); font-size: 26px; font-weight: 500; }
+.stepper button { width: 50px; height: 50px; border-radius: 12px; border: 1px solid var(--line); background: var(--soft); font-size: 26px; font-weight: 500; }
 .stepper .v { font-family: var(--font-display); font-size: 34px; font-weight: 700; min-width: 64px; text-align: center; }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
-.chip { min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg); font-weight: 600; font-size: 15px; }
+.chip { min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--soft); font-weight: 600; font-size: 15px; }
 .chip[aria-pressed=true] { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
 .pick { display: flex; flex-direction: column; gap: 10px; }
 .pick input[type=text] { width: 100%; }
 .grp { display: flex; flex-direction: column; gap: 6px; }
 .grp h4 { margin: 0; font: 600 13px/1.2 var(--font-body); color: var(--muted); }
-.stepper input.minute { width: 84px; min-width: 0; flex: none; height: 50px; text-align: center; border: 1px solid var(--line); border-radius: 12px; background: var(--bg); color: var(--ink); font-family: var(--font-display); font-size: 26px; font-weight: 700; padding: 0; }
+.stepper input.minute { width: 84px; min-width: 0; flex: none; height: 50px; text-align: center; border: 1px solid var(--line); border-radius: 12px; background: var(--soft); color: var(--ink); font-family: var(--font-display); font-size: 26px; font-weight: 700; padding: 0; }
 .chip.on { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
 
 /* tabellone */
@@ -184,12 +195,66 @@ input[type=text] {
 .subsvg .up { stroke: #5fe39a; }
 .subsvg .down { stroke: #ff6b7d; }
 .ico .subsvg .up { stroke: var(--accent); }
+.tile .subsvg .up { stroke: #1f8a4c; }
+.tile .subsvg .down { stroke: #d7263d; }
 .ico .subsvg .down { stroke: var(--danger); }
 .who .on, .who .off { display: block; }
 .who .on::before, .who .off::before { display: inline-block; width: 1.1em; font-size: .8em; }
 .who .on::before { content: "\25B2"; color: var(--accent); }
 .who .off::before { content: "\25BC"; color: var(--danger); }
 .who .off { font-weight: 500; color: var(--muted); }
+
+/* logo */
+.logo { display: flex; align-items: center; justify-content: center; gap: 18px; padding-block: 18px 10px; }
+.logo .word { display: flex; flex-direction: column; font: 800 54px/.9 var(--font-display); letter-spacing: .01em; }
+.logo .word .y { color: var(--brand); }
+.logo svg { width: 118px; height: 88px; flex: none; }
+.logo.sm { padding-block: 4px 0; gap: 12px; }
+.logo.sm .word { font-size: 34px; }
+.logo.sm svg { width: 70px; height: 52px; }
+
+/* schede grandi da toccare */
+.tiles { display: flex; flex-direction: column; gap: 10px; }
+.tile {
+  display: flex; align-items: center; gap: 14px; width: 100%; min-height: 78px; padding: 10px 14px 10px 12px;
+  background: var(--surface); border-radius: 10px; text-align: left; box-shadow: 0 3px 0 rgba(0,0,0,.18);
+}
+.tile:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0,0,0,.18); }
+.tile[disabled] { opacity: .55; }
+.tile .ti { width: 58px; height: 58px; flex: none; display: grid; place-items: center; color: var(--ink); }
+.tile .ti svg { width: 54px; height: 54px; }
+.tile .tlab { flex: 1; min-width: 0; font: 700 23px/1.05 var(--font-display); text-transform: uppercase; letter-spacing: .02em; overflow-wrap: anywhere; }
+.tile .tlab small { display: block; margin-top: 3px; font: 500 14px/1.3 var(--font-body); text-transform: none; letter-spacing: 0; color: var(--muted); }
+.tile .chev { flex: none; width: 12px; color: #c99a00; }
+.tile .chev svg { width: 12px; height: 20px; display: block; }
+.tiles.compact .tile { min-height: 62px; padding-block: 6px; }
+.tiles.compact .tile .ti { width: 46px; height: 46px; }
+.tiles.compact .tile .ti svg { width: 42px; height: 42px; }
+.tiles.small { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.tiles.small .tile { flex-direction: column; justify-content: center; gap: 4px; min-height: 82px; padding: 8px 4px; text-align: center; }
+.tiles.small .tile .ti { width: 34px; height: 34px; }
+.tiles.small .tile .ti svg { width: 32px; height: 32px; }
+.tiles.small .tile .tlab { flex: none; font-size: 15px; }
+.tiles.small .chev { display: none; }
+.tile.big { min-height: 104px; }
+.tile.big .tlab { font-size: 28px; }
+.bigcard { display: block; width: 34px; height: 46px; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,.35); }
+.bigcard.y { background: var(--yellow); }
+.bigcard.r { background: var(--red); }
+.danger-link { align-self: center; color: #ffd9de; font-weight: 600; padding: 12px; text-decoration: underline; }
+
+/* tabellone essenziale della partita */
+.board.hub { padding: 12px 12px 14px; gap: 6px; }
+.hub .scoreline { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 6px; }
+.hub .side { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; }
+.hub .nm { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 48px; }
+.hub .tname { font-size: 18px; }
+.hub .score { font-size: 56px; }
+.hub .vs { padding-top: 0; font-size: 40px; }
+.hub .ball { width: 46px; height: 46px; }
+.hub .ball svg { width: 34px; height: 34px; }
+.hub .clock { font-size: 64px; }
+.hub .nm { min-height: 46px; }
 
 /* comandi partita */
 .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -245,8 +310,8 @@ input[type=text] {
 .scorers > div { min-width: 0; overflow-wrap: anywhere; }
 .scorers .r { text-align: right; }
 .scorers p { margin: 0 0 4px; }
-.textout { width: 100%; min-height: 160px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); padding: 12px; font: 15px/1.45 var(--font-body); }
-.toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 18px; border-radius: 999px; font-weight: 600; z-index: 40; }
+.textout { width: 100%; min-height: 160px; border-radius: 12px; border: 1px solid var(--line); background: var(--soft); color: var(--ink); padding: 12px; font: 15px/1.45 var(--font-body); }
+.toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: #fff; padding: 10px 18px; border-radius: 999px; max-width: calc(100% - 32px); text-align: center; font-weight: 600; z-index: 40; }
 
 /* campo della formazione: stesso aspetto in tema chiaro e scuro */
 .pitch {
@@ -286,7 +351,7 @@ input[type=text] {
 .pitch .ballsvg .k { fill: #101512; }
 .pitch .ballsvg .s, .pitch .ballsvg .ring { stroke: #101512; }
 .bench { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 14px; }
-.bench .bp { padding: 3px 10px; border-radius: 999px; background: var(--bg); border: 1px solid var(--line); }
+.bench .bp { padding: 3px 10px; border-radius: 999px; background: var(--soft); border: 1px solid var(--line); }
 .bench .bp small { color: var(--muted); margin-left: 4px; }
 
 /* diretta */
@@ -298,6 +363,10 @@ input[type=text] {
 .live-st.err .dot { background: var(--danger); }
 
 @media (max-width: 380px) {
+  .logo .word { font-size: 44px; }
+  .logo svg { width: 92px; height: 70px; }
+  .hub .clock { font-size: 60px; }
+  .hub .score { font-size: 54px; }
   .clock { font-size: 70px; }
   .score { font-size: 64px; }
   .tname { font-size: 17px; }
@@ -306,6 +375,7 @@ input[type=text] {
 </style>
 </head>
 <body>
+<div class="lines" aria-hidden="true"><i class="v"></i><i class="h"></i><i class="c"></i></div>
 <div id="app"></div>
 <div id="layer"></div>
 
@@ -337,7 +407,8 @@ function save() { store(); liveSchedule(); }
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
 function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
 
-var ui = { view: S.match ? "live" : "home", id: null, sheet: null, confirm: null, share: null, newPlayer: {} };
+// ui.view = schermata, ui.p = suoi parametri (es. { sec: "team", act: "goal" }), ui.stack = schermate precedenti.
+var ui = { view: S.match ? "live" : "home", p: {}, stack: S.match ? [{ view: "home", p: {} }] : [], id: null, sheet: null, confirm: null, share: null, newPlayer: {} };
 
 /* ---------- tempo ---------- */
 // m.acc = millisecondi già giocati nel tempo corrente, m.run = timestamp di quando il cronometro è ripartito (null = fermo).
@@ -436,8 +507,8 @@ function finishMatch() {
   S.match = null;
   save();
   releaseWake();
-  ui = { view: "summary", id: m.id, sheet: null, confirm: null, share: null, newPlayer: {} };
-  render();
+  ui.id = m.id; ui.confirm = null; ui.share = null; ui.newPlayer = {};
+  reset("summary", {}, [{ view: "home", p: {} }]);
   liveSchedule();
 }
 
@@ -549,21 +620,16 @@ function benchHTML(st) {
     return '<span class="bp">' + esc(p) + (s && s.outAt ? "<small>\u25BC " + s.outAt + "</small>" : "") + "</span>";
   }).join("") + "</div>";
 }
-// Riquadro delle formazioni con una scheda per squadra.
-function lineupPanel(m, readOnly) {
-  var t = ui.luTab === "home" || ui.luTab === "away" ? ui.luTab : m.mySide;
-  var h = '<section class="panel"><h2>Formazioni</h2><div class="seg">' + ["home", "away"].map(function (x) {
-    return '<button data-a="lu-tab" data-v="' + x + '" aria-pressed="' + (x === t) + '">' + esc(teamName(m, x)) + "</button>";
-  }).join("") + "</div>";
+// Formazione di una squadra: campo con la situazione attuale e panchina, o invito a prepararla.
+function teamLineupHTML(m, t) {
   if (!hasLineup(m, t)) {
-    if (readOnly) return h + '<div class="note">Formazione di ' + esc(teamName(m, t)) + " non inserita.</div></section>";
-    return h + '<div class="note">Schiera i titolari di ' + esc(teamName(m, t)) + " sul campo e scegli chi va in panchina: poi negli eventi li scegli con un tocco.</div>" +
-      '<button class="btn block" data-a="lu-open" data-mid="' + m.id + '" data-t="' + t + '">Prepara la formazione</button></section>';
+    return '<section class="panel"><div class="note">Schiera i titolari di ' + esc(teamName(m, t)) + " sul campo e scegli chi va in panchina: poi negli eventi li scegli con un tocco.</div>" +
+      '<button class="btn primary big block" data-a="lu-open" data-mid="' + m.id + '" data-t="' + t + '">Prepara la formazione</button></section>';
   }
   var st = fieldState(m, null, t);
-  return h + '<div class="row"><span class="grow muted small">Modulo ' + esc(st.mod) + "</span>" +
-    '<button class="link" data-a="lu-open" data-mid="' + m.id + '" data-t="' + t + '">Modifica</button></div>' +
-    pitchHTML(st.mod, st.slots, st.stats) + benchHTML(st) + "</section>";
+  return '<section class="panel"><div class="row"><span class="grow muted small">Modulo ' + esc(st.mod) + "</span></div>" +
+    pitchHTML(st.mod, st.slots, st.stats) + benchHTML(st) + "</section>" +
+    '<button class="btn primary big block" data-a="lu-open" data-mid="' + m.id + '" data-t="' + t + '">Modifica formazione</button>';
 }
 function lineupText(m, t) {
   if (!hasLineup(m, t)) return "";
@@ -763,41 +829,85 @@ var app = document.getElementById("app"), layer = document.getElementById("layer
 
 function render() {
   var v = ui.view;
-  if (v === "live" && !S.match) v = ui.view = "home";
-  app.innerHTML = v === "setup" ? vSetup() : v === "roster" ? vRoster() : v === "lineup" ? vLineup() : v === "live" ? vLive() : v === "summary" ? vSummary() : vHome();
+  if (v === "live" && !S.match) { v = ui.view = "home"; ui.p = {}; ui.stack = []; }
+  app.innerHTML = v === "setup" ? vSetup() : v === "roster" ? vRoster() : v === "lineup" ? vLineup() : v === "live" ? vLive() :
+    v === "summary" ? vSummary() : v === "history" ? vHistory() : vHome();
   renderLayer();
   filterAll();
   tick(true);
 }
 
+/* ---------- navigazione: ogni schermata ne apre altre più semplici, Indietro torna alla precedente ---------- */
+function go(view, p) {
+  ui.stack.push({ view: ui.view, p: ui.p, sheet: ui.sheet });
+  ui.sheet = null; ui.view = view; ui.p = p || {};
+  render(); window.scrollTo(0, 0);
+}
+function back() {
+  var s = ui.stack.pop() || { view: "home", p: {} };
+  ui.view = s.view; ui.p = s.p || {}; ui.sheet = s.sheet || null;
+  render(); window.scrollTo(0, 0);
+}
+function reset(view, p, stack) {
+  ui.stack = stack || []; ui.sheet = null; ui.view = view; ui.p = p || {};
+  render(); window.scrollTo(0, 0);
+}
+function topBar(title, backLabel) {
+  return '<div class="top"><button class="link" data-a="back">‹ ' + (backLabel || "Indietro") + '</button><span class="title">' + title + "</span><span></span></div>";
+}
+
+/* ---------- icone ---------- */
+var CHEV = '<svg viewBox="0 0 12 20" aria-hidden="true"><path d="M2 2l8 8-8 8" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+function svgI(body) { return '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + body + "</svg>"; }
+var ICON = {
+  formation: svgI('<rect x="7" y="3" width="34" height="42" rx="2"/><path d="M7 24h34M17 3v6h14V3M17 45v-6h14v6"/><circle cx="24" cy="24" r="4.5"/>' +
+    '<g fill="currentColor" stroke="none"><circle cx="14" cy="14" r="2.6"/><circle cx="24" cy="15" r="2.6"/><circle cx="34" cy="14" r="2.6"/><circle cx="14" cy="34" r="2.6"/><circle cx="34" cy="34" r="2.6"/><circle cx="24" cy="33" r="2.6"/></g>'),
+  shirt: svgI('<path d="M17 6l-10 6 4 9 5-2v23h16V19l5 2 4-9-10-6c-1 4-3.5 6-7 6s-6-2-7-6z"/>'),
+  opp: svgI('<path d="M17 6l-10 6 4 9 5-2v23h16V19l5 2 4-9-10-6c-1 4-3.5 6-7 6s-6-2-7-6z" fill="#d7263d" stroke="#13201a"/>'),
+  folder: svgI('<path d="M5 12a3 3 0 0 1 3-3h10l4 4h18a3 3 0 0 1 3 3v21a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3z"/><path d="M24 20v12M18 26l6 6 6-6"/>'),
+  list: svgI('<path d="M17 12h24M17 24h24M17 36h24"/><g fill="currentColor" stroke="none"><circle cx="9" cy="12" r="3"/><circle cx="9" cy="24" r="3"/><circle cx="9" cy="36" r="3"/></g>'),
+  live: svgI('<circle cx="24" cy="24" r="4" fill="currentColor"/><path d="M15 15a13 13 0 0 0 0 18M33 15a13 13 0 0 1 0 18M9 9a21 21 0 0 0 0 30M39 9a21 21 0 0 1 0 30"/>'),
+  clock: svgI('<circle cx="24" cy="27" r="16"/><path d="M24 27V17M19 4h10M24 4v7M37 12l3-3"/>'),
+  play: svgI('<circle cx="24" cy="24" r="19"/><path d="M20 16l12 8-12 8z" fill="currentColor"/>'),
+  plus: svgI('<circle cx="24" cy="24" r="19"/><path d="M24 15v18M15 24h18"/>'),
+  cal: svgI('<rect x="6" y="9" width="36" height="33" rx="3"/><path d="M6 18h36M15 5v8M33 5v8M14 26h6M28 26h6M14 34h6"/>'),
+  share: svgI('<circle cx="36" cy="11" r="5"/><circle cx="12" cy="24" r="5"/><circle cx="36" cy="37" r="5"/><path d="M16.5 21.5l15-8M16.5 26.5l15 8"/>'),
+  pen: svgI('<path d="M31 7l10 10L18 40H8V30z"/><path d="M26 12l10 10"/>'),
+  ball: function () { return ballSVG("inline"); },
+  sub: function () { return subSVG(); },
+  yellow: '<span class="bigcard y"></span>',
+  red: '<span class="bigcard r"></span>'
+};
+function ic(k) { var x = ICON[k]; return typeof x === "function" ? x() : x; }
+function tile(act, icon, label, sub, attrs, disabled, cls) {
+  return '<button class="tile' + (cls ? " " + cls : "") + '" data-a="' + act + '"' + (attrs || "") + (disabled ? " disabled" : "") + ">" +
+    '<span class="ti">' + icon + '</span><span class="tlab">' + label + (sub ? "<small>" + sub + "</small>" : "") + '</span><span class="chev">' + CHEV + "</span></button>";
+}
+function logoHTML(small) {
+  return '<div class="logo' + (small ? " sm" : "") + '"><div class="word"><span>BORDO</span><span class="y">CAMPO</span></div>' +
+    '<svg viewBox="0 0 64 48" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2" y="2" width="60" height="44"/>' +
+    '<path d="M32 2v44M2 24h60"/><circle cx="32" cy="24" r="7"/></svg></div>';
+}
+
+/* ---------- schermate principali ---------- */
 function vHome() {
-  var h = '<div class="top"><span class="title">Bordocampo</span></div>';
-  var m = S.match;
-  if (m) {
-    h += '<button class="board" data-a="resume" style="text-align:left">' +
-      '<div class="board-top"><span>Partita in corso</span><span>' + periodName(m.period) + "</span></div>" +
-      '<div class="row" style="justify-content:space-between;font-family:var(--font-display);font-size:24px;font-weight:700;text-transform:uppercase">' +
-      '<span class="grow" style="overflow-wrap:anywhere">' + esc(m.home) + " " + score(m, "home") + " - " + score(m, "away") + " " + esc(m.away) + "</span>" +
-      '<span style="color:var(--led)">Riprendi ›</span></div></button>';
-  } else {
-    h += '<button class="btn primary big block" data-a="setup">Nuova partita</button>';
-  }
-  var team = S.settings.team || "La mia squadra";
-  h += '<section class="panel"><div class="row"><div class="grow"><h2>La mia squadra</h2>' +
-    '<div class="t" style="font-family:var(--font-display);font-size:24px;font-weight:700;text-transform:uppercase;overflow-wrap:anywhere">' + esc(team) + "</div>" +
-    '<div class="muted small">' + (S.settings.roster.length ? S.settings.roster.length + " giocatori in rosa" : "Nessun giocatore in rosa") + "</div></div>" +
-    '<button class="btn" data-a="roster">Rosa</button></div></section>';
-  h += '<section class="panel"><h2>Partite giocate</h2>';
-  if (!S.history.length) h += '<div class="empty">Qui trovi i risultati finali con marcatori e minuti, appena chiudi la prima partita.</div>';
-  else {
-    h += '<div class="list">';
-    S.history.forEach(function (x) {
-      h += '<button class="item" data-a="open" data-id="' + x.id + '"><div class="grow"><div class="t">' + esc(x.home) + " " + score(x, "home") + " - " + score(x, "away") + " " + esc(x.away) + "</div>" +
-        '<div class="muted small">' + esc(dateLabel(x.date)) + "</div></div><span class=\"muted\">›</span></button>";
-    });
-    h += "</div>";
-  }
-  return h + "</section>";
+  var m = S.match, h = logoHTML(), opps = Object.keys(S.oppRosters).length;
+  h += '<div class="tiles">';
+  if (m) h += tile("resume", ic("play"), "Riprendi la partita", esc(m.home + " " + score(m, "home") + " - " + score(m, "away") + " " + m.away) + " · " + periodName(m.period));
+  else h += tile("setup", ic("plus"), "Nuova partita", "Squadre, tempi e via");
+  h += tile("roster", ic("shirt"), "Rosa", S.settings.roster.length + " giocatori" + (opps ? " · " + opps + " avversari" : ""));
+  h += tile("history", ic("cal"), "Partite giocate", S.history.length ? S.history.length + " partite" : "Ancora nessuna");
+  return h + "</div>";
+}
+function vHistory() {
+  var h = topBar("Partite giocate", "Home");
+  if (!S.history.length) return h + '<div class="note">Qui trovi i risultati finali con marcatori e minuti, appena chiudi la prima partita.</div>';
+  h += '<section class="panel"><div class="list">';
+  S.history.forEach(function (x) {
+    h += '<button class="item" data-a="open" data-id="' + x.id + '"><div class="grow"><div class="t">' + esc(x.home) + " " + score(x, "home") + " - " + score(x, "away") + " " + esc(x.away) + "</div>" +
+      '<div class="muted small">' + esc(dateLabel(x.date)) + '</div></div><span class="chev" style="color:var(--muted)">' + CHEV + "</span></button>";
+  });
+  return h + "</div></section>";
 }
 
 var form = null;
@@ -814,16 +924,19 @@ function oppChooser() {
 }
 function vSetup() {
   if (!form) form = { team: S.settings.team || "", opp: "", side: S.settings.side || "home", periods: S.settings.periods || 2, minutes: S.settings.minutes || 45 };
+  if (ui.p.step !== 2) {
+    return topBar("Nuova partita") + '<p class="lead">Chi gioca?<small>Passo 1 di 2</small></p>' +
+      '<section class="panel">' +
+      '<label class="f">La mia squadra<input type="text" id="f-team" autocomplete="off" value="' + esc(form.team) + '" placeholder="Es. Pulcini 2016"></label>' +
+      '<label class="f">Avversario<input type="text" id="f-opp" autocomplete="off" value="' + esc(form.opp) + '" placeholder="Es. Virtus"></label>' +
+      oppChooser() + "</section>" +
+      '<section class="panel"><h2>Giochiamo</h2><div class="seg">' +
+      '<button data-a="f-side" data-v="home" aria-pressed="' + (form.side === "home") + '">In casa</button>' +
+      '<button data-a="f-side" data-v="away" aria-pressed="' + (form.side === "away") + '">In trasferta</button></div></section>' +
+      '<button class="btn primary big block" data-a="f-next">Avanti</button>';
+  }
   var presets = [10, 15, 20, 25, 30, 35, 40, 45];
-  return '<div class="top"><button class="link" data-a="home">‹ Indietro</button><span class="title">Nuova partita</span><span style="width:70px"></span></div>' +
-    '<section class="panel">' +
-    '<label class="f">La mia squadra<input type="text" id="f-team" autocomplete="off" value="' + esc(form.team) + '" placeholder="Es. Pulcini 2016"></label>' +
-    '<label class="f">Avversario<input type="text" id="f-opp" autocomplete="off" value="' + esc(form.opp) + '" placeholder="Es. Virtus"></label>' +
-    oppChooser() +
-    '<div class="f" style="display:flex;flex-direction:column;gap:6px"><span class="muted small" style="font-weight:600">Giochiamo</span><div class="seg">' +
-    '<button data-a="f-side" data-v="home" aria-pressed="' + (form.side === "home") + '">In casa</button>' +
-    '<button data-a="f-side" data-v="away" aria-pressed="' + (form.side === "away") + '">In trasferta</button></div></div>' +
-    "</section>" +
+  return topBar("Nuova partita") + '<p class="lead">Quanto si gioca?<small>Passo 2 di 2</small></p>' +
     '<section class="panel"><h2>Numero di tempi</h2><div class="stepper">' +
     '<button data-a="f-per" data-d="-1" aria-label="Meno tempi">−</button><span class="v tabnum">' + form.periods + '</span><button data-a="f-per" data-d="1" aria-label="Più tempi">+</button>' +
     '<span class="muted">' + (form.periods === 1 ? "tempo unico" : "tempi") + "</span></div></section>" +
@@ -838,15 +951,12 @@ function vSetup() {
 /* ---------- salvare e caricare le rose ---------- */
 // File JSON leggibile: { app, tipo: "rose", rose: [{ squadra, mia, giocatori }] }.
 // Serve anche a passare le rose da un dispositivo all'altro (telefono, app installata, PC).
-function filePanel(r) {
-  var name = ui.rTab === "opp" ? (ui.rOpp && (S.oppLabels[ui.rOpp] || ui.rOpp)) : (S.settings.team || "La mia squadra");
-  return '<section class="panel"><h2>Salva e carica</h2>' +
-    '<div class="note">Salva le rose in un file sul dispositivo, con il nome della squadra, e caricale in un secondo momento: anche su un altro telefono o sul PC.</div>' +
-    '<div class="controls">' + (r ? '<button class="btn" data-a="r-save"' + (r.length ? "" : " disabled") + ">Salva " + esc(name) + "</button>" : "<span></span>") +
-    '<button class="btn" data-a="r-saveall">Salva tutte le rose</button></div>' +
-    '<label class="btn block" for="r-file">Carica rose da file</label>' +
+function filePanel() {
+  return '<p class="lead">Le tue rose in un file<small>Salvale sul dispositivo e caricale più tardi, anche su un altro telefono o sul PC.</small></p>' +
+    '<div class="tiles">' + tile("r-saveall", ic("folder"), "Salva tutte le rose", "La tua squadra e tutti gli avversari") +
+    '<label class="tile" for="r-file"><span class="ti">' + ic("list") + '</span><span class="tlab">Carica rose da file<small>I nomi già presenti non si duplicano</small></span><span class="chev">' + CHEV + "</span></label></div>" +
     '<input type="file" id="r-file" accept=".json,.txt,.csv,application/json,text/plain" hidden>' +
-    '<div class="note">Puoi caricare anche un file di testo con un nome per riga: i giocatori vanno nella rosa aperta.</div></section>';
+    '<div class="note">Per una sola squadra usa Salva su file nella sua rosa. Un file di testo con un nome per riga va nella rosa aperta.</div>';
 }
 function rosterEntries(all) {
   var mine = { squadra: S.settings.team || "La mia squadra", mia: true, giocatori: S.settings.roster.slice() };
@@ -926,55 +1036,53 @@ function loadRosters(text, fname) {
   toast(done.length ? "Rose caricate: " + done.join(", ") : "Nel file non ci sono rose da caricare", 3500);
 }
 function rosterList() { return ui.rTab === "opp" ? (ui.rOpp && S.oppRosters[ui.rOpp]) : S.settings.roster; }
+// Rosa: un menu con La mia squadra / Avversari / Salva e carica, ognuna nella sua schermata.
 function vRoster() {
-  var tab = ui.rTab === "opp" ? "opp" : "mine";
-  if (tab === "opp" && !ui.rOpp && S.match) { playersOf(S.match, other(S.match.mySide)); ui.rOpp = oppKey(S.match); }
-  var r = rosterList();
-  var h = '<div class="top"><button class="link" data-a="r-back">\u2039 Indietro</button><span class="title">Rosa</span><span style="width:70px"></span></div>' +
-    '<div class="seg"><button data-a="r-tab" data-v="mine" aria-pressed="' + (tab === "mine") + '">La mia squadra</button>' +
-    '<button data-a="r-tab" data-v="opp" aria-pressed="' + (tab === "opp") + '">Avversari</button></div>';
-  if (tab === "mine") {
-    h += '<section class="panel"><label class="f">Nome della squadra<input type="text" id="r-team" autocomplete="off" value="' + esc(S.settings.team) + '" placeholder="La mia squadra"></label></section>';
-  } else {
-    var keys = Object.keys(S.oppRosters).sort();
-    h += '<section class="panel"><h2>Squadra avversaria</h2>' +
-      (keys.length ? '<div class="chips">' + keys.map(function (k) {
-        return '<button class="chip" data-a="r-opp" data-v="' + esc(k) + '" aria-pressed="' + (k === ui.rOpp) + '">' + esc(S.oppLabels[k] || k) + " \u00b7 " + S.oppRosters[k].length + "</button>";
-      }).join("") + "</div>" : '<div class="empty">Nessuna squadra avversaria salvata.</div>') +
-      '<div class="row"><input type="text" id="r-oppname" class="grow" autocomplete="off" placeholder="Nome della squadra, es. Virtus"><button class="btn" data-a="r-oppnew">Nuova</button></div>' +
-      '<div class="note">La rosa di un avversario viene proposta in automatico quando giochi contro una squadra con lo stesso nome.</div></section>';
-    if (!r) return h + filePanel(null);
-    h += '<h1 style="font-size:28px;text-transform:uppercase">' + esc(S.oppLabels[ui.rOpp] || ui.rOpp) + "</h1>";
+  var sec = ui.p.sec, h;
+  if (!sec) {
+    var opps = Object.keys(S.oppRosters).length;
+    return topBar("Rosa") + '<div class="tiles">' +
+      tile("r-go", ic("shirt"), esc(S.settings.team || "La mia squadra"), S.settings.roster.length + " giocatori", ' data-v="mine"') +
+      tile("r-go", ic("opp"), "Avversari", opps ? opps + " squadre" : "Nessuna squadra salvata", ' data-v="opps"') +
+      tile("r-go", ic("folder"), "Salva e carica", "Rose in un file, anche per un altro dispositivo", ' data-v="file"') + "</div>";
   }
+  if (sec === "file") {
+    ui.rTab = null;
+    return topBar("Salva e carica") + filePanel(null);
+  }
+  if (sec === "opps") {
+    var keys = Object.keys(S.oppRosters).sort();
+    h = topBar("Avversari") + '<div class="tiles compact">' + keys.map(function (k) {
+      return tile("r-opp", ic("opp"), esc(S.oppLabels[k] || k), S.oppRosters[k].length + " giocatori", ' data-v="' + esc(k) + '"');
+    }).join("") + "</div>";
+    if (!keys.length) h += '<div class="note">Nessuna squadra avversaria salvata.</div>';
+    return h + '<section class="panel"><h2>Nuova squadra avversaria</h2>' +
+      '<div class="row"><input type="text" id="r-oppname" class="grow" autocomplete="off" placeholder="Nome, es. Virtus"><button class="btn primary" data-a="r-oppnew">Crea</button></div>' +
+      '<div class="note">La rosa di un avversario viene proposta in automatico quando giochi contro una squadra con lo stesso nome.</div></section>';
+  }
+  // rosa di una squadra: la mia (sec "mine") o un avversario (sec "opp", ui.rOpp)
+  ui.rTab = sec === "opp" ? "opp" : "mine";
+  var r = rosterList();
+  if (!r) { ui.p = { sec: "opps" }; return vRoster(); }
+  h = topBar(sec === "opp" ? "Avversario" : "La mia squadra");
+  if (sec === "mine") h += '<section class="panel"><label class="f">Nome della squadra<input type="text" id="r-team" autocomplete="off" value="' + esc(S.settings.team) + '" placeholder="La mia squadra"></label></section>';
+  else h += '<p class="lead">' + esc(S.oppLabels[ui.rOpp] || ui.rOpp) + "</p>";
   h += '<section class="panel"><h2>Aggiungi giocatori</h2><div class="row"><input type="text" id="r-new" class="grow" autocomplete="off" placeholder="Es. 10 Rossi"><button class="btn primary" data-a="r-add">Aggiungi</button></div>' +
-    '<div class="note">Puoi inserirne tanti insieme separandoli con una virgola. Scrivi il numero di maglia prima del nome per vederlo sul campo.</div></section>' +
+    '<div class="note">Anche tanti insieme, separati da virgola. Il numero di maglia prima del nome compare sul campo.</div></section>' +
     '<section class="panel"><h2>' + r.length + " giocatori</h2>";
-  if (!r.length) h += '<div class="empty">La rosa è vuota. Aggiungi i nomi per sceglierli con un tocco in formazione, gol, cartellini e cambi.</div>';
+  if (!r.length) h += '<div class="empty">La rosa è vuota.</div>';
   else {
     h += '<div class="list">';
     r.forEach(function (p, i) { h += '<div class="item"><span class="grow t">' + esc(p) + '</span><button class="link danger" data-a="r-del" data-i="' + i + '" aria-label="Rimuovi ' + esc(p) + '">Rimuovi</button></div>'; });
     h += "</div>";
   }
-  return h + "</section>" + filePanel(r);
-}
-
-function teamCol(m, t) {
-  var can = m.status === "play";
-  var mine = t === m.mySide ? '<span class="mine">noi</span>' : "";
-  return '<div class="team">' +
-    '<div class="tname-row"><span class="tname">' + mine + esc(teamName(m, t)) + "</span></div>" +
-    '<button class="ball" data-a="goal" data-t="' + t + '" aria-label="Gol ' + esc(teamName(m, t)) + '"' + (can ? "" : " disabled") + ">" + ballSVG() + "</button>" +
-    '<div class="score" id="sc-' + t + '">' + score(m, t) + "</div>" +
-    '<div class="cardbtns">' +
-    '<button class="cardbtn y" data-a="card" data-c="yellow" data-t="' + t + '" aria-label="Ammonizione ' + esc(teamName(m, t)) + '"' + (can ? "" : " disabled") + "><i></i></button>" +
-    '<button class="cardbtn r" data-a="card" data-c="red" data-t="' + t + '" aria-label="Espulsione ' + esc(teamName(m, t)) + '"' + (can ? "" : " disabled") + "><i></i></button>" +
-    '<button class="cardbtn s" data-a="card" data-c="sub" data-t="' + t + '" aria-label="Cambio ' + esc(teamName(m, t)) + '"' + (can ? "" : " disabled") + ">" + subSVG() + "</button>" +
-    "</div></div>";
+  return h + "</section>" + '<div class="controls"><button class="btn ghost" data-a="r-save"' + (r.length ? "" : " disabled") + ">Salva su file</button>" +
+    '<label class="btn ghost" for="r-file">Carica da file</label></div><input type="file" id="r-file" accept=".json,.txt,.csv,application/json,text/plain" hidden>';
 }
 
 function timeline(m) {
   var list = sorted(m);
-  if (!list.length) return '<div class="empty">Tocca il pallone accanto a una squadra per segnare un gol: il minuto viene registrato subito, i dettagli puoi aggiungerli dopo.</div>';
+  if (!list.length) return '<div class="empty">Ancora nessun evento. Gol, cartellini e cambi compaiono qui con il loro minuto.</div>';
   var h = "", cur = 0;
   list.forEach(function (e) {
     if (e.period !== cur) {
@@ -989,31 +1097,70 @@ function timeline(m) {
   });
   return h;
 }
+function cronacaHTML(m) {
+  var h = '<section class="panel"><div class="note">Tocca un evento per correggere giocatori, tipo, minuto o squadra.</div><div class="tl">' + timeline(m) + "</div></section>";
+  var y = cardsOf(m, "yellow"), r = cardsOf(m, "red"), subs = subsOf(m);
+  var block = function (title, list, icon) {
+    return list.length ? "<h2>" + title + '</h2><div class="list">' + list.map(function (s) { return '<div class="item"><span class="ico">' + icon + '</span><span class="grow">' + esc(s) + "</span></div>"; }).join("") + "</div>" : "";
+  };
+  if (y.length || r.length || subs.length) h += '<section class="panel">' + block("Ammoniti", y, '<i class="card y"></i>') + block("Espulsi", r, '<i class="card r"></i>') + block("Cambi", subs, subSVG()) + "</section>";
+  return h;
+}
+// Scelta della squadra a tutto schermo: due schede grandi.
+function teamPickHTML(m, title, sub) {
+  return topBar(title) + '<p class="lead">Per quale squadra?' + (sub ? "<small>" + sub + "</small>" : "") + '</p><div class="tiles">' +
+    ["home", "away"].map(function (t) {
+      return tile("tp", ic(t === m.mySide ? "shirt" : "opp"), esc(teamName(m, t)), (t === m.mySide ? "La mia squadra · " : "") + score(m, t) + " gol", ' data-t="' + t + '"', false, "big");
+    }).join("") + "</div>";
+}
 
 function vLive() {
-  var m = S.match, brk = m.status === "break", last = m.period >= m.periods;
-  var h = '<div class="top"><button class="link" data-a="home">‹ Menu</button>' +
-    '<span class="muted small tabnum">' + m.periods + " × " + m.minutes + "′</span>" +
-    '<button class="link danger" data-a="end-match">Termina</button></div>';
-  h += '<section class="board">' +
-    '<div class="board-top"><span>' + (brk ? "Fine " + periodName(m.period) : periodName(m.period)) + '</span><span class="pill" id="pill"><i class="dot"></i><span id="pill-t"></span></span></div>' +
-    '<div class="clockwrap"><div class="clock"><span id="clk">00:00</span><span class="extra" id="extra"></span></div>' +
-    '<div class="cd" id="cdw">Mancano <b id="cd">00:00</b></div></div>' +
-    '<div class="teams">' + teamCol(m, "home") + '<div class="vs">-</div>' + teamCol(m, "away") + "</div></section>";
-  if (brk) {
-    h += '<div class="controls"><button class="btn primary big span" data-a="next-period">Inizia ' + periodName(m.period + 1) + "</button></div>";
-  } else {
-    h += '<div class="controls">' +
-      '<button class="btn primary big" id="toggle" data-a="toggle"></button>' +
-      '<button class="btn big" data-a="end-period">' + (last ? "Fine partita" : "Fine " + m.period + "° t.") + "</button>" +
-      '<div class="span"><div class="adj">' +
+  var m = S.match, brk = m.status === "break", last = m.period >= m.periods, can = m.status === "play", sec = ui.p.sec;
+  if (sec === "team") {
+    var what = { goal: ["Gol", "Il minuto si registra subito, poi scegli il marcatore."], card: ["Ammonizioni", "Poi scegli il cartellino."],
+      sub: ["Sostituzioni", "Poi scegli chi esce e chi entra."], lineup: ["Formazione", ""] }[ui.p.act];
+    return teamPickHTML(m, what[0], what[1]);
+  }
+  if (sec === "cardtype") {
+    return topBar("Ammonizioni") + '<p class="lead">' + esc(teamName(m, ui.p.t)) + "<small>Che cartellino?</small></p>" +
+      '<div class="tiles">' + tile("ct", ic("yellow"), "Ammonizione", "Cartellino giallo", ' data-c="yellow"') +
+      tile("ct", ic("red"), "Espulsione", "Cartellino rosso", ' data-c="red"') + "</div>";
+  }
+  if (sec === "lineup") return topBar("Formazione") + '<p class="lead">' + esc(teamName(m, ui.p.t)) + "</p>" + teamLineupHTML(m, ui.p.t);
+  if (sec === "cronaca") return topBar("Cronaca") + cronacaHTML(m);
+  if (sec === "diretta") return topBar("Diretta") + livePanel(m);
+  if (sec === "tempo") {
+    return topBar("Cronometro") + '<section class="board"><div class="clockwrap"><div class="clock"><span id="clk">00:00</span><span class="extra" id="extra"></span></div>' +
+      '<div class="cd" id="cdw">Mancano <b id="cd">00:00</b></div></div></section>' +
+      '<section class="panel"><h2>Correggi il cronometro</h2><div class="adj">' +
       '<button data-a="adj" data-d="-60">−1′</button><button data-a="adj" data-d="-10">−10″</button>' +
       '<button data-a="adj" data-d="10">+10″</button><button data-a="adj" data-d="60">+1′</button></div>' +
-      '<div class="adj-label">Correggi il cronometro</div></div></div>';
+      '<div class="note">Se hai avviato in ritardo o in anticipo, sposta il tempo di gioco.</div></section>' +
+      '<section class="panel"><h2>Partita</h2><div class="note">' + m.periods + " tempi da " + m.minutes + "′. Termina adesso se la partita finisce prima del tempo.</div>" +
+      '<button class="btn danger block" data-a="end-match">Termina la partita</button></section>';
   }
-  h += lineupPanel(m);
-  h += livePanel(m);
-  h += '<section class="panel"><h2>Cronaca</h2><div class="tl">' + timeline(m) + "</div></section>";
+  // schermata principale della partita
+  var side = function (t) {
+    var ball = '<button class="ball" data-a="goal" data-t="' + t + '" aria-label="Gol ' + esc(teamName(m, t)) + '"' + (can ? "" : " disabled") + ">" + ballSVG() + "</button>";
+    var nm = '<span class="tname">' + (t === m.mySide ? '<span class="mine">noi</span>' : "") + esc(teamName(m, t)) + "</span>";
+    return '<div class="side"><div class="nm">' + (t === "home" ? ball + nm : nm + ball) + '</div><div class="score">' + score(m, t) + "</div></div>";
+  };
+  var h = '<div class="top"><button class="link" data-a="back">‹ Home</button><span class="title">' + (brk ? "Intervallo" : periodName(m.period)) + "</span><span></span></div>";
+  h += '<section class="board hub">' +
+    '<div class="board-top"><span>' + m.periods + " × " + m.minutes + '′</span><span class="pill" id="pill"><i class="dot"></i><span id="pill-t"></span></span></div>' +
+    '<div class="clockwrap"><div class="clock"><span id="clk">00:00</span><span class="extra" id="extra"></span></div>' +
+    '<div class="cd" id="cdw">Mancano <b id="cd">00:00</b></div></div>' +
+    '<div class="scoreline">' + side("home") + '<div class="vs">-</div>' + side("away") + "</div></section>";
+  if (brk) h += '<button class="btn primary big block" data-a="next-period">Inizia il ' + periodName(m.period + 1) + "</button>";
+  else h += '<div class="controls"><button class="btn primary big" id="toggle" data-a="toggle"></button>' +
+    '<button class="btn big" data-a="end-period">' + (last ? "Fine partita" : "Fine " + m.period + "° t.") + "</button></div>";
+  h += '<div class="tiles compact">' +
+    tile("hub", ic("formation"), "Formazione", "", ' data-v="lineup"') +
+    tile("hub", ic("ball"), "Gol", "", ' data-v="goal"', !can) +
+    tile("hub", ic("yellow"), "Ammonizioni", "", ' data-v="card"', !can) +
+    tile("hub", ic("sub"), "Sostituzioni", "", ' data-v="sub"', !can) + "</div>";
+  h += '<div class="tiles small">' + tile("hub", ic("list"), "Cronaca", "", ' data-v="cronaca"') +
+    tile("hub", ic("live"), "Diretta", "", ' data-v="diretta"') + tile("hub", ic("clock"), "Cronometro", "", ' data-v="tempo"') + "</div>";
   return h;
 }
 
@@ -1022,12 +1169,11 @@ function vLive() {
 function vLineup() {
   var m = findMatch(ui.lmid), t = ui.luTeam;
   var L = m && lineupOf(m, t);
-  if (!L) { ui.view = "home"; return vHome(); }
+  if (!L) { ui.view = "home"; ui.stack = []; return vHome(); }
   var size = modSize(L.mod), sel = ui.luSlot, roster = playersOf(m, t), bench = benchOf(m, t, L);
   var out = roster.filter(function (p) { return L.slots.indexOf(p) < 0 && bench.indexOf(p) < 0; });
   var chip = function (p, act, extra) { return '<button class="chip' + (extra || "") + '" data-a="' + act + '" data-v="' + esc(p) + '">' + esc(p) + "</button>"; };
-  var h = '<div class="top"><button class="link" data-a="lu-done">\u2039 Indietro</button><span class="title">Formazione</span><span style="width:70px"></span></div>';
-  h += '<h1 style="font-size:28px;text-transform:uppercase">' + esc(teamName(m, t)) + "</h1>";
+  var h = topBar("Formazione") + '<p class="lead">' + esc(teamName(m, t)) + "</p>";
   h += '<section class="panel"><h2>Giocatori in campo</h2><div class="seg">' + Object.keys(MODULI).map(function (n) {
     return '<button data-a="lu-size" data-v="' + n + '" aria-pressed="' + (+n === size) + '">' + n + "</button>";
   }).join("") + '</div><div class="chips">' + (MODULI[size] || [L.mod]).map(function (mod) {
@@ -1056,36 +1202,35 @@ function vLineup() {
 
 function vSummary() {
   var m = findMatch(ui.id);
-  if (!m) { ui.view = "home"; return vHome(); }
+  if (!m) { ui.view = "home"; ui.stack = []; return vHome(); }
+  var sec = ui.p.sec;
+  if (sec === "cronaca") return topBar("Cronaca") + cronacaHTML(m);
+  if (sec === "diretta") return topBar("Diretta") + livePanel(m);
+  if (sec === "team") return teamPickHTML(m, ui.p.act === "fix" ? "Correggi" : "Formazione", ui.p.act === "fix" ? "Poi scegli cosa aggiungere." : "");
+  if (sec === "lineup") return topBar("Formazione") + '<p class="lead">' + esc(teamName(m, ui.p.t)) + "</p>" + teamLineupHTML(m, ui.p.t);
+  if (sec === "fixtype") {
+    var t = ui.p.t;
+    return topBar("Correggi") + '<p class="lead">' + esc(teamName(m, t)) + "<small>Cosa vuoi aggiungere?</small></p>" +
+      '<div class="tiles compact">' + tile("past-add", ic("ball"), "Gol", "", ' data-c="goal" data-t="' + t + '"') +
+      tile("past-add", ic("yellow"), "Ammonizione", "", ' data-c="yellow" data-t="' + t + '"') +
+      tile("past-add", ic("red"), "Espulsione", "", ' data-c="red" data-t="' + t + '"') +
+      tile("past-add", ic("sub"), "Cambio", "", ' data-c="sub" data-t="' + t + '"') + "</div>" +
+      '<div class="note">Per togliere o spostare un evento sull’altra squadra, aprilo dalla Cronaca.</div>';
+  }
   var sh = scorersOf(m, "home"), sa = scorersOf(m, "away");
-  var h = '<div class="top"><button class="link" data-a="home">‹ Menu</button><span class="title">Finale</span><span style="width:70px"></span></div>';
+  var h = topBar("Finale");
   h += '<section class="board final"><div class="board-top"><span>' + esc(dateLabel(m.date)) + '</span><span class="tabnum">' + m.periods + " × " + m.minutes + "′</span></div>" +
     '<div class="scoreline"><span class="tname">' + esc(m.home) + '</span><span class="score">' + score(m, "home") + " - " + score(m, "away") + '</span><span class="tname">' + esc(m.away) + "</span></div>" +
     (m.periods > 1 ? '<div class="partials">' + partials(m).join(" · ") + "</div>" : "") +
     ((sh.length || sa.length) ? '<div class="scorers"><div>' + sh.map(function (s) { return "<p>" + esc(s) + "</p>"; }).join("") + '</div><div class="r">' + sa.map(function (s) { return "<p>" + esc(s) + "</p>"; }).join("") + "</div></div>" : "") +
     "</section>";
-  h += '<section class="panel"><h2>Correggi il risultato</h2>' +
-    '<div class="note">Aggiungi un evento dimenticato, oppure tocca un evento nella cronaca per cambiarne giocatore o minuto, assegnarlo all\u2019altra squadra o eliminarlo.</div>' +
-    ["home", "away"].map(function (t) {
-      var b = function (c, l) { return '<button class="chip" data-a="past-add" data-c="' + c + '" data-t="' + t + '">' + l + "</button>"; };
-      return '<div class="grp"><h4>' + esc(teamName(m, t)) + " \u00b7 " + score(m, t) + " gol</h4>" +
-        '<div class="chips">' + b("goal", "+ Gol") + b("yellow", "+ Ammonizione") + b("red", "+ Espulsione") + b("sub", "+ Cambio") + "</div></div>";
-    }).join("") + "</section>";
-  var y = cardsOf(m, "yellow"), r = cardsOf(m, "red");
-  if (y.length || r.length) {
-    h += '<section class="panel">';
-    if (y.length) h += '<h2>Ammoniti</h2><div class="list">' + y.map(function (s) { return '<div class="item"><span class="ico"><i class="card y"></i></span><span class="grow">' + esc(s) + "</span></div>"; }).join("") + "</div>";
-    if (r.length) h += '<h2>Espulsi</h2><div class="list">' + r.map(function (s) { return '<div class="item"><span class="ico"><i class="card r"></i></span><span class="grow">' + esc(s) + "</span></div>"; }).join("") + "</div>";
-    h += "</section>";
-  }
-  var subs = subsOf(m);
-  if (hasLineup(m, "home") || hasLineup(m, "away")) h += lineupPanel(m);
-  if (subs.length) h += '<section class="panel"><h2>Cambi</h2><div class="list">' + subs.map(function (x) { return '<div class="item"><span class="ico">' + subSVG() + '</span><span class="grow">' + esc(x) + "</span></div>"; }).join("") + "</div></section>";
-  h += '<div class="controls"><button class="btn primary" data-a="copy">Copia risultato</button><button class="btn" data-a="share">Condividi</button></div>';
-  if (m.live) h += livePanel(m);
-  h += '<section class="panel"><h2>Cronaca</h2><div class="note">Tocca un evento per correggere giocatori, tipo o minuto.</div><div class="tl">' + timeline(m) + "</div></section>";
-  h += '<button class="btn danger block" data-a="del-match">Elimina partita</button>';
-  return h;
+  h += '<div class="tiles compact">' +
+    tile("s-go", ic("list"), "Cronaca", sorted(m).length + " eventi", ' data-v="cronaca"') +
+    tile("s-go", ic("formation"), "Formazioni", "", ' data-v="lineup"') +
+    tile("s-go", ic("pen"), "Correggi il risultato", "Aggiungi un evento dimenticato", ' data-v="fix"') +
+    tile("share", ic("share"), "Condividi il risultato", "Marcatori, minuti e cartellini") +
+    (m.live ? tile("s-go", ic("live"), "Diretta", "Link per i genitori", ' data-v="diretta"') : "") + "</div>";
+  return h + '<button class="danger-link" data-a="del-match">Elimina partita</button>';
 }
 
 /* ---------- foglio evento e conferme ---------- */
@@ -1237,24 +1382,27 @@ function whistle() {
 }
 
 /* ---------- cronometro ---------- */
-function tick(force) {
+function tick() {
   var m = S.match;
-  if (ui.view !== "live" || !m) return;
-  var clk = document.getElementById("clk");
-  if (!clk) return;
+  if (!m) return;
   var sec = periodSec(m), len = lenSec(m), base = (m.period - 1) * len;
-  var over = sec > len;
-  clk.textContent = mmss(base + Math.min(sec, len));
-  document.getElementById("extra").textContent = over ? "+" + mmss(sec - len) : "";
-  document.getElementById("cd").textContent = mmss(len - sec);
-  document.getElementById("cdw").className = "cd" + (sec >= len ? " over" : "");
-  var pill = document.getElementById("pill"), pt = document.getElementById("pill-t");
-  if (m.status === "break") { pill.className = "pill"; pt.textContent = "Intervallo"; }
-  else if (m.run) { pill.className = "pill " + (sec >= len ? "over" : "on"); pt.textContent = sec >= len ? "Recupero" : "In corso"; }
-  else { pill.className = "pill"; pt.textContent = m.started ? "In pausa" : "Pronti"; }
-  var tg = document.getElementById("toggle");
-  if (tg) tg.textContent = m.run ? "❚❚ Pausa" : m.started ? "▶ Riprendi" : "▶ Avvia";
   if (m.run && sec >= len && !m.beeped) { m.beeped = true; save(); whistle(); }
+  if (ui.view !== "live") return;
+  var $id = function (id) { return document.getElementById(id); };
+  if ($id("clk")) {
+    $id("clk").textContent = mmss(base + Math.min(sec, len));
+    $id("extra").textContent = sec > len ? "+" + mmss(sec - len) : "";
+    $id("cd").textContent = mmss(len - sec);
+    $id("cdw").className = "cd" + (sec >= len ? " over" : "");
+  }
+  var pill = $id("pill"), pt = $id("pill-t");
+  if (pill) {
+    if (m.status === "break") { pill.className = "pill"; pt.textContent = "Intervallo"; }
+    else if (m.run) { pill.className = "pill " + (sec >= len ? "over" : "on"); pt.textContent = sec >= len ? "Recupero" : "In corso"; }
+    else { pill.className = "pill"; pt.textContent = m.started ? "In pausa" : "Pronti"; }
+  }
+  var tg = $id("toggle");
+  if (tg) tg.textContent = m.run ? "❚❚ Pausa" : m.started ? "▶ Riprendi" : "▶ Avvia";
 }
 setInterval(tick, 250);
 document.addEventListener("visibilitychange", function () {
@@ -1313,35 +1461,48 @@ document.addEventListener("click", function (ev) {
   var se = sm && sm.events.filter(function (x) { return x.id === ui.sheet.eid; })[0];
 
   switch (a) {
-    case "home": ui.view = "home"; render(); window.scrollTo(0, 0); break;
-    case "setup": form = null; ui.view = "setup"; render(); break;
-    case "resume": ui.view = "live"; render(); break;
-    case "roster": ui.rBack = null; ui.view = "roster"; render(); break;
+    case "back": back(); break;
+    case "home": reset("home"); break;
+    case "setup": form = null; go("setup", { step: 1 }); break;
+    case "resume": go("live"); break;
+    case "roster": go("roster"); break;
+    case "history": go("history"); break;
+    case "r-go": go("roster", { sec: el.getAttribute("data-v") }); break;
     case "roster-open": {
-      // dal foglio di un evento: apre la rosa di quella squadra e poi ci riporta
-      var rm = findMatch(ui.sheet.mid), rt = el.getAttribute("data-t");
-      ui.rTab = rt === rm.mySide ? "mine" : "opp";
-      if (ui.rTab === "opp") { playersOf(rm, rt); ui.rOpp = oppKey(rm); }
-      ui.rBack = { view: ui.view, sheet: ui.sheet }; ui.sheet = null;
-      ui.view = "roster"; render(); window.scrollTo(0, 0); break;
+      // dal foglio di un evento: apre la rosa di quella squadra; Indietro riporta all'evento
+      var rm = findMatch(ui.sheet.mid), rt = el.getAttribute("data-t"), mineT = rt === rm.mySide;
+      if (!mineT) { playersOf(rm, rt); ui.rOpp = oppKey(rm); }
+      go("roster", { sec: mineT ? "mine" : "opp" }); break;
     }
-    case "r-back":
-      if (ui.rBack) { ui.view = ui.rBack.view; ui.sheet = ui.rBack.sheet; ui.rBack = null; }
-      else ui.view = "home";
-      render(); window.scrollTo(0, 0); break;
-    case "r-tab": ui.rTab = el.getAttribute("data-v"); render(); break;
-    case "r-opp": ui.rOpp = el.getAttribute("data-v"); render(); break;
+    case "r-opp": ui.rOpp = el.getAttribute("data-v"); go("roster", { sec: "opp" }); break;
     case "r-oppnew": {
       var on = document.getElementById("r-oppname").value.trim();
       if (!on) { document.getElementById("r-oppname").focus(); break; }
       var ok = on.toLowerCase();
       if (!S.oppRosters[ok]) S.oppRosters[ok] = [];
-      S.oppLabels[ok] = on; ui.rOpp = ok; save(); render();
+      S.oppLabels[ok] = on; ui.rOpp = ok; save(); go("roster", { sec: "opp" });
       var rn = document.getElementById("r-new"); if (rn) rn.focus();
       break;
     }
-    case "open": ui.view = "summary"; ui.id = el.getAttribute("data-id"); render(); window.scrollTo(0, 0); break;
-
+    case "open": ui.id = el.getAttribute("data-id"); go("summary"); break;
+    case "s-go": {
+      var sv = el.getAttribute("data-v");
+      go("summary", sv === "lineup" || sv === "fix" ? { sec: "team", act: sv } : { sec: sv }); break;
+    }
+    case "hub": {
+      var hv = el.getAttribute("data-v");
+      go("live", /^(goal|card|sub|lineup)$/.test(hv) ? { sec: "team", act: hv } : { sec: hv }); break;
+    }
+    case "tp": {
+      // squadra scelta: gol e cambi si registrano subito e si torna alla partita
+      var tt = el.getAttribute("data-t"), act = ui.p.act;
+      if (act === "fix") { go("summary", { sec: "fixtype", t: tt }); break; }
+      if (act === "lineup") { go(ui.view, { sec: "lineup", t: tt }); break; }
+      if (act === "card") { go("live", { sec: "cardtype", t: tt }); break; }
+      unlockAudio(); reset("live", {}, [{ view: "home", p: {} }]); addEvent(act, tt); break;
+    }
+    case "ct": { var ctt = ui.p.t; reset("live", {}, [{ view: "home", p: {} }]); addEvent(el.getAttribute("data-c"), ctt); break; }
+    case "f-next": readForm(); go("setup", { step: 2 }); break;
     case "f-side": readForm(); form.side = el.getAttribute("data-v"); render(); break;
     case "f-per": readForm(); form.periods = Math.min(8, Math.max(1, form.periods + +el.getAttribute("data-d"))); render(); break;
     case "f-min": readForm(); form.minutes = Math.min(90, Math.max(1, form.minutes + +el.getAttribute("data-d"))); render(); break;
@@ -1351,10 +1512,10 @@ document.addEventListener("click", function (ev) {
       readForm();
       var fk = (form.opp || "").trim().toLowerCase();
       if (fk && !S.oppRosters[fk]) { S.oppRosters[fk] = []; S.oppLabels[fk] = form.opp.trim(); save(); }
-      ui.rTab = "opp"; ui.rOpp = fk || ui.rOpp; ui.rBack = { view: "setup", sheet: null };
-      ui.view = "roster"; render(); window.scrollTo(0, 0); break;
+      if (fk) { ui.rOpp = fk; go("roster", { sec: "opp" }); } else go("roster", { sec: "opps" });
+      break;
     }
-    case "start": readForm(); newMatch(form); form = null; ui.view = "live"; render(); window.scrollTo(0, 0); break;
+    case "start": readForm(); newMatch(form); form = null; reset("live", {}, [{ view: "home", p: {} }]); break;
 
     case "r-add": {
       var inp = document.getElementById("r-new");
@@ -1388,14 +1549,14 @@ document.addEventListener("click", function (ev) {
         last ? "Chiudi partita" : "Fine tempo",
         function () {
           if (last) return finishMatch();
-          stopClock(m); m.status = "break"; releaseWake(); save(); render();
+          stopClock(m); m.status = "break"; releaseWake(); save(); reset("live", {}, [{ view: "home", p: {} }]);
         });
       break;
     }
     case "next-period":
       unlockAudio();
       m.period++; m.acc = 0; m.run = Date.now(); m.status = "play"; m.beeped = false; m.started = true;
-      holdWake(); save(); render(); break;
+      holdWake(); save(); reset("live", {}, [{ view: "home", p: {} }]); break;
     case "end-match":
       ask("Terminare la partita?", "La partita viene chiusa adesso con il risultato attuale (" + score(m, "home") + "-" + score(m, "away") + ").", "Termina", finishMatch, true);
       break;
@@ -1445,22 +1606,22 @@ document.addEventListener("click", function (ev) {
     }
     case "share-close": ui.share = null; renderLayer(); break;
 
-    case "lu-tab": ui.luTab = el.getAttribute("data-v"); render(); break;
     case "lu-open": {
       var lm = findMatch(el.getAttribute("data-mid")), lt = el.getAttribute("data-t") || lm.mySide;
       if (!lineupOf(lm, lt)) setLineup(lm, lt, newLineup(lm, lt));
       var LL = lineupOf(lm, lt);
       if (!LL.bench) LL.bench = benchOf(lm, lt, LL).slice();
-      ui.back = ui.view; ui.lmid = lm.id; ui.luTeam = lt; ui.luTab = lt; ui.luQ = "";
+      ui.lmid = lm.id; ui.luTeam = lt; ui.luQ = "";
       var empty = LL.slots.indexOf("");
       ui.luSlot = empty >= 0 ? empty : null;
-      ui.view = "lineup"; save(); render(); window.scrollTo(0, 0); break;
+      save(); go("lineup"); break;
     }
-    case "lu-done": ui.view = ui.back || "live"; ui.luSlot = null; render(); window.scrollTo(0, 0); break;
+    case "lu-done": ui.luSlot = null; back(); break;
     case "lu-size": case "lu-mod": case "lu-slot": case "lu-pick": case "lu-add": case "lu-clear": case "lu-bench": case "lu-many":
-      lineupAction(a, el); break;    case "del-match":
+      lineupAction(a, el); break;
+    case "del-match":
       ask("Eliminare la partita?", "Il risultato e la cronaca vengono cancellati da questo telefono.", "Elimina", function () {
-        S.history = S.history.filter(function (x) { return x.id !== ui.id; }); save(); ui.view = "home"; render();
+        S.history = S.history.filter(function (x) { return x.id !== ui.id; }); save(); reset("history", {}, [{ view: "home", p: {} }]);
       }, true);
       break;
   }
@@ -1507,9 +1668,7 @@ if (S.match && S.match.run) holdWake();
 // Tasto "indietro" di Android: chiude il foglio aperto o torna al menu; 0 = lascia uscire dall'app.
 window.bcBack = function () {
   if (ui.confirm || ui.share || ui.sheet) { ui.confirm = null; ui.share = null; ui.sheet = null; render(); return 1; }
-  if (ui.view === "lineup") { ui.view = ui.back || "live"; ui.luSlot = null; render(); return 1; }
-  if (ui.view === "roster" && ui.rBack) { ui.view = ui.rBack.view; ui.sheet = ui.rBack.sheet; ui.rBack = null; render(); return 1; }
-  if (ui.view !== "home") { ui.view = "home"; render(); window.scrollTo(0, 0); return 1; }
+  if (ui.view !== "home") { ui.luSlot = null; back(); return 1; }
   return 0;
 };
 if (liveTarget()) livePush();
