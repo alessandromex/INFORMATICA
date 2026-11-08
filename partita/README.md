@@ -22,7 +22,8 @@ L'app è fatta di schermate semplici con poche cose grandi da toccare, pensate p
   4. **Formazione** – modulo e ruoli dei titolari sul campo (toccando un titolare in un altro ruolo i due si scambiano).
   5. **Convocazione PDF** – anteprima A4 e PDF da condividere (ordine della formazione o alfabetico), con logo e testi della società.
   Poi **Inizia la partita**: tempi e minuti, e si va in campo. La convocazione dell'ultima partita viene riproposta.
-- **Società**: nome, categoria, logo (resta sul dispositivo), valori proposti (competizione, ritrovo, impianto) e note della convocazione (documenti, kit, puntualità, assenze, saluto).
+- **Società**: nome, categoria, logo (resta sul dispositivo), **colori sociali** (principale e secondario, tra colori pronti o personalizzati), valori proposti (competizione, ritrovo, impianto) e note della convocazione (documenti, kit, puntualità, assenze, saluto).
+- **Loghi e colori degli avversari**: in Rosa → Avversari → squadra. I colori vestono le maglie sul campo; nei documenti la convocazione usa i colori della società (cornice e scritte) e il PDF della partita mostra l'intestazione nel colore sociale e i loghi delle due squadre accanto al risultato. Un colore troppo chiaro viene scurito per le scritte.
 - Il file **rosa.json** dell'app Convocazioni si carica in Rosa → Salva e carica: rosa e predefiniti entrano in Bordocampo.
 - **Partita**: tabellone con minuto, conto alla rovescia e risultato (il pallone accanto al nome registra un gol con un tocco), Avvia/Pausa e Fine tempo, poi le schede **Formazione, Gol, Cartellini, Sostituzioni** e in basso **Cronaca, Diretta, Cronometro**.
 - **Procedure guidate** per Gol, Cartellini e Sostituzioni: una domanda per schermata, con il passo in corso e una riga di aiuto. Il minuto è quello del primo tocco (si può correggere nel riepilogo).

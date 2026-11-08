@@ -236,6 +236,14 @@ input[type=text] {
 .tiles.small .tile .ti svg { width: 32px; height: 32px; }
 .tiles.small .tile .tlab { flex: none; font-size: 15px; }
 .tiles.small .chev { display: none; }
+/* colori sociali */
+.swatches { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.sw { width: 40px; height: 40px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(0,0,0,.25); }
+.sw[aria-pressed=true] { box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px var(--accent); }
+.sw.custom { display: grid; place-items: center; background: var(--soft); font-weight: 700; color: var(--muted); position: relative; overflow: hidden; }
+.sw.custom input { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; }
+.kitprev { display: flex; align-items: center; gap: 12px; }
+.kitprev .shirt { width: 44px; height: 44px; }
 /* procedure guidate di gol, cartellini e cambi */
 .evl { display: flex; flex-direction: column; }
 .evl .er { display: flex; align-items: center; gap: 8px; padding: 8px 0; }
@@ -272,20 +280,20 @@ textarea.field { padding: 10px 12px; min-height: 76px; font: 16px/1.35 var(--fon
 /* anteprima A4 della convocazione: carta sempre bianca, come la stampa */
 .sheetwrap { width: 100%; overflow: hidden; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,.3); background: #fff; }
 .a4 { width: 595px; height: 842px; background: #fff; color: #000; font-family: "Times New Roman", Times, serif; position: relative; transform-origin: top left; }
-.a4 .fr { position: absolute; left: 34px; top: 62px; width: 527px; min-height: 714px; border: 6px solid #9B3B33; padding: 30px 30px 18px 32px; }
-.a4 .club { text-align: center; color: #800020; font-size: 20px; margin: 6px 0; }
+.a4 .fr { position: absolute; left: 34px; top: 62px; width: 527px; min-height: 714px; border: 6px solid var(--cf, #9B3B33); padding: 30px 30px 18px 32px; }
+.a4 .club { text-align: center; color: var(--c1, #800020); font-size: 20px; margin: 6px 0; }
 .a4 .lg { display: block; margin: 0 auto 10px; width: 61px; height: 83px; object-fit: contain; }
 .a4 .tit { text-align: center; color: #323232; font-size: 11.5px; margin: 6px 0 10px; }
 .a4 .tit .c { color: #EE0000; font-weight: 700; } .a4 .tit .u { color: #000; font-weight: 700; font-size: 16px; }
 .a4 .ln { font-size: 11px; margin: 0 0 6px; } .a4 .ln.gap { margin-top: 12px; }
-.a4 .lb { color: #800020; }
-.a4 .el { color: #800020; font-size: 12px; margin: 24px 0 4px; }
+.a4 .lb { color: var(--c1, #800020); }
+.a4 .el { color: var(--c1, #800020); font-size: 12px; margin: 24px 0 4px; }
 .a4 table { border-collapse: collapse; width: 100%; table-layout: fixed; font-size: 11px; }
 .a4 td { border: .7px solid #000; padding: 3px 5px; height: 20px; overflow-wrap: anywhere; line-height: 1.15; }
-.a4 td.n { color: #800020; width: 48px; }
-.a4 .nt { font-size: 10px; margin-top: 26px; } .a4 .nt .h { color: #800020; font-size: 12px; }
+.a4 td.n { color: var(--c1, #800020); width: 48px; }
+.a4 .nt { font-size: 10px; margin-top: 26px; } .a4 .nt .h { color: var(--c1, #800020); font-size: 12px; }
 .a4 ul { font-size: 10px; margin: 8px 0 0; padding-left: 18px; } .a4 li { margin-bottom: 4px; }
-.a4 .motto { text-align: center; color: #800020; font-size: 12px; margin-top: 14px; }
+.a4 .motto { text-align: center; color: var(--c1, #800020); font-size: 12px; margin-top: 14px; }
 .tile.big { min-height: 104px; }
 .tile.big .tlab { font-size: 28px; }
 .bigcard { display: block; width: 34px; height: 46px; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,.35); }
@@ -436,7 +444,7 @@ textarea.field { padding: 10px 12px; min-height: 76px; font: 16px/1.35 var(--fon
 /* ---------- dati ---------- */
 var KEY = "bordocampo-v1";
 var S = load();
-function fresh() { return { settings: { team: "", roster: [], periods: 2, minutes: 45, side: "home" }, match: null, history: [], oppRosters: {}, oppLabels: {}, oppLineups: {} }; }
+function fresh() { return { settings: { team: "", roster: [], periods: 2, minutes: 45, side: "home" }, match: null, history: [], oppRosters: {}, oppLabels: {}, oppLineups: {}, oppInfo: {} }; }
 function load() {
   var d = fresh();
   try {
@@ -449,6 +457,7 @@ function load() {
       if (raw.oppRosters) d.oppRosters = raw.oppRosters;
       if (raw.oppLabels) d.oppLabels = raw.oppLabels;
       if (raw.oppLineups) d.oppLineups = raw.oppLineups;
+      if (raw.oppInfo) d.oppInfo = raw.oppInfo;
     }
   } catch (e) {}
   return d;
@@ -504,6 +513,58 @@ function findMatch(id) {
   return null;
 }
 function stopClock(m) { if (m.run) { m.acc += Date.now() - m.run; m.run = null; } }
+
+/* ---------- loghi e colori sociali ---------- */
+var SWATCHES = [["Granata", "#7E1E2C"], ["Rosso", "#D7263D"], ["Arancione", "#F07F13"], ["Giallo", "#F2C200"], ["Verde", "#1F8A4C"],
+  ["Azzurro", "#3BA3E0"], ["Blu", "#1D3F8F"], ["Viola", "#6B2D8F"], ["Nero", "#111111"], ["Bianco", "#FFFFFF"], ["Grigio", "#8A8F94"]];
+function hexRgb(h) { var r = /^#?([0-9a-f]{6})$/i.exec(h || ""); if (!r) return null; var n = parseInt(r[1], 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
+function rgbHex(c) { return "#" + c.map(function (v) { return ("0" + v.toString(16)).slice(-2); }).join(""); }
+function lum(c) { return (0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2]) / 255; }
+// Colore leggibile su carta bianca: un colore chiaro (giallo, bianco) viene scurito.
+function onWhite(c) { if (!c) return null; c = c.slice(); while (lum(c) > 0.5) c = c.map(function (v) { return Math.round(v * 0.82); }); return c; }
+function inkOn(c) { return lum(c) > 0.6 ? [19, 32, 26] : [255, 255, 255]; }
+// Logo e colori di una squadra della partita: la mia da Società, gli avversari da Rosa → Avversari.
+function teamInfo(m, t) {
+  if (t === m.mySide) { var c = conv(); return { logo: c.logo || "", primary: c.primary || "", secondary: c.secondary || "" }; }
+  return S.oppInfo[oppKey(m)] || {};
+}
+// Colore principale per i documenti: il primo che non sia quasi bianco.
+function docColor(info, fallback) {
+  var a = hexRgb(info.primary), b = hexRgb(info.secondary);
+  var c = a && lum(a) < 0.92 ? a : b && lum(b) < 0.92 ? b : null;
+  return c || fallback;
+}
+// Maglie sul campo nei colori sociali (primario; numero nel secondario se si legge, altrimenti bianco o scuro).
+function kitFor(m, t) {
+  var info = teamInfo(m, t), a = hexRgb(info.primary);
+  if (!a) return null;
+  var b = hexRgb(info.secondary), fg = b && Math.abs(lum(a) - lum(b)) > 0.35 ? b : inkOn(a);
+  return { bg: rgbHex(a), fg: rgbHex(fg) };
+}
+function colorsHTML(scope, info) {
+  var row = function (which, label) {
+    var cur = (info[which] || "").toUpperCase();
+    return "<h4>" + label + '</h4><div class="swatches">' + SWATCHES.map(function (sw) {
+      return '<button class="sw" style="background:' + sw[1] + '" data-a="col-set" data-k="' + scope + '" data-w="' + which + '" data-v="' + sw[1] + '" aria-pressed="' + (cur === sw[1]) + '" aria-label="' + sw[0] + '"></button>';
+    }).join("") + '<label class="sw custom" aria-label="Altro colore">+<input type="color" id="col-' + scope + "-" + which + '" value="' + (cur || "#888888") + '"></label>' +
+      (cur ? '<button class="link" data-a="col-set" data-k="' + scope + '" data-w="' + which + '" data-v="">Nessuno</button>' : "") + "</div>";
+  };
+  var a = hexRgb(info.primary), kit = a ? (function () { var b = hexRgb(info.secondary); return { bg: rgbHex(a), fg: rgbHex(b && Math.abs(lum(a) - lum(b)) > 0.35 ? b : inkOn(a)) }; })() : null;
+  return '<section class="panel"><h2>Colori sociali</h2><div class="grp">' + row("primary", "Colore principale") + "</div><div class=\"grp\">" + row("secondary", "Colore secondario") + "</div>" +
+    (kit ? '<div class="kitprev"><span class="shirt" style="background:' + kit.bg + ";color:" + kit.fg + '">10</span><span class="note">Così le maglie sul campo; nei documenti il colore principale.</span></div>'
+      : '<div class="note">Usati per le maglie sul campo e nei documenti (convocazione e PDF della partita).</div>') + "</section>";
+}
+function logoPanelHTML(scope, logo) {
+  return '<section class="panel"><h2>Logo</h2><div class="row">' + (logo ? '<img class="logoprev" src="' + logo + '" alt="Logo">' : '<div class="logoprev"></div>') +
+    '<div class="grow" style="display:flex;flex-direction:column;gap:8px"><label class="btn" for="' + scope + '-logo-file">' + (logo ? "Cambia logo" : "Carica il logo") + "</label>" +
+    (logo ? '<button class="btn danger" data-a="logo-del" data-k="' + scope + '">Togli il logo</button>' : "") + "</div></div>" +
+    '<input type="file" id="' + scope + '-logo-file" accept="image/*" hidden><div class="note">Resta solo su questo dispositivo.</div></section>';
+}
+function setTeamInfo(scope, patch) {
+  if (scope === "c") S.settings.conv = Object.assign({}, S.settings.conv, patch);
+  else S.oppInfo[ui.rOpp] = Object.assign({}, S.oppInfo[ui.rOpp], patch);
+  save(); render();
+}
 
 /* ---------- prossima partita: convocazione e preparazione ---------- */
 // Testi fissi della convocazione (Home → Società); i campi vuoti usano questi valori.
@@ -580,7 +641,7 @@ function convocati(m) {
 function convData(m) {
   var c = conv(), pl = m.plan || {};
   return {
-    club: c.club, categoria: c.categoria, logo: c.logo || "", avversario: oppName(m), competizione: pl.comp || c.competizione,
+    club: c.club, categoria: c.categoria, logo: c.logo || "", color: docColor(c, null), avversario: oppName(m), competizione: pl.comp || c.competizione,
     data: pl.data, ritrovoOra: pl.ritrovoOra, ritrovoLuogo: pl.ritrovoLuogo, inizioOra: pl.inizioOra, impianto: pl.impianto,
     documenti: c.documenti, kit: c.kit, puntualita: c.puntualita, assenze: c.assenze, motto: c.motto,
     sel: convocati(m).map(function (n) { return String(shirtOf(n).s || n).toUpperCase(); })
@@ -714,7 +775,8 @@ function pitchHTML(mod, slots, stats, opt) {
       if (s.r) b += '<i class="b-card ' + (s.y >= 2 ? "yr" : "r") + '"></i>';
       else if (s.y) b += '<i class="b-card y"></i>';
       if (s.inAt) b += '<i class="b-in">▲</i>';
-      var inner = '<span class="shirt">' + (name ? esc(sh.n) : "+") + (b ? '<span class="bd">' + b + "</span>" : "") + "</span>" +
+      var kst = opt.kit && name && i > 0 ? ' style="background:' + opt.kit.bg + ";color:" + opt.kit.fg + '"' : "";
+      var inner = '<span class="shirt"' + kst + ">" + (name ? esc(sh.n) : "+") + (b ? '<span class="bd">' + b + "</span>" : "") + "</span>" +
         '<span class="pn">' + esc(name ? sh.s : opt.edit ? roleOf(mod, i) : "") + "</span>";
       if (opt.edit) h += '<button class="' + cls + '" data-a="lu-slot" data-i="' + i + '" aria-pressed="' + (opt.sel === i) + '" aria-label="' + esc(roleOf(mod, i) + (name ? ": " + name : "")) + '"' + attr + ">" + inner + "</button>";
       else if (opt.pick && name) h += '<button class="' + cls + '" data-a="' + (opt.act || "pick") + '" data-f="' + opt.pick + '" data-v="' + esc(name) + '" aria-pressed="' + (opt.cur === name) + '"' + attr + ">" + inner + "</button>";
@@ -747,7 +809,7 @@ function teamLineupHTML(m, t) {
   }
   var st = fieldState(m, null, t);
   return '<section class="panel"><div class="row"><span class="grow muted small">Modulo ' + esc(st.mod) + "</span></div>" +
-    pitchHTML(st.mod, st.slots, st.stats) + benchHTML(st) + "</section>" +
+    pitchHTML(st.mod, st.slots, st.stats, { kit: kitFor(m, t) }) + benchHTML(st) + "</section>" +
     '<button class="btn primary big block" data-a="lu-open" data-mid="' + m.id + '" data-t="' + t + '">Modifica formazione</button>';
 }
 function lineupText(m, t) {
@@ -1309,7 +1371,8 @@ function a4HTML(d) {
   for (var i = 0; i < R; i++) {
     rows += '<tr><td class="n">N.' + two0(i + 1) + "</td><td>" + esc(d.sel[i] || "") + '</td><td class="n">N.' + two0(i + R + 1) + "</td><td>" + esc(d.sel[i + R] || "") + "</td></tr>";
   }
-  return '<div class="a4" id="a4"><div class="fr"><div class="club">' + esc(d.club) + "</div>" +
+  var cs = d.color ? ' style="--c1:' + rgbHex(onWhite(d.color)) + ";--cf:" + rgbHex(d.color) + '"' : "";
+  return '<div class="a4" id="a4"' + cs + '><div class="fr"><div class="club">' + esc(d.club) + "</div>" +
     (d.logo ? '<img class="lg" src="' + d.logo + '" alt="">' : "") +
     '<div class="tit">CONVOCAZIONE GARA UFFICIALE – <span class="c">CATEGORIA</span> <span class="u">' + esc(d.categoria) + "</span></div>" +
     '<p class="ln"><span class="lb">Avversario:</span> ' + esc(d.avversario) + "</p>" +
@@ -1341,7 +1404,7 @@ function loadJsPdf() {
 function pdfText(s) { return String(s == null ? "" : s).replace(/[′]/g, "'").replace(/[–—]/g, "-").replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/…/g, "...").replace(/[^\x00-\xFF]/g, ""); }
 function buildPdf(d) {
   var doc = new window.jspdf.jsPDF({ unit: "mm", format: "a4" });
-  var BUR = [128, 0, 32], RED = [238, 0, 0], GREY = [50, 50, 50], BLK = [0, 0, 0];
+  var BUR = d.color ? onWhite(d.color) : [128, 0, 32], FRAME = d.color || [155, 59, 51], RED = [238, 0, 0], GREY = [50, 50, 50], BLK = [0, 0, 0];
   var set = function (style, size, col) { doc.setFont("times", style); doc.setFontSize(size); doc.setTextColor(col[0], col[1], col[2]); };
   var line = function (segs, x, y) { segs.forEach(function (sg) { set(sg[2] || "normal", sg[3], sg[1]); var t = pdfText(sg[0]); doc.text(t, x, y); x += doc.getTextWidth(t); }); return x; };
   var wrap = function (segs, x, y, maxW, lh) {
@@ -1422,7 +1485,7 @@ function buildPdf(d) {
   y += 3;
   set("normal", 12, BUR); doc.text(pdfText(d.motto), CX, y, { align: "center" });
   var bottom = Math.min(290, Math.max(T + 252, y + 10));
-  doc.setDrawColor(155, 59, 51); doc.setLineWidth(2.2);
+  doc.setDrawColor(FRAME[0], FRAME[1], FRAME[2]); doc.setLineWidth(2.2);
   doc.rect(L, T, W, bottom - T);
   return doc;
 }
@@ -1476,10 +1539,7 @@ function vClub() {
   return topBar("Società") +
     '<section class="panel"><div class="fields">' + fld("club", "Società", "Es. A.S.D. Polisportiva") + fld("categoria", "Categoria", "Es. Under 17") +
     "</div></section>" +
-    '<section class="panel"><h2>Logo</h2><div class="row">' + (c.logo ? '<img class="logoprev" src="' + c.logo + '" alt="Logo">' : '<div class="logoprev"></div>') +
-    '<div class="grow" style="display:flex;flex-direction:column;gap:8px"><label class="btn" for="c-logo-file">' + (c.logo ? "Cambia logo" : "Carica il logo") + "</label>" +
-    (c.logo ? '<button class="btn danger" data-a="c-logo-del">Togli il logo</button>' : "") + "</div></div>" +
-    '<input type="file" id="c-logo-file" accept="image/*" hidden><div class="note">Resta solo su questo dispositivo.</div></section>' +
+    logoPanelHTML("c", c.logo) + colorsHTML("c", c) +
     '<section class="panel"><h2>Valori proposti per la prossima partita</h2><div class="fields">' + fld("competizione", "Competizione") +
     '<label class="f">Ritrovo alle<input type="time" id="c-ritrovoOra" value="' + esc(c.ritrovoOra) + '"></label>' +
     '<label class="f">Inizio gara<input type="time" id="c-inizioOra" value="' + esc(c.inizioOra) + '"></label>' +
@@ -1489,15 +1549,14 @@ function vClub() {
     '<div class="note">Le modifiche si salvano da sole.</div>';
 }
 // Logo ridotto (max 400 px) per non appesantire i dati salvati sul telefono.
-function loadLogo(file) {
+function loadLogo(file, scope) {
   var img = new Image(), url = URL.createObjectURL(file);
   img.onload = function () {
     var k = Math.min(1, 400 / Math.max(img.width, img.height)), c = document.createElement("canvas");
     c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
     var g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0, c.width, c.height);
     URL.revokeObjectURL(url);
-    S.settings.conv = Object.assign({}, S.settings.conv, { logo: c.toDataURL("image/jpeg", 0.88) });
-    save(); render();
+    setTeamInfo(scope || "c", { logo: c.toDataURL("image/jpeg", 0.88) });
   };
   img.onerror = function () { URL.revokeObjectURL(url); toast("Immagine non valida"); };
   img.src = url;
@@ -1630,7 +1689,10 @@ function vRoster() {
   if (!r) { ui.p = { sec: "opps" }; return vRoster(); }
   h = topBar(sec === "opp" ? "Avversario" : "La mia squadra");
   if (sec === "mine") h += '<section class="panel"><label class="f">Nome della squadra<input type="text" id="r-team" autocomplete="off" value="' + esc(S.settings.team) + '" placeholder="La mia squadra"></label></section>';
-  else h += '<p class="lead">' + esc(S.oppLabels[ui.rOpp] || ui.rOpp) + "</p>";
+  else {
+    var oi = S.oppInfo[ui.rOpp] || {};
+    h += '<p class="lead">' + esc(S.oppLabels[ui.rOpp] || ui.rOpp) + "</p>" + logoPanelHTML("o", oi.logo) + colorsHTML("o", oi);
+  }
   h += '<div class="tiles">' + tile("scan-open", ic("camera"), "Leggi dalla distinta", "Dalla foto della distinta, o dal testo copiato") + "</div>";
   h += guideHTML("?", "Scrivi cognome e nome (con il numero di maglia davanti, se vuoi, es. 10 Rossi Mario) e tocca <b>Aggiungi</b>. Puoi scriverne tanti separati da virgola.");
   h += '<section class="panel"><h2>Aggiungi giocatori</h2><div class="row"><input type="text" id="r-new" class="grow" autocomplete="off" placeholder="Es. 10 Rossi"><button class="btn primary" data-a="r-add">Aggiungi</button></div>' +
@@ -1689,13 +1751,13 @@ function evDetail(e) {
 }
 function buildMatchPdf(m) {
   var doc = new window.jspdf.jsPDF({ unit: "mm", format: "a4" }), c = conv(), pl = m.plan || {};
-  var GREEN = [28, 90, 52], INK = [19, 32, 26], MUT = [90, 106, 97], L = 15, R = 195, y;
+  var BAND = docColor(c, [28, 90, 52]), GREEN = onWhite(BAND), BINK = inkOn(BAND), INK = [19, 32, 26], MUT = [90, 106, 97], L = 15, R = 195, y;
   var set = function (st, sz, col) { doc.setFont("helvetica", st); doc.setFontSize(sz); doc.setTextColor(col[0], col[1], col[2]); };
   var T = function (t, x, yy, o) { doc.text(pdfText(t), x, yy, o || {}); };
   var lines = function (t, w) { return doc.splitTextToSize(pdfText(t), w); };
   var need = function (h) { if (y + h > 280) { doc.addPage(); y = 18; return true; } return false; };
   // intestazione
-  doc.setFillColor(GREEN[0], GREEN[1], GREEN[2]); doc.rect(0, 0, 210, 30, "F");
+  doc.setFillColor(BAND[0], BAND[1], BAND[2]); doc.rect(0, 0, 210, 30, "F");
   var tx = L;
   if (c.logo) {
     try {
@@ -1704,15 +1766,28 @@ function buildMatchPdf(m) {
       doc.addImage(c.logo, L, 4.5, pr.width * k, pr.height * k); tx = L + pr.width * k + 6;
     } catch (e) {}
   }
-  set("bold", 18, [255, 255, 255]); T("CRONACA DELLA PARTITA", tx, 14);
-  set("normal", 10, [235, 242, 237]); T([c.club, c.categoria].filter(Boolean).join(" - "), tx, 21);
+  set("bold", 18, BINK); T("CRONACA DELLA PARTITA", tx, 14);
+  set("normal", 10, BINK); T([c.club, c.categoria].filter(Boolean).join(" - "), tx, 21);
   y = 40;
   set("normal", 10, MUT);
   var info = [dateLabel(m.date), pl.comp, pl.impianto].filter(Boolean).join("  -  ");
   T(info, 105, y, { align: "center" });
   if (m.status !== "ended") { y += 5; set("bold", 10, [179, 25, 45]); T("Partita in corso - " + periodName(m.period), 105, y, { align: "center" }); }
-  // risultato
+  // risultato, con i loghi delle due squadre
   y += 12;
+  var logoAt = function (t, x, align) {
+    var lg = teamInfo(m, t).logo;
+    if (!lg) return false;
+    try {
+      var pp = doc.getImageProperties(lg), kk = Math.min(16 / pp.width, 18 / pp.height), w2 = pp.width * kk;
+      doc.addImage(lg, align === "right" ? x - w2 : x, y - 4, w2, pp.height * kk); return true;
+    } catch (e) { return false; }
+  };
+  if (logoAt("home", 90, "right") | logoAt("away", 120, "left")) y += 20;
+  ["home", "away"].forEach(function (t) {
+    var col = hexRgb(teamInfo(m, t).primary);
+    if (col && lum(col) < 0.92) { doc.setFillColor(col[0], col[1], col[2]); doc.rect(t === "home" ? 60 : 120, y + 3.2, 30, 1.2, "F"); }
+  });
   set("bold", 13, INK);
   var hn = lines(m.home.toUpperCase(), 66), an = lines(m.away.toUpperCase(), 66);
   doc.text(hn, 90, y, { align: "right" }); doc.text(an, 120, y);
@@ -1732,7 +1807,7 @@ function buildMatchPdf(m) {
   set("bold", 12, GREEN); T("CRONACA", L, y); y += 3;
   var cols = [L, L + 16, L + 64, L + 106], head = function () {
     doc.setFillColor(GREEN[0], GREEN[1], GREEN[2]); doc.rect(L, y, R - L, 7, "F");
-    set("bold", 9, [255, 255, 255]); T("Min.", cols[0] + 2, y + 4.8); T("Squadra", cols[1] + 2, y + 4.8); T("Evento", cols[2] + 2, y + 4.8); T("Giocatori", cols[3] + 2, y + 4.8);
+    set("bold", 9, inkOn(GREEN)); T("Min.", cols[0] + 2, y + 4.8); T("Squadra", cols[1] + 2, y + 4.8); T("Evento", cols[2] + 2, y + 4.8); T("Giocatori", cols[3] + 2, y + 4.8);
     y += 7;
   };
   head();
@@ -1742,7 +1817,8 @@ function buildMatchPdf(m) {
     if (e.period !== cur && m.periods > 1) {
       cur = e.period;
       if (need(14)) head();
-      doc.setFillColor(222, 233, 226); doc.rect(L, y, R - L, 6, "F");
+      var tint = GREEN.map(function (v) { return Math.round(v + (255 - v) * 0.85); });
+      doc.setFillColor(tint[0], tint[1], tint[2]); doc.rect(L, y, R - L, 6, "F");
       set("bold", 9, GREEN); T(periodName(cur).toUpperCase(), L + 2, y + 4.2); y += 6;
     }
     set("normal", 9.5, INK);
@@ -1890,7 +1966,7 @@ function vWizard(m) {
     else if (st === "on") { q2 = "Chi entra?"; g2 = "Esce <b>" + esc(w.off || "giocatore non indicato") + "</b>. Ora tocca il giocatore che <b>entra</b>."; groups = fs ? [["Panchina", bench.filter(function (x) { return x !== w.off; })], ["Altri della rosa", rest]] : [["Rosa", names.filter(function (x) { return x !== w.off; })]]; }
     else { q2 = w.type === "goal" ? (w.kind === "autogol" ? "Chi ha fatto l’autogol?" : "Chi ha segnato?") : "A chi il cartellino?"; g2 = "Tocca il giocatore" + (fs ? " sul campo o nell’elenco." : " nell’elenco.") + " Se non lo sai, tocca Non indicato."; groups = fs ? [["In campo", onField], ["Panchina", bench], ["Altri della rosa", rest]] : [["Rosa", names]]; }
     h += '<p class="lead">' + q2 + "<small>" + pas + " · " + esc(teamName(m, pt)) + " · " + min + "</small></p>" + guideHTML(n, g2);
-    if (st !== "on" && fs) h += pitchHTML(fs.mod, fs.slots, fs.stats, { mini: true, pick: st, act: "wz-pick", cur: w[st] });
+    if (st !== "on" && fs) h += pitchHTML(fs.mod, fs.slots, fs.stats, { mini: true, pick: st, act: "wz-pick", cur: w[st], kit: kitFor(m, pt) });
     h += '<section class="panel">' + (names.length ? "" : '<div class="note">La rosa di ' + esc(teamName(m, pt)) + " è vuota: scrivi il nome qui sotto.</div>") +
       chooserHTML({ key: "wz", input: "wz-q", q: ui.wzQ, groups: groups, act: "wz-pick", attrs: ' data-f="' + st + '"', cur: w[st], none: true, add: "wz-new", team: teamName(m, pt) }) + "</section>";
     return h;
@@ -1968,7 +2044,7 @@ function vLineup() {
   }).join("") + '</div><div class="chips">' + (MODULI[size] || [L.mod]).map(function (mod) {
     return '<button class="chip" data-a="lu-mod" data-v="' + mod + '" aria-pressed="' + (mod === L.mod) + '">' + mod + "</button>";
   }).join("") + "</div></section>";
-  h += pitchHTML(L.mod, L.slots, null, { edit: true, sel: sel });
+  h += pitchHTML(L.mod, L.slots, null, { edit: true, sel: sel, kit: kitFor(m, t) });
   if (sel != null) {
     h += '<section class="panel"><h2>' + roleOf(L.mod, sel) + (L.slots[sel] ? ": " + esc(L.slots[sel]) : "") + "</h2>" +
       chooserHTML({ key: "lu", input: "lu-q", q: ui.luQ, groups: [["Panchina", bench], ["In campo · scambia il ruolo", L.slots.filter(function (n) { return n && n !== L.slots[sel]; })], ["Tribuna", out]], act: "lu-pick", attrs: "",
@@ -2122,7 +2198,7 @@ function sheetHTML(m, e) {
   if (e.type === "sub") {
     if (fs) {
       var onField = fs.slots.filter(Boolean), rest = but.apply(null, [names].concat(onField, fs.bench));
-      h += "<h2>Esce \u00b7 tocca il giocatore in campo</h2>" + pitchHTML(fs.mod, fs.slots, fs.stats, { mini: true, pick: "off", cur: e.off });
+      h += "<h2>Esce \u00b7 tocca il giocatore in campo</h2>" + pitchHTML(fs.mod, fs.slots, fs.stats, { mini: true, pick: "off", cur: e.off, kit: kitFor(m, pt) });
       h += pickerHTML(m, e, "off", "Oppure scegli chi esce", [["In campo", but(onField, e.on)], ["Panchina", but(fs.bench, e.on)], ["Altri della rosa", but(rest, e.on)]], pt);
       h += pickerHTML(m, e, "on", "Entra", [["Panchina", but(fs.bench, e.off)], ["Altri della rosa", but(rest, e.off)]], pt);
     } else {
@@ -2133,7 +2209,7 @@ function sheetHTML(m, e) {
     var label = e.kind === "autogol" ? "Autore dell'autogol (" + esc(teamName(m, pt)) + ")" : "Giocatore" + (e.type === "goal" ? " che ha segnato" : "");
     if (fs) {
       var off = fs.slots.filter(Boolean);
-      h += "<h2>" + label + " \u00b7 tocca in campo</h2>" + pitchHTML(fs.mod, fs.slots, fs.stats, { mini: true, pick: "player", cur: e.player });
+      h += "<h2>" + label + " \u00b7 tocca in campo</h2>" + pitchHTML(fs.mod, fs.slots, fs.stats, { mini: true, pick: "player", cur: e.player, kit: kitFor(m, pt) });
       h += pickerHTML(m, e, "player", "Oppure scegli dall'elenco", [["In campo", off], ["Panchina", fs.bench], ["Altri della rosa", names]], pt);
     } else {
       h += pickerHTML(m, e, "player", label, [["Rosa", names]], pt);
@@ -2379,7 +2455,8 @@ document.addEventListener("click", function (ev) {
         S.match = null; save(); reset("home");
       }, true);
       break;
-    case "c-logo-del": S.settings.conv = Object.assign({}, S.settings.conv, { logo: "" }); save(); render(); break;
+    case "logo-del": setTeamInfo(el.getAttribute("data-k"), { logo: "" }); break;
+    case "col-set": { var cp = {}; cp[el.getAttribute("data-w")] = el.getAttribute("data-v"); setTeamInfo(el.getAttribute("data-k"), cp); break; }
 
     case "r-add": {
       var inp = document.getElementById("r-new");
@@ -2507,7 +2584,7 @@ document.addEventListener("input", function (ev) {
   if (id === "lu-q") { ui.luQ = ev.target.value; filterChips("lu", ev.target.value); }
   if (id === "wz-q") { ui.wzQ = ev.target.value; filterChips("wz", ev.target.value); }
   if (/^p-f-/.test(id) && S.match && S.match.plan) { S.match.plan[id.slice(4)] = ev.target.value; save(); }
-  if (/^c-/.test(id) && id !== "c-logo-file") { var cs = {}; cs[id.slice(2)] = ev.target.value; S.settings.conv = Object.assign({}, S.settings.conv, cs); save(); }
+  if (/^c-/.test(id) && id !== "c-logo-file" && !/^col-/.test(id)) { var cs = {}; cs[id.slice(2)] = ev.target.value; S.settings.conv = Object.assign({}, S.settings.conv, cs); save(); }
 });
 // Invio: se la ricerca trova un solo nome lo sceglie. Un nome nuovo si aggiunge solo col pulsante.
 function enterPick(key) {
@@ -2517,7 +2594,9 @@ function enterPick(key) {
 }
 document.addEventListener("change", function (ev) {
   if (ev.target.id === "r-team") { S.settings.team = ev.target.value.trim(); save(); }
-  if (ev.target.id === "c-logo-file" && ev.target.files && ev.target.files[0]) { loadLogo(ev.target.files[0]); ev.target.value = ""; }
+  if (/^[co]-logo-file$/.test(ev.target.id) && ev.target.files && ev.target.files[0]) { loadLogo(ev.target.files[0], ev.target.id.charAt(0)); ev.target.value = ""; }
+  var cm = /^col-([co])-(primary|secondary)$/.exec(ev.target.id);
+  if (cm) { var cc2 = {}; cc2[cm[2]] = ev.target.value.toUpperCase(); setTeamInfo(cm[1], cc2); }
   if (ev.target.id === "scan-file" && ev.target.files && ev.target.files[0]) { readPhoto(ev.target.files[0]); ev.target.value = ""; }
   if (ev.target.id === "r-file" && ev.target.files && ev.target.files[0]) {
     var f = ev.target.files[0], rd = new FileReader();
