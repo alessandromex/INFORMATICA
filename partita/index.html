@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Bordocampo</title>
+<title>MisterBook</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Bordocampo">
+<meta name="apple-mobile-web-app-title" content="MisterBook">
 <meta name="theme-color" content="#1c5a34">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
@@ -17,7 +17,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Barlow:wght@400;500;600;700&display=swap">
 <style>
 /* Layout: una colonna da telefono; il tabellone scuro in alto resta sempre leggibile a bordocampo, sotto comandi e cronologia. */
-/* Layout: una colonna, sfondo a campo verde (come la grafica di Bordocampo); ogni schermata ha poche
+/* Layout: una colonna, sfondo a campo verde (come la grafica di MisterBook); ogni schermata ha poche
    cose grandi da toccare: schede bianche con icona, testo e freccia. Tema unico, pensato per l'esterno. */
 :root {
   --field: #1c5a34;
@@ -299,6 +299,12 @@ textarea.field { padding: 10px 12px; min-height: 76px; font: 16px/1.35 var(--fon
 .bigcard { display: block; width: 34px; height: 46px; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,.35); }
 .bigcard.y { background: var(--yellow); }
 .bigcard.r { background: var(--red); }
+.navbar { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,.22); }
+.navbar .btn { min-height: 54px; font: 700 19px/1 var(--font-display); text-transform: uppercase; letter-spacing: .04em; }
+.navbar .btn.ghost[disabled] { opacity: .35; }
+.langs { display: flex; justify-content: center; gap: 8px; margin-top: 6px; }
+.langs button { padding: 8px 16px; border-radius: 999px; color: var(--on-field); border: 1px solid rgba(255,255,255,.35); font-weight: 600; }
+.langs button[aria-pressed="true"] { background: var(--surface); color: var(--ink); border-color: transparent; }
 .danger-link { align-self: center; color: #ffd9de; font-weight: 600; padding: 12px; text-decoration: underline; }
 
 /* tabellone essenziale della partita */
@@ -467,8 +473,268 @@ function save() { store(); liveSchedule(); }
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
 function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
 
+/* ---------- lingua: italiano (testi nel codice) e inglese (dizionario qui sotto) ---------- */
+// I testi dell'app sono scritti in italiano; in inglese l'HTML di ogni schermata passa da trHTML, che
+// traduce ogni pezzo di testo (e placeholder / aria-label) con il dizionario EN o con le regole ENP.
+// Chi ha già dati salvati resta in italiano finché non sceglie un'altra lingua in Home.
+var LANG = "it", LOC = "it-IT";
+function setLang(l) { LANG = l === "en" ? "en" : "it"; LOC = LANG === "en" ? "en-GB" : "it-IT"; try { document.documentElement.lang = LANG; } catch (e) {} }
+(function () {
+  var used = S.history.length || S.match || S.settings.roster.length || S.settings.team;
+  setLang(S.settings.lang || (used || /^it\b/i.test(navigator.language || "it") ? "it" : "en"));
+})();
+function L(it, en) { return LANG === "en" ? en : it; }
+function ord(n) { n = +n; var k = n % 100; return n + (k >= 11 && k <= 13 ? "th" : ["th", "st", "nd", "rd"][n % 10] || "th"); }
+function pl(n, one, many) { return n + " " + (+n === 1 ? one : many); }
+var EN = {
+  // navigazione e comandi
+  "‹ Indietro": "‹ Back", "Indietro": "Back", "Avanti": "Next", "Avanti ›": "Next ›", "Fatto ✓": "Done ✓", "Fatto": "Done", "Salva": "Save", "Chiudi": "Close",
+  "Annulla": "Cancel", "Elimina": "Delete", "Conferma": "Confirm", "Aggiungi": "Add", "Crea": "Create", "Rimuovi": "Remove", "Condividi": "Share",
+  "Eliminato": "Deleted", "Nessuno": "None", "Altro colore": "Other color",
+  // home
+  "Prossima partita": "Next match", "Riprendi la partita": "Resume the match", "Nuova partita": "New match", "Convocazione, formazione e via": "Call-up, lineup and kick-off",
+  "Rosa": "Squad", "Partite giocate": "Matches played", "Ancora nessuna": "None yet", "Società": "Club", "Logo e testi della convocazione": "Logo and call-up texts",
+  "da preparare": "to prepare", "Lingua": "Language",
+  "Qui trovi i risultati finali con marcatori e minuti, appena chiudi la prima partita.": "Final scores with scorers and minutes appear here as soon as you finish your first match.",
+  // colori e logo
+  "Granata": "Maroon", "Rosso": "Red", "Arancione": "Orange", "Giallo": "Yellow", "Verde": "Green", "Azzurro": "Sky blue", "Blu": "Blue", "Viola": "Purple",
+  "Nero": "Black", "Bianco": "White", "Grigio": "Grey", "Colori sociali": "Team colors", "Colore principale": "Main color", "Colore secondario": "Second color",
+  "Così le maglie sul campo; nei documenti il colore principale.": "This is how the shirts look on the pitch; documents use the main color.",
+  "Usati per le maglie sul campo e nei documenti (convocazione e PDF della partita).": "Used for the shirts on the pitch and in documents (call-up and match PDF).",
+  "Logo": "Logo", "Cambia logo": "Change logo", "Carica il logo": "Upload the logo", "Togli il logo": "Remove the logo", "Resta solo su questo dispositivo.": "It stays on this device only.",
+  "Immagine non valida": "Invalid image",
+  // testi fissi della convocazione
+  "Portare un documento d'identità valido (o tesserino FIGC a cura del dirigente).": "Bring a valid ID (or player card, handled by the team manager).",
+  "Presentarsi con la divisa ufficiale, parastinchi e scarpe adatte al terreno di gioco.": "Come in the official kit, with shin guards and boots suited to the pitch.",
+  "Si raccomanda la massima puntualità all'orario di ritrovo fissato.": "Please be on time at the meeting point.",
+  "In caso di imprevisti o problemi dell'ultimo minuto, avvisare tempestivamente il mister o il dirigente.": "If anything comes up at the last minute, let the coach or team manager know straight away.",
+  // squadre
+  "La mia squadra": "My team", "Casa": "Home", "Ospiti": "Away", "Avversari": "Opponents", "Avversario": "Opponent", "noi": "us",
+  // prossima partita
+  "Quando e dove": "When and where", "Convocazione": "Call-up", "Formazione": "Lineup", "Convocazione PDF": "Call-up PDF", "Da scegliere": "To choose",
+  "Data da scegliere": "Date to choose", "Scegli chi convocare dalla rosa": "Choose who to call up from the squad", "Servono i convocati": "Call up players first",
+  "Prepara la partita": "Prepare the match", "Segui i passi: avversario, convocazione, formazione": "Follow the steps: opponent, call-up, lineup",
+  "Inizia la partita": "Start the match", "Annulla la partita": "Cancel the match", "Contro chi giochiamo?": "Who are we playing?",
+  "Scrivi il nome della squadra avversaria oppure toccane una già salvata. Poi scegli <b>In casa</b> o <b>In trasferta</b> e tocca <b>Avanti</b>.":
+    "Type the name of the opposing team or tap one you saved before. Then choose <b>Home</b> or <b>Away</b> and tap <b>Next</b>.",
+  "Squadra avversaria": "Opposing team", "Es. Virtus": "e.g. Rovers", "Giochiamo": "We play", "In casa": "Home", "In trasferta": "Away",
+  "Quando e dove?": "When and where?", "finisce nella convocazione": "goes into the call-up",
+  "Tocca ogni casella e inserisci data, orari e luoghi. Le caselle già piene vengono dalla Società: cambiale solo se serve.":
+    "Tap each box and enter date, times and places. Boxes already filled in come from Club: change them only if needed.",
+  "Data": "Date", "Inizio gara": "Kick-off", "Ritrovo alle": "Meet at (time)", "Ritrovo presso": "Meeting point", "Impianto di gioco": "Venue", "Competizione": "Competition",
+  "Es. Stadio comunale": "e.g. Town stadium", "Es. Campo sportivo …": "e.g. Riverside sports ground", "Es. Campionato Under 17": "e.g. Under 17 league",
+  "Chi convochi?": "Who are you calling up?",
+  "Per ogni giocatore tocca <b>Campo</b> (titolare), <b>Panch.</b> (in panchina) o <b>Tribuna</b> (non convocato). In alto vedi i conteggi.":
+    "For each player tap <b>Pitch</b> (starter), <b>Bench</b> (substitute) or <b>Stands</b> (not called up). The counts are at the top.",
+  "In campo": "On the pitch", "Panchina": "Bench", "Convocati": "Called up", "Convocati (max 20)": "Called up (max 20)", "Giocatori in campo": "Players on the pitch",
+  "La rosa è vuota.": "The squad is empty.", "Inserisci la rosa": "Enter the squad", "Campo": "Pitch", "Panch.": "Bench", "Tribuna": "Stands",
+  "Aggiungi o correggi giocatori della rosa": "Add or fix squad players", "La convocazione": "The call-up",
+  "Controlla il foglio qui sotto, poi tocca <b>Crea e condividi il PDF</b> per mandarlo su WhatsApp o salvarlo.":
+    "Check the sheet below, then tap <b>Create and share the PDF</b> to send it on WhatsApp or save it.",
+  "Ordine: formazione": "Order: lineup", "Ordine: A–Z": "Order: A–Z",
+  "Il logo della società si aggiunge in Home → Società, insieme ai testi fissi.": "Add the club logo in Home → Club, together with the standard texts.",
+  "Crea e condividi il PDF": "Create and share the PDF", "Modifica logo e testi": "Edit logo and texts",
+  "Quanto si gioca?": "How long is the match?", "Poi parte la partita con il cronometro": "Then the match starts with the clock",
+  "Scegli quanti tempi e quanti minuti per tempo (+ e −, oppure tocca un valore), poi <b>Vai in campo</b>. Il cronometro parte quando tocchi Avvia.":
+    "Choose how many periods and how many minutes each (+ and −, or tap a value), then <b>Go to the pitch</b>. The clock starts when you tap Start.",
+  "Numero di tempi": "Number of periods", "Meno tempi": "Fewer periods", "Più tempi": "More periods", "tempo unico": "single period", "tempi": "periods",
+  "Minuti per tempo": "Minutes per period", "Meno minuti": "Fewer minutes", "Più minuti": "More minutes", "Vai in campo": "Go to the pitch",
+  "Scrivi o scegli la squadra avversaria": "Type or choose the opposing team",
+  // foglio A4 della convocazione
+  "CONVOCAZIONE GARA UFFICIALE –": "OFFICIAL MATCH CALL-UP –", "CATEGORIA": "AGE GROUP", "Avversario:": "Opponent:", "Competizione:": "Competition:", "Data:": "Date:",
+  "Orario Ritrovo:": "Meeting time:", "&nbsp; presso &nbsp;": "&nbsp; at &nbsp;", "Inizio Gara:": "Kick-off:", "Impianto di gioco:": "Venue:",
+  "ELENCO CONVOCATI": "SQUAD LIST", "NOTE IMPORTANTI": "IMPORTANT NOTES",
+  "Prima scegli i convocati": "Choose the players first", "Preparo il PDF…": "Preparing the PDF…", "Serve la connessione la prima volta per creare il PDF": "An internet connection is needed the first time to create the PDF",
+  "Non è stato possibile salvare il file": "Could not save the file",
+  // società
+  "Categoria": "Age group", "Es. A.S.D. Polisportiva": "e.g. Riverside FC", "Es. Under 17": "e.g. Under 17", "Valori proposti per la prossima partita": "Defaults for the next match",
+  "Note della convocazione": "Call-up notes", "Documenti": "Documents", "Kit di gara": "Match kit", "Puntualità": "Punctuality", "Assenze": "Absences",
+  "Saluto finale": "Closing line", "Es. Forza ragazzi": "e.g. Come on, team!", "Le modifiche si salvano da sole.": "Changes are saved automatically.",
+  // rose
+  "Le tue rose in un file": "Your squads in a file", "Salvale sul dispositivo e caricale più tardi, anche su un altro telefono o sul PC.": "Save them on the device and load them later, even on another phone or a computer.",
+  "Salva tutte le rose": "Save all squads", "La tua squadra e tutti gli avversari": "Your team and all opponents", "Carica rose da file": "Load squads from a file",
+  "I nomi già presenti non si duplicano": "Names already there are not duplicated",
+  "Per una sola squadra usa Salva su file nella sua rosa. Un file di testo con un nome per riga va nella rosa aperta.": "For a single team use Save to file in its squad. A text file with one name per line goes into the open squad.",
+  "Salva il file delle rose": "Save the squads file", "Nel file non ci sono rose da caricare": "There are no squads to load in this file", "Non riesco a leggere il file": "Cannot read the file",
+  "Nessuna squadra salvata": "No team saved", "Salva e carica": "Save and load", "Rose in un file, anche per un altro dispositivo": "Squads in a file, also for another device",
+  "Nessuna squadra avversaria salvata.": "No opposing team saved.", "Nuova squadra avversaria": "New opposing team", "Nome, es. Virtus": "Name, e.g. Rovers",
+  "La rosa di un avversario viene proposta in automatico quando giochi contro una squadra con lo stesso nome.": "An opponent's squad is suggested automatically when you play a team with the same name.",
+  "Nome della squadra": "Team name", "Leggi dalla distinta": "Read from the team sheet", "Dalla foto della distinta, o dal testo copiato": "From a photo of the team sheet, or from copied text",
+  "Scrivi cognome e nome (con il numero di maglia davanti, se vuoi, es. 10 Rossi Mario) e tocca <b>Aggiungi</b>. Puoi scriverne tanti separati da virgola.":
+    "Type surname and name (with the shirt number first if you like, e.g. 10 Smith John) and tap <b>Add</b>. You can type many, separated by commas.",
+  "Aggiungi giocatori": "Add players", "Es. 10 Rossi": "e.g. 10 Smith",
+  "Anche tanti insieme, separati da virgola. Il numero di maglia prima del nome compare sul campo.": "Many at once too, separated by commas. The shirt number before the name is shown on the pitch.",
+  "Salva su file": "Save to file", "Carica da file": "Load from file",
+  // distinta (foto)
+  "Distinta": "Team sheet", "Lettura in corso": "Reading", "Resta su questa schermata: ci vuole qualche secondo.": "Stay on this screen: it takes a few seconds.",
+  "Controlla i nomi: tocca il segno per escludere una riga, correggi il testo se serve.": "Check the names: tap the mark to leave out a row, fix the text if needed.",
+  "Non ho trovato nomi di giocatori. Prova con una foto più nitida e dritta, oppure incolla il testo.": "No player names found. Try a sharper, straighter photo, or paste the text.",
+  "Includi": "Include", "Leggi un’altra foto": "Read another photo", "Incolla il testo": "Paste the text",
+  "Su iPhone tieni premuto sul testo della foto (Testo attivo), su Android usa Google Lens: copia l’elenco e incollalo qui.": "On iPhone press and hold the text in the photo (Live Text), on Android use Google Lens: copy the list and paste it here.",
+  "Trova i giocatori": "Find the players", "Dalla distinta della partita ricavo numeri, cognomi e nomi dei giocatori.": "From the match team sheet I take the players' numbers, surnames and names.",
+  "Foto della distinta": "Photo of the team sheet", "Scatta o scegli: dritta, ben illuminata, con tutta la tabella": "Take or choose one: straight, well lit, with the whole table",
+  "Copiato dalla foto con Testo attivo o Google Lens": "Copied from the photo with Live Text or Google Lens",
+  "La foto viene letta sul telefono e non viene inviata a nessuno. Vengono presi solo numero, cognome e nome: date di nascita, matricole e documenti sono ignorati, come dirigenti e allenatori.":
+    "The photo is read on the phone and is not sent to anyone. Only number, surname and name are taken: dates of birth, registration numbers and documents are ignored, as are staff and coaches.",
+  "Preparo la lettura…": "Getting ready…", "Leggo la distinta…": "Reading the team sheet…", "Scarico i dati per la lettura (solo la prima volta)…": "Downloading the reading data (first time only)…",
+  "Serve la connessione la prima volta, per scaricare la lettura delle foto. Riprova con internet.": "An internet connection is needed the first time, to download photo reading. Try again online.",
+  "Non sono riuscito a leggere la foto. Riprova con una foto più dritta e illuminata, oppure incolla il testo.": "Could not read the photo. Try a straighter, brighter photo, or paste the text.",
+  // cronaca ed eventi
+  "Ancora nessun evento. Gol, cartellini e cambi compaiono qui con il loro minuto.": "No events yet. Goals, cards and substitutions appear here with their minute.",
+  "Tocca un evento per <b>correggerlo</b> (giocatori, tipo, minuto, squadra) o per <b>eliminarlo</b>. In fondo crei il PDF della partita da condividere.":
+    "Tap an event to <b>fix it</b> (players, type, minute, team) or to <b>delete it</b>. At the bottom you create the match PDF to share.",
+  "Ammoniti": "Booked", "Espulsi": "Sent off", "Cambi": "Substitutions", "Aggiungi un evento dimenticato": "Add a missed event",
+  "Cambio": "Substitution", "giocatori non indicati": "players not specified", "non indicato": "not specified", "Rigore": "Penalty", "Autogol": "Own goal", "Gol": "Goal",
+  "Gol su rigore": "Penalty goal", "Espulsione": "Red card", "Espulsione (2a amm.)": "Red card (2nd yellow)", "Ammonizione": "Yellow card", "2ª ammonizione, espulso": "Second yellow, sent off",
+  "marcatore non indicato": "scorer not specified", "giocatore non indicato": "player not specified", "Marcatore non indicato": "Scorer not specified", "Giocatore non indicato": "Player not specified",
+  "Cronaca della partita": "Match report", "Per quale squadra?": "Which team?",
+  // procedure guidate
+  "Cartellini": "Cards", "Sostituzioni": "Substitutions", "Gol salvato": "Goal saved", "Espulsione salvata": "Red card saved", "Ammonizione salvata": "Yellow card saved",
+  "Cambi fatti": "Substitutions made", "Cartellini dati": "Cards given", "Gol segnati": "Goals scored", "Nessun cambio ancora.": "No substitutions yet.",
+  "Nessun cartellino ancora.": "No cards yet.", "Nessun gol ancora.": "No goals yet.", "Tocca un evento per correggerlo.": "Tap an event to fix it.",
+  "Chi ha segnato il gol?": "Who scored the goal?", "A quale squadra il cartellino?": "Which team got the card?", "Quale squadra fa il cambio?": "Which team is making the substitution?",
+  "Com’è arrivato il gol?": "How was the goal scored?", "Tocca il tipo di gol. Se è un autogol, poi sceglierai il giocatore dell’altra squadra.": "Tap the type of goal. If it is an own goal, you will then choose the player from the other team.",
+  "Su azione": "Open play", "Gol normale": "Regular goal", "Segnato da un avversario nella propria porta": "Scored by an opponent into their own net",
+  "Che cartellino?": "Which card?", "Tocca il colore del cartellino.": "Tap the color of the card.", "Cartellino giallo": "Booking", "Cartellino rosso": "Sending off",
+  "Chi esce dal campo?": "Who is coming off?", "Chi entra?": "Who is coming on?", "Chi ha fatto l’autogol?": "Who scored the own goal?", "Chi ha segnato?": "Who scored?", "A chi il cartellino?": "Who got the card?",
+  "Tocca il giocatore che <b>esce</b> sul campo o nell’elenco.": "Tap the player <b>coming off</b> on the pitch or in the list.",
+  "Tocca il giocatore che <b>esce</b> nell’elenco.": "Tap the player <b>coming off</b> in the list.",
+  "Tocca il giocatore sul campo o nell’elenco. Se non lo sai, tocca Non indicato.": "Tap the player on the pitch or in the list. If you don't know, tap Not specified.",
+  "Tocca il giocatore nell’elenco. Se non lo sai, tocca Non indicato.": "Tap the player in the list. If you don't know, tap Not specified.",
+  "Altri della rosa": "Rest of the squad", "Non indicato": "Not specified", "Scelto": "Selected",
+  "Minuto": "Minute", "Squadra": "Team", "Tipo": "Type", "Autogol di": "Own goal by", "Marcatore": "Scorer", "Cartellino": "Card", "Rosso · espulsione": "Red · sent off",
+  "Giallo · ammonizione": "Yellow · booking", "Giocatore": "Player", "Esce": "Off", "Entra": "On", "Gol registrato": "Goal recorded", "Controlla e conferma": "Check and confirm",
+  "Il gol è già salvato. Controlla i dati e tocca Fatto.": "The goal is already saved. Check the details and tap Done.",
+  "Se è tutto giusto tocca <b>Conferma</b>. Per cambiare qualcosa usa Indietro.": "If everything is right tap <b>Confirm</b>. To change something use Back.",
+  "Correggi il minuto": "Fix the minute", "Un minuto prima": "One minute earlier", "Un minuto dopo": "One minute later", "Elimina questo gol": "Delete this goal",
+  // partita in corso
+  "Cronaca": "Match log", "Diretta": "Live", "Cronometro": "Clock", "Mancano": "Remaining", "Correggi il cronometro": "Adjust the clock",
+  "Se hai avviato in ritardo o in anticipo, sposta il tempo di gioco.": "If you started late or early, shift the playing time.", "Partita": "Match",
+  "Termina la partita": "End the match", "Intervallo": "Break", "Fine partita": "Full time", "Ammonizioni ed espulsioni": "Bookings and sendings off",
+  "Recupero": "Added time", "In corso": "Running", "In pausa": "Paused", "Pronti": "Ready", "❚❚ Pausa": "❚❚ Pause", "▶ Riprendi": "▶ Resume", "▶ Avvia": "▶ Start",
+  // formazione
+  "Portiere": "Goalkeeper", "Difensore": "Defender", "Centrocampista": "Midfielder", "Attaccante": "Forward",
+  "Scegli quanti giocano e il modulo. Poi tocca un cerchio sul campo e il giocatore da mettere in quel ruolo.": "Choose how many play and the formation. Then tap a circle on the pitch and the player for that position.",
+  "In campo · scambia il ruolo": "On the pitch · swap positions", "La rosa è vuota: scrivi i nomi qui sotto, separati da virgola.": "The squad is empty: type the names below, separated by commas.",
+  "Togli dal campo": "Take off the pitch", "Tocca un ruolo sul campo per scegliere il giocatore.": "Tap a position on the pitch to choose the player.",
+  "Nessun giocatore in panchina.": "No players on the bench.", "Tribuna · non convocati": "Stands · not called up", "Tutta la rosa è in campo o in panchina.": "The whole squad is on the pitch or on the bench.",
+  "Tocca un nome per spostarlo tra panchina e tribuna.": "Tap a name to move it between bench and stands.", "Nuovi giocatori, separati da virgola": "New players, separated by commas",
+  "Prepara la formazione": "Prepare the lineup", "Modifica formazione": "Edit lineup", "Tocca prima un ruolo sul campo": "First tap a position on the pitch",
+  // riepilogo
+  "Correggi": "Fix", "Poi scegli cosa aggiungere.": "Then choose what to add.", "Cosa vuoi aggiungere?": "What do you want to add?",
+  "Per togliere o spostare un evento sull’altra squadra, aprilo dalla Cronaca.": "To remove an event or move it to the other team, open it from the Match log.",
+  "Finale": "Full time", "PDF della partita": "Match PDF", "Risultato, cronaca e formazioni da condividere": "Score, match log and lineups to share", "Formazioni": "Lineups",
+  "Correggi il risultato": "Fix the result", "Condividi il risultato": "Share the result", "Marcatori, minuti e cartellini": "Scorers, minutes and cards",
+  "Link per i genitori": "Link for parents", "Elimina partita": "Delete match",
+  // conferme
+  "Eliminare questo gol?": "Delete this goal?", "Il gol viene tolto dal risultato.": "The goal is removed from the score.", "Elimina il gol": "Delete the goal", "Gol eliminato": "Goal deleted",
+  "Annullare la partita?": "Cancel the match?", "Convocazione e dati della partita vengono cancellati. Rosa e formazione restano.": "Call-up and match data are deleted. Squad and lineup stay.",
+  "Fine partita?": "Full time?", "Il cronometro si ferma e vedi il risultato finale con i marcatori.": "The clock stops and you see the final score with the scorers.",
+  "Chiudi partita": "End match", "Fine tempo": "End period", "Terminare la partita?": "End the match?", "Termina": "End",
+  "Eliminare la partita?": "Delete the match?", "Il risultato e la cronaca vengono cancellati da questo telefono.": "The score and match log are deleted from this phone.",
+  "Evento eliminato": "Event deleted", "Risultato copiato": "Result copied", "Link copiato": "Link copied", "Condividi la diretta": "Share the live link",
+  "Risultato": "Result", "Il testo è selezionato: copialo e incollalo dove vuoi.": "The text is selected: copy it and paste it wherever you like.",
+  "Esce · tocca il giocatore in campo": "Off · tap the player on the pitch", "Oppure scegli chi esce": "Or choose who comes off", "Giocatore che ha segnato": "Scorer",
+  "Oppure scegli dall'elenco": "Or choose from the list", "Minuto, es. 38 o 45+2": "Minute, e.g. 38 or 45+2", "Scrivi il minuto, es. 38 o 45+2": "Type the minute, e.g. 38 or 45+2",
+  // diretta
+  "Diretta per i genitori": "Live link for parents",
+  "Crea un link da mandare nel gruppo della squadra: chi lo apre vede risultato, minuto e marcatori in tempo reale, senza installare niente.":
+    "Create a link to send to the team group chat: anyone who opens it sees score, minute and scorers in real time, without installing anything.",
+  "Crea link della diretta": "Create live link", "Link della diretta": "Live link", "Copia link": "Copy link",
+  "Il link resta attivo per 12 ore dall’ultimo aggiornamento.": "The link stays active for 12 hours after the last update.",
+  "Nessuna connessione: riprovo tra poco. La partita resta salvata sul telefono.": "No connection: retrying shortly. The match stays saved on the phone.",
+  "Invio aggiornamento…": "Sending update…", "1 ROSSI MARIO&#10;2 BIANCHI LUCA&#10;…": "1 SMITH JOHN&#10;2 BROWN TOM&#10;…", "In attesa del primo invio": "Waiting for the first update"
+};
+// Frasi con parti variabili (nomi, numeri, minuti): espressione regolare → traduzione.
+var ENP = [
+  [/^(\d+) giocatori$/, function (_, n) { return pl(n, "player", "players"); }],
+  [/^(\d+) giocatori · (\d+) avversari$/, function (_, n, o) { return pl(n, "player", "players") + " · " + pl(o, "opponent", "opponents"); }],
+  [/^(\d+) partite$/, function (_, n) { return pl(n, "match", "matches"); }],
+  [/^(\d+) squadre$/, function (_, n) { return pl(n, "team", "teams"); }],
+  [/^(\d+) gol$/, function (_, n) { return pl(n, "goal", "goals"); }],
+  [/^La mia squadra · (\d+) gol$/, function (_, n) { return "My team · " + pl(n, "goal", "goals"); }],
+  [/^(\d+) eventi$/, function (_, n) { return pl(n, "event", "events"); }],
+  [/^(\d+) eventi · rivedi e correggi$/, function (_, n) { return pl(n, "event", "events") + " · review and fix"; }],
+  [/^(\d+) giocatori trovati$/, function (_, n) { return pl(n, "player", "players") + " found"; }],
+  [/^(\d+) convocati$/, function (_, n) { return n + " called up"; }],
+  [/^Creata · (\d+) convocati$/, function (_, n) { return "Created · " + n + " called up"; }],
+  [/^(\d+) in campo · (\d+) in panchina · (\d+) in tribuna$/, "$1 on the pitch · $2 on the bench · $3 in the stands"],
+  [/^Modulo (\S+) · (\d+)\/(\d+) ruoli$/, "Formation $1 · $2/$3 positions"],
+  [/^Modulo (.+)$/, "Formation $1"],
+  [/^Passo (\d+) di (\d+)(?: · ([\s\S]+))?$/, function (_, a, b, r) { return "Step " + a + " of " + b + (r ? " · " + T(r) : ""); }],
+  [/^minuto (.+)$/, "minute $1"],
+  [/^con (.+?) · (.+)$/, function (_, a, b) { return "vs " + a + " · " + T(b); }],
+  [/^con (.+)$/, "vs $1"],
+  [/^In casa con (.+)$/, "Home vs $1"],
+  [/^In trasferta con (.+)$/, "Away at $1"],
+  [/^(.+) · ritrovo (.+)$/, function (_, a, b) { return T(a) + " · meet at " + b; }],
+  [/^(.+) · inizio (.+)$/, "$1 · kick-off $2"],
+  [/^Durata totale: (\d+) minuti$/, "Total time: $1 minutes"],
+  [/^Documenti: ([\s\S]*)$/, "Documents: $1"],
+  [/^Kit di gara: ([\s\S]*)$/, "Match kit: $1"],
+  [/^Puntualità: ([\s\S]*)$/, "Punctuality: $1"],
+  [/^Assenze: ([\s\S]*)$/, "Absences: $1"],
+  [/^In campo ce ne sono già (\d+): prima mandane uno in panchina$/, "There are already $1 on the pitch: move one to the bench first"],
+  [/^File salvato: (.+)$/, "File saved: $1"],
+  [/^Rose caricate: (.+)$/, "Squads loaded: $1"],
+  [/^Rimuovi (.+)$/, "Remove $1"],
+  [/^Rosa di (.+)$/, "$1 squad"],
+  [/^Squadra sulla distinta: (.+)$/, "Team on the sheet: $1"],
+  [/^Aggiungi (\d+) alla rosa di (.+)$/, "Add $1 to the $2 squad"],
+  [/^(\d+) giocatori aggiunti alla rosa di (.+)$/, function (_, n, t) { return pl(n, "player", "players") + " added to the " + t + " squad"; }],
+  [/^Cerca nella rosa di (.+)$/, "Search the $1 squad"],
+  [/^La rosa di (.+) è vuota\.$/, "The $1 squad is empty."],
+  [/^La rosa di (.+) è vuota: scrivi il nome qui sotto\.$/, "The $1 squad is empty: type the name below."],
+  [/^Inserisci la rosa di (.+)$/, "Enter the $1 squad"],
+  [/^Schiera i titolari di (.+) sul campo e scegli chi va in panchina: poi negli eventi li scegli con un tocco\.$/, "Put the $1 starters on the pitch and choose the bench: then you pick them with one tap in events."],
+  [/^Gol di (.+) registrato al (.+)$/, "Goal for $1 recorded at $2"],
+  [/^Cambio salvato: entra (.*), esce (.*)$/, "Substitution saved: on $1, off $2"],
+  [/^Tocca la squadra che ha segnato: il gol viene registrato subito al (.+), poi aggiungi i dettagli\.$/, "Tap the team that scored: the goal is recorded right away at $1, then add the details."],
+  [/^Tocca la squadra\. Il minuto (.+) è già preso\.$/, "Tap the team. Minute $1 is already taken."],
+  [/^Esce <b>(.*)<\/b>\. Ora tocca il giocatore che <b>entra<\/b>\.$/, function (_, x) { return "<b>" + T(x) + "</b> comes off. Now tap the player <b>coming on</b>."; }],
+  [/^(Portiere|Difensore|Centrocampista|Attaccante): ([\s\S]+)$/, function (_, r, n) { return T(r) + ": " + n; }],
+  [/^Panchina · (\d+)$/, "Bench · $1"],
+  [/^Autore dell'autogol \((.+)\)$/, "Own goal scorer ($1)"],
+  [/^(.+) · tocca in campo$/, function (_, a) { return T(a) + " · tap on the pitch"; }],
+  [/^Assegna a (.+)$/, "Move to $1"],
+  [/^Assegnato a (.+)$/, "Moved to $1"],
+  [/^Eliminare (il cambio|il gol|l’espulsione|l’ammonizione)\?$/, function (_, w) { return "Delete the " + { "il cambio": "substitution", "il gol": "goal", "l’espulsione": "red card", "l’ammonizione": "yellow card" }[w] + "?"; }],
+  [/^(.+?) · (.+)\. L’evento viene tolto dalla cronaca( e dal risultato)?\.$/, function (_, a, b, c) { return a + " · " + b + ". The event is removed from the match log" + (c ? " and the score." : "."); }],
+  [/^Fine (.+)\?$/, "End of the $1?"],
+  [/^Il cronometro si ferma\. Riparti quando inizia il (.+)\.$/, "The clock stops. Restart it when the $1 begins."],
+  [/^La partita viene chiusa adesso con il risultato attuale \((.+)\)\.$/, "The match is closed now with the current score ($1)."],
+  [/^(\d+) tempi da (.+)\. Termina adesso se la partita finisce prima del tempo\.$/, "$1 periods of $2. End now if the match finishes early."],
+  [/^Inizia il (.+)$/, "Start the $1"],
+  [/^Aggiornata alle (.+)$/, "Updated at $1"],
+  [/^Gol (.+)$/, "Goal $1"]
+];
+function T(s) {
+  if (LANG === "it" || s == null) return s;
+  s = String(s);
+  if (Object.prototype.hasOwnProperty.call(EN, s)) return EN[s];
+  for (var i = 0; i < ENP.length; i++) {
+    var r = ENP[i][0].exec(s);
+    if (r) return typeof ENP[i][1] === "function" ? ENP[i][1].apply(null, r) : s.replace(ENP[i][0], ENP[i][1]);
+  }
+  return s;
+}
+function unesc(s) { return s.replace(/&(#39|quot|amp|lt|gt);/g, function (_, k) { return { "#39": "'", quot: '"', amp: "&", lt: "<", gt: ">" }[k]; }); }
+function escKeep(s) { return s.replace(/&(?!#?\w+;)/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+function trSeg(raw) {
+  var m = /^(\s*)([\s\S]*?)(\s*)$/.exec(raw), core = m[2];
+  if (!/[A-Za-zÀ-ÿ]/.test(core)) return raw;
+  var plain = unesc(core), out = T(plain);
+  return out === plain ? raw : m[1] + escKeep(out) + m[3];
+}
+// Traduce l'HTML di una schermata: i testi tra i tag e i placeholder / aria-label.
+function trHTML(h) {
+  if (LANG === "it") return h;
+  return h.replace(/>([^<]+)</g, function (_, x) { return ">" + trSeg(x) + "<"; })
+    .replace(/ (placeholder|aria-label)="([^"]*)"/g, function (_, k, v) { return " " + k + '="' + trSeg(v) + '"'; });
+}
+
 // ui.view = schermata, ui.p = suoi parametri (es. { sec: "team", act: "goal" }), ui.stack = schermate precedenti.
-var ui = { view: S.match ? "live" : "home", p: {}, stack: S.match ? [{ view: "home", p: {} }] : [], id: null, sheet: null, confirm: null, share: null, newPlayer: {} };
+var ui = { view: S.match ? "live" : "home", p: {}, stack: S.match ? [{ view: "home", p: {} }] : [], fwd: [], navNext: null, id: null, sheet: null, confirm: null, share: null, newPlayer: {} };
 
 /* ---------- tempo ---------- */
 // m.acc = millisecondi già giocati nel tempo corrente, m.run = timestamp di quando il cronometro è ripartito (null = fermo).
@@ -483,11 +749,12 @@ function minuteLabel(m, period, sec) {
   if (sec < len) return (base + Math.floor(sec / 60) + 1) + "′";
   return (base + m.minutes) + "+" + (Math.floor((sec - len) / 60) + 1) + "′";
 }
-function periodName(n) { return n + "° tempo"; }
+// P = numero di tempi della partita: in inglese con due tempi "1st half", altrimenti "3rd period".
+function periodName(n, P) { return LANG === "en" ? ord(n) + (P && P !== 2 ? " period" : " half") : n + "° tempo"; }
 
 /* ---------- partita ---------- */
 function other(t) { return t === "home" ? "away" : "home"; }
-function teamName(m, t) { return m[t] || (t === "home" ? "Casa" : "Ospiti"); }
+function teamName(m, t) { return m[t] || T(t === "home" ? "Casa" : "Ospiti"); }
 function sorted(m) { return m.events.slice().sort(function (a, b) { return a.period - b.period || a.sec - b.sec || a.n - b.n; }); }
 function score(m, t, upto) { return m.events.filter(function (e) { return e.type === "goal" && e.team === t && (!upto || e.period <= upto); }).length; }
 // Squadra del giocatore coinvolto: nell'autogol il giocatore è della squadra avversaria.
@@ -577,9 +844,11 @@ var CONV_DEF = {
   motto: ""
 };
 function conv() {
-  var c = Object.assign({}, CONV_DEF, S.settings.conv || {});
+  var d = {};
+  Object.keys(CONV_DEF).forEach(function (k) { d[k] = CONV_DEF[k] ? T(CONV_DEF[k]) : ""; });
+  var c = Object.assign(d, S.settings.conv || {});
   if (!c.club) c.club = S.settings.team || "";
-  if (!c.motto && S.settings.team) c.motto = "Forza " + S.settings.team;
+  if (!c.motto && S.settings.team) c.motto = L("Forza " + S.settings.team, "Come on " + S.settings.team + "!");
   return c;
 }
 function nextSaturday() {
@@ -588,7 +857,7 @@ function nextSaturday() {
 }
 // Nuova partita: nasce "in preparazione" con i dati della convocazione; il cronometro parte solo con Inizia la partita.
 function planMatch() {
-  var c = conv(), side = S.settings.side || "home", mine = S.settings.team || "La mia squadra";
+  var c = conv(), side = S.settings.side || "home", mine = S.settings.team || T("La mia squadra");
   S.match = {
     id: uid(), date: new Date().toISOString(),
     home: side === "home" ? mine : "", away: side === "home" ? "" : mine, mySide: side,
@@ -603,7 +872,7 @@ function planMatch() {
 }
 function oppName(m) { return m[other(m.mySide)] || ""; }
 function setOpp(m, name, side) {
-  var mine = S.settings.team || "La mia squadra";
+  var mine = S.settings.team || T("La mia squadra");
   m.mySide = side; S.settings.side = side;
   m.home = side === "home" ? mine : name; m.away = side === "home" ? name : mine;
   var mem = name && S.oppLineups[oppKey(m)];
@@ -612,7 +881,7 @@ function setOpp(m, name, side) {
 function startMatch(m, periods, minutes) {
   S.settings.periods = periods; S.settings.minutes = minutes;
   m.periods = periods; m.minutes = minutes; m.status = "play"; m.date = new Date().toISOString();
-  if (!m[other(m.mySide)]) setOpp(m, "Avversari", m.mySide);
+  if (!m[other(m.mySide)]) setOpp(m, T("Avversari"), m.mySide);
   save();
 }
 // Campo / panchina / tribuna di un giocatore della mia squadra nella prossima partita.
@@ -647,8 +916,8 @@ function convData(m) {
     sel: convocati(m).map(function (n) { return String(shirtOf(n).s || n).toUpperCase(); })
   };
 }
-function fmtData(v) { var r = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v || ""); return r ? r[3] + "." + r[2] + "." + r[1] : v || ""; }
-function fmtOra(v) { return (v || "").replace(":", "."); }
+function fmtData(v) { var r = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v || ""); return r ? r[3] + L(".", "/") + r[2] + L(".", "/") + r[1] : v || ""; }
+function fmtOra(v) { return LANG === "en" ? v || "" : (v || "").replace(":", "."); }
 function two0(n) { return ("0" + n).slice(-2); }
 // A partita in corso l'evento prende il minuto attuale; a partita finita parte dal 1' e il minuto si scrive nel foglio.
 function addEvent(type, team, m) {
@@ -817,16 +1086,16 @@ function lineupText(m, t) {
   var L = lineupOf(m, t), rows = [1].concat(L.mod.split("-").map(Number)), i = 0, out = [];
   rows.forEach(function (n) { var r = []; for (var j = 0; j < n; j++, i++) r.push(L.slots[i] || "\u2014"); out.push(r.join(", ")); });
   var bench = benchOf(m, t, L);
-  return "Formazione " + teamName(m, t) + " (" + L.mod + "): " + out.join("; ") + (bench.length ? "\nPanchina: " + bench.join(", ") : "");
+  return T("Formazione") + " " + teamName(m, t) + " (" + L.mod + "): " + out.join("; ") + (bench.length ? "\n" + T("Panchina") + ": " + bench.join(", ") : "");
 }
 
 /* ---------- testo del risultato ---------- */
-function kindTag(e) { return e.kind === "rigore" ? " (rig.)" : e.kind === "autogol" ? " (aut.)" : ""; }
+function kindTag(e) { return e.kind === "rigore" ? L(" (rig.)", " (pen.)") : e.kind === "autogol" ? L(" (aut.)", " (o.g.)") : ""; }
 function scorersOf(m, t) {
   var groups = [], byName = {};
   sorted(m).forEach(function (e) {
     if (e.type !== "goal" || e.team !== t) return;
-    var name = e.player || "Marcatore non indicato";
+    var name = e.player || T("Marcatore non indicato");
     if (!byName[name]) { byName[name] = { name: name, mins: [] }; groups.push(byName[name]); }
     byName[name].mins.push(minuteLabel(m, e.period, e.sec) + kindTag(e));
   });
@@ -837,39 +1106,39 @@ function cardsOf(m, kind) {
     if (kind === "yellow") return e.type === "yellow" && !secondYellow(m, e);
     return e.type === "red" || secondYellow(m, e);
   }).map(function (e) {
-    return (e.player || "Giocatore non indicato") + " (" + teamName(m, e.team) + ") " + minuteLabel(m, e.period, e.sec) + (secondYellow(m, e) ? " doppia amm." : "");
+    return (e.player || T("Giocatore non indicato")) + " (" + teamName(m, e.team) + ") " + minuteLabel(m, e.period, e.sec) + (secondYellow(m, e) ? L(" doppia amm.", " 2nd yellow") : "");
   });
 }
 // Cambi, es. "Aurora 55′: entra Bianchi, esce Rossi"
 function subsOf(m) {
   return sorted(m).filter(function (e) { return e.type === "sub"; }).map(function (e) {
-    return teamName(m, e.team) + " " + minuteLabel(m, e.period, e.sec) + ": entra " + (e.on || "non indicato") + ", esce " + (e.off || "non indicato");
+    return teamName(m, e.team) + " " + minuteLabel(m, e.period, e.sec) + L(": entra ", ": on ") + (e.on || T("non indicato")) + L(", esce ", ", off ") + (e.off || T("non indicato"));
   });
 }
 function partials(m) {
   var out = [];
-  for (var p = 1; p <= m.periods; p++) out.push(p + "°T " + score(m, "home", p) + "-" + score(m, "away", p));
+  for (var p = 1; p <= m.periods; p++) out.push(L(p + "°T ", ord(p) + " ") + score(m, "home", p) + "-" + score(m, "away", p));
   return out;
 }
 function dateLabel(iso) {
-  try { return new Date(iso).toLocaleDateString("it-IT", { weekday: "short", day: "numeric", month: "long", year: "numeric" }); } catch (e) { return ""; }
+  try { return new Date(iso).toLocaleDateString(LOC, { weekday: "short", day: "numeric", month: "long", year: "numeric" }); } catch (e) { return ""; }
 }
 function resultText(m) {
-  var L = [];
-  L.push(teamName(m, "home") + " " + score(m, "home") + " - " + score(m, "away") + " " + teamName(m, "away"));
-  L.push(dateLabel(m.date) + " · " + m.periods + " tempi da " + m.minutes + "'");
-  if (m.periods > 1) L.push("Parziali: " + partials(m).join(" · "));
-  ["home", "away"].forEach(function (t) { if (hasLineup(m, t)) L.push("", lineupText(m, t)); });
+  var L0 = [];
+  L0.push(teamName(m, "home") + " " + score(m, "home") + " - " + score(m, "away") + " " + teamName(m, "away"));
+  L0.push(dateLabel(m.date) + " · " + m.periods + L(" tempi da ", " × ") + m.minutes + "'");
+  if (m.periods > 1) L0.push(L("Parziali: ", "By period: ") + partials(m).join(" · "));
+  ["home", "away"].forEach(function (t) { if (hasLineup(m, t)) L0.push("", lineupText(m, t)); });
   ["home", "away"].forEach(function (t) {
     var s = scorersOf(m, t);
-    if (s.length) L.push("", "⚽ " + teamName(m, t) + ":", s.join("\n"));
+    if (s.length) L0.push("", "⚽ " + teamName(m, t) + ":", s.join("\n"));
   });
   var y = cardsOf(m, "yellow"), r = cardsOf(m, "red");
-  if (y.length) L.push("", "🟨 Ammoniti:", y.join("\n"));
-  if (r.length) L.push("", "🟥 Espulsi:", r.join("\n"));
+  if (y.length) L0.push("", "🟨 " + T("Ammoniti") + ":", y.join("\n"));
+  if (r.length) L0.push("", "🟥 " + T("Espulsi") + ":", r.join("\n"));
   var c = subsOf(m);
-  if (c.length) L.push("", "🔁 Cambi:", c.join("\n"));
-  return L.join("\n");
+  if (c.length) L0.push("", "🔁 " + T("Cambi") + ":", c.join("\n"));
+  return L0.join("\n");
 }
 
 /* ---------- diretta ---------- */
@@ -880,7 +1149,7 @@ var NTFY = "https://ntfy.sh/";
 var PAGES = "https://alessandromex.github.io/INFORMATICA/partita/";
 var liveTimer = null, liveRetry = null;
 function liveTopic() {
-  var a = new Uint8Array(16), out = "bordocampo-";
+  var a = new Uint8Array(16), out = "misterbook-";
   try { crypto.getRandomValues(a); } catch (e) { for (var i = 0; i < a.length; i++) a[i] = Math.random() * 256; }
   for (var k = 0; k < a.length; k++) out += "abcdefghijkmnpqrstuvwxyz23456789"[a[k] % 32];
   return out;
@@ -928,14 +1197,14 @@ function livePush() {
 function liveStatusText(m) {
   if (m.live.state === "err") return "Nessuna connessione: riprovo tra poco. La partita resta salvata sul telefono.";
   if (m.live.state === "sending") return "Invio aggiornamento…";
-  if (m.live.sent) return "Aggiornata alle " + new Date(m.live.sent).toLocaleTimeString("it-IT");
+  if (m.live.sent) return "Aggiornata alle " + new Date(m.live.sent).toLocaleTimeString(LOC);
   return "In attesa del primo invio";
 }
 function liveStatus() {
   var el = document.getElementById("live-st"), m = liveTarget();
   if (!el || !m) return;
   el.className = "live-st " + (m.live.state || "");
-  el.lastChild.textContent = liveStatusText(m);
+  el.lastChild.textContent = T(liveStatusText(m));
 }
 function livePanel(m) {
   if (!m.live) {
@@ -958,7 +1227,7 @@ function shareText(text, title) {
   try {
     var C = window.Capacitor;
     if (C && C.isNativePlatform && C.isNativePlatform() && C.nativePromise) {
-      C.nativePromise("Share", "share", { text: text, dialogTitle: title || "Condividi" }).catch(show);
+      C.nativePromise("Share", "share", { text: text, dialogTitle: T(title || "Condividi") }).catch(show);
       return;
     }
     if (navigator.share) {
@@ -1011,8 +1280,11 @@ var app = document.getElementById("app"), layer = document.getElementById("layer
 function render() {
   var v = ui.view;
   if ((v === "live" && (!S.match || S.match.status === "planned")) || (v === "plan" && (!S.match || S.match.status !== "planned"))) { v = ui.view = "home"; ui.p = {}; ui.stack = []; }
-  app.innerHTML = v === "plan" ? vPlan() : v === "club" ? vClub() : v === "roster" ? vRoster() : v === "lineup" ? vLineup() : v === "live" ? vLive() :
+  ui.navNext = null;
+  var html = v === "plan" ? vPlan() : v === "club" ? vClub() : v === "roster" ? vRoster() : v === "lineup" ? vLineup() : v === "live" ? vLive() :
     v === "summary" ? vSummary() : v === "history" ? vHistory() : v === "scan" ? vScan() : vHome();
+  if (ui.view !== "home") html += navBarHTML();
+  app.innerHTML = trHTML(html);
   renderLayer();
   filterAll();
   fitSheet();
@@ -1020,19 +1292,37 @@ function render() {
 }
 
 /* ---------- navigazione: ogni schermata ne apre altre più semplici, Indietro torna alla precedente ---------- */
+// Come nel browser: Indietro ricorda la schermata lasciata, Avanti ci ritorna; aprirne una nuova cancella gli Avanti.
 function go(view, p) {
   ui.stack.push({ view: ui.view, p: ui.p, sheet: ui.sheet });
+  ui.fwd = [];
   ui.sheet = null; ui.view = view; ui.p = p || {};
   render(); window.scrollTo(0, 0);
 }
 function back() {
   var s = ui.stack.pop() || { view: "home", p: {} };
+  if (ui.view !== "home") ui.fwd.push({ view: ui.view, p: ui.p, sheet: null });
   ui.view = s.view; ui.p = s.p || {}; ui.sheet = s.sheet || null;
   render(); window.scrollTo(0, 0);
 }
-function reset(view, p, stack) {
-  ui.stack = stack || []; ui.sheet = null; ui.view = view; ui.p = p || {};
+function forward() {
+  var f = ui.fwd.pop();
+  if (!f) return;
+  ui.stack.push({ view: ui.view, p: ui.p, sheet: ui.sheet });
+  ui.sheet = null; ui.view = f.view; ui.p = f.p || {};
   render(); window.scrollTo(0, 0);
+}
+function reset(view, p, stack) {
+  ui.stack = stack || []; ui.fwd = []; ui.sheet = null; ui.view = view; ui.p = p || {};
+  render(); window.scrollTo(0, 0);
+}
+// In fondo a ogni schermata: Indietro e Avanti. Avanti è il passo successivo quando la schermata ne ha uno
+// (ui.navNext, impostato dalla schermata), altrimenti riporta alla schermata da cui si è tornati indietro.
+function navBarHTML() {
+  var n = ui.navNext;
+  return '<div class="navbar"><button class="btn ghost" data-a="back">‹ Indietro</button>' +
+    (n ? '<button class="btn primary" data-a="' + n.a + '"' + (n.attrs || "") + ">" + (n.label || "Avanti ›") + "</button>"
+      : '<button class="btn ghost" data-a="fwd"' + (ui.fwd.length ? "" : " disabled") + ">Avanti ›</button>") + "</div>";
 }
 function topBar(title, backLabel) {
   return '<div class="top"><button class="link" data-a="back">‹ ' + (backLabel || "Indietro") + '</button><span class="title">' + title + "</span><span></span></div>";
@@ -1069,7 +1359,7 @@ function tile(act, icon, label, sub, attrs, disabled, cls) {
     '<span class="ti">' + icon + '</span><span class="tlab">' + label + (sub ? "<small>" + sub + "</small>" : "") + '</span><span class="chev">' + CHEV + "</span></button>";
 }
 function logoHTML(small) {
-  return '<div class="logo' + (small ? " sm" : "") + '"><div class="word"><span>BORDO</span><span class="y">CAMPO</span></div>' +
+  return '<div class="logo' + (small ? " sm" : "") + '"><div class="word"><span>MISTER</span><span class="y">BOOK</span></div>' +
     '<svg viewBox="0 0 64 48" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2" y="2" width="60" height="44"/>' +
     '<path d="M32 2v44M2 24h60"/><circle cx="32" cy="24" r="7"/></svg></div>';
 }
@@ -1079,12 +1369,14 @@ function vHome() {
   var m = S.match, h = logoHTML(), opps = Object.keys(S.oppRosters).length;
   h += '<div class="tiles">';
   if (m && m.status === "planned") h += tile("plan", ic("whistle"), "Prossima partita", esc((oppName(m) ? "con " + oppName(m) + " · " : "") + (m.plan.data ? dateLabel(m.plan.data) : "da preparare")));
-  else if (m) h += tile("resume", ic("play"), "Riprendi la partita", esc(m.home + " " + score(m, "home") + " - " + score(m, "away") + " " + m.away) + " · " + periodName(m.period));
+  else if (m) h += tile("resume", ic("play"), "Riprendi la partita", esc(m.home + " " + score(m, "home") + " - " + score(m, "away") + " " + m.away) + " · " + periodName(m.period, m.periods));
   else h += tile("setup", ic("plus"), "Nuova partita", "Convocazione, formazione e via");
   h += tile("roster", ic("shirt"), "Rosa", S.settings.roster.length + " giocatori" + (opps ? " · " + opps + " avversari" : ""));
   h += tile("history", ic("cal"), "Partite giocate", S.history.length ? S.history.length + " partite" : "Ancora nessuna");
   h += tile("club", ic("doc"), "Società", "Logo e testi della convocazione");
-  return h + "</div>";
+  return h + "</div>" + '<div class="langs" role="group" aria-label="Lingua">' + [["it", "Italiano"], ["en", "English"]].map(function (x) {
+    return '<button data-a="lang" data-v="' + x[0] + '" aria-pressed="' + (LANG === x[0]) + '">' + x[1] + "</button>";
+  }).join("") + "</div>";
 }
 function vHistory() {
   var h = topBar("Partite giocate", "Home");
@@ -1165,7 +1457,7 @@ function titleCase(s) {
 // Funziona anche col testo copiato dalla foto (Testo attivo, Google Lens) o con un semplice elenco.
 function parseDistinta(text) {
   var lines = String(text || "").split(/\r?\n/), players = [], seen = {}, team = "", started = false;
-  var hasHeader = /cognome/i.test(String(text || ""));  // distinta intera; altrimenti è un elenco incollato
+  var hasHeader = /cognome|surname|last name/i.test(String(text || ""));  // distinta intera; altrimenti è un elenco incollato
   var stop = /assistente|dirigente|allenatore|massaggiatore|medico|preparatore|arbitro|\bnote\b/i;
   var noise = /^(TESS|FIGC|LND|CI|C\.?I\.?|PAT|PASS|PASSAPORTO|CARTA|IDENTITA|DOC|DOCUMENTO|CAPITANO|RUOLO|COGNOME|NOME|DATA|NASCITA|MATRICOLA|ESPULSI|AMMONITI)$/;
   for (var i = 0; i < lines.length; i++) {
@@ -1173,7 +1465,7 @@ function parseDistinta(text) {
     if (!line) continue;
     var tm = !team && /^\d{4,7}\s+([A-Z0-9][A-Z0-9 .'’&-]{2,})$/.exec(line);
     if (tm) { team = titleCase(tm[1].trim()); continue; }
-    if (/cognome/i.test(line)) { started = true; continue; }
+    if (/cognome|surname|last name/i.test(line)) { started = true; continue; }
     if (stop.test(line)) { if (started || players.length) break; continue; }
     if (hasHeader && !started) continue;
     var clean = line.replace(/\b\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4}\b/g, " ");
@@ -1202,7 +1494,7 @@ function parseDistinta(text) {
 }
 function scanTarget() {
   var opp = ui.rTab === "opp";
-  return { list: rosterList(), name: opp ? S.oppLabels[ui.rOpp] || ui.rOpp : S.settings.team || "La mia squadra" };
+  return { list: rosterList(), name: opp ? S.oppLabels[ui.rOpp] || ui.rOpp : S.settings.team || T("La mia squadra") };
 }
 function scanResult(text) {
   var r = parseDistinta(text);
@@ -1214,13 +1506,13 @@ function readPhoto(file) {
   render();
   var show = function () {
     var el = document.getElementById("scan-prog");
-    if (el) el.textContent = ui.scan.step + (ui.scan.progress ? " " + ui.scan.progress + "%" : "");
+    if (el) el.textContent = T(ui.scan.step) + (ui.scan.progress ? " " + ui.scan.progress + "%" : "");
   };
   loadScript(TESSERACT)
     .then(function () { return prepImage(file); })
     .then(function (canvas) {
       var worker;
-      return window.Tesseract.createWorker("ita", 1, {
+      return window.Tesseract.createWorker(LANG === "en" ? "eng" : "ita", 1, {
         logger: function (m) {
           if (!ui.scan || ui.scan.status !== "reading") return;
           ui.scan.step = m.status === "recognizing text" ? "Leggo la distinta…" : "Scarico i dati per la lettura (solo la prima volta)…";
@@ -1287,7 +1579,8 @@ function planSteps(m) {
   ];
 }
 var PLAN_NEXT = { opp: "when", when: "conv", conv: "lineup", lineup: "pdf" };
-function nextBtn(step, label) { return '<button class="btn primary big block" data-a="p-next" data-v="' + step + '">' + (label || "Avanti") + "</button>"; }
+// Il passo successivo della preparazione è il pulsante Avanti della barra in fondo.
+function nextBtn(step, label) { ui.navNext = { a: "p-next", attrs: ' data-v="' + step + '"', label: label }; return ""; }
 function vPlan() {
   var m = S.match, st = ui.p.step, pl = m.plan, c = conv();
   if (!st) {
@@ -1337,7 +1630,7 @@ function vPlan() {
       var s2 = cvState(L, n), b = function (v, l) { return '<button data-a="cv-set" data-v="' + v + '" data-n="' + esc(n) + '" aria-pressed="' + (s2 === v) + '">' + l + "</button>"; };
       return '<div class="cvrow"><span class="nm">' + esc(n) + '</span><div class="seg3">' + b("campo", "Campo") + b("panchina", "Panch.") + b("tribuna", "Tribuna") + "</div></div>";
     }).join("") + "</section>";
-    return h2 + '<button class="btn ghost block" data-a="r-go" data-v="mine">Aggiungi o correggi giocatori della rosa</button>' + nextBtn("conv", "Avanti: i ruoli in campo");
+    return h2 + '<button class="btn ghost block" data-a="r-go" data-v="mine">Aggiungi o correggi giocatori della rosa</button>' + nextBtn("conv");
   }
   if (st === "pdf") {
     var d = convData(m);
@@ -1347,7 +1640,7 @@ function vPlan() {
       '<div class="sheetwrap" id="sheetwrap">' + a4HTML(d) + "</div>" +
       (d.logo ? "" : '<div class="note">Il logo della società si aggiunge in Home → Società, insieme ai testi fissi.</div>') +
       '<button class="btn primary big block" data-a="p-pdf"' + (d.sel.length ? "" : " disabled") + ">Crea e condividi il PDF</button>" +
-      '<button class="btn ghost block" data-a="club">Modifica logo e testi</button>' + nextBtn("pdf", "Fatto");
+      '<button class="btn ghost block" data-a="club">Modifica logo e testi</button>' + nextBtn("pdf", "Fatto ✓");
   }
   if (st === "durata") {
     if (!form) form = { periods: m.periods, minutes: m.minutes };
@@ -1420,7 +1713,7 @@ function buildPdf(d) {
     });
     return y;
   };
-  var L = 12, T = 22, W = 186, CX = 105, X = 25, RIGHT = L + W - 12;
+  var L0 = 12, T0 = 22, W = 186, CX = 105, X = 25, RIGHT = L0 + W - 12;
   set("normal", 20, BUR); doc.text(pdfText(d.club), CX, 41, { align: "center" });
   if (d.logo) {
     try {
@@ -1428,21 +1721,21 @@ function buildPdf(d) {
       doc.addImage(d.logo, CX - lw / 2, 45 + (29.2 - lh2) / 2, lw, lh2);
     } catch (e) {}
   }
-  var titleSegs = [["CONVOCAZIONE GARA UFFICIALE - ", GREY, "normal", 11.5], ["CATEGORIA ", RED, "bold", 11.5], [d.categoria, BLK, "bold", 16]], tw = 0;
+  var titleSegs = [[L("CONVOCAZIONE GARA UFFICIALE - ", "OFFICIAL MATCH CALL-UP - "), GREY, "normal", 11.5], [L("CATEGORIA ", "AGE GROUP "), RED, "bold", 11.5], [d.categoria, BLK, "bold", 16]], tw = 0;
   titleSegs.forEach(function (sg) { set(sg[2], sg[3], sg[1]); tw += doc.getTextWidth(pdfText(sg[0])); });
   line(titleSegs, CX - tw / 2, 84);
   var FS = 11;
-  line([["Avversario: ", BUR, "normal", FS], [d.avversario, BLK, "normal", FS]], X, 93);
-  line([["Competizione: ", BUR, "normal", FS], [d.competizione, BLK, "normal", FS]], X, 99);
-  line([["Data: ", BUR, "normal", FS], [fmtData(d.data), BLK, "normal", FS]], X, 107);
-  line([["Orario Ritrovo: ", BUR, "normal", FS], [fmtOra(d.ritrovoOra) + "   presso   " + d.ritrovoLuogo, BLK, "normal", FS]], X, 113.5);
-  line([["Inizio Gara: ", BUR, "normal", FS], [fmtOra(d.inizioOra) + "    ", BLK, "normal", FS], ["Impianto di gioco: ", BUR, "normal", FS], [d.impianto, BLK, "normal", FS]], X, 120);
+  line([[L("Avversario: ", "Opponent: "), BUR, "normal", FS], [d.avversario, BLK, "normal", FS]], X, 93);
+  line([[L("Competizione: ", "Competition: "), BUR, "normal", FS], [d.competizione, BLK, "normal", FS]], X, 99);
+  line([[L("Data: ", "Date: "), BUR, "normal", FS], [fmtData(d.data), BLK, "normal", FS]], X, 107);
+  line([[L("Orario Ritrovo: ", "Meeting time: "), BUR, "normal", FS], [fmtOra(d.ritrovoOra) + L("   presso   ", "   at   ") + d.ritrovoLuogo, BLK, "normal", FS]], X, 113.5);
+  line([[L("Inizio Gara: ", "Kick-off: "), BUR, "normal", FS], [fmtOra(d.inizioOra) + "    ", BLK, "normal", FS], [L("Impianto di gioco: ", "Venue: "), BUR, "normal", FS], [d.impianto, BLK, "normal", FS]], X, 120);
   var y = 134;
   doc.setDrawColor(110, 110, 110); doc.setLineWidth(0.3); doc.setFillColor(245, 240, 225);
   doc.roundedRect(X, y - 3.6, 3.2, 4.2, 0.4, 0.4, "FD");
   doc.setFillColor(150, 110, 60); doc.rect(X + 0.9, y - 4.1, 1.4, 0.9, "F");
   doc.setDrawColor(150, 150, 150); doc.setLineWidth(0.2); doc.line(X + 0.7, y - 2.2, X + 2.5, y - 2.2); doc.line(X + 0.7, y - 1.3, X + 2.5, y - 1.3); doc.line(X + 0.7, y - 0.4, X + 2.0, y - 0.4);
-  set("normal", 12, BUR); doc.text("ELENCO CONVOCATI", X + 4.6, y);
+  set("normal", 12, BUR); doc.text(L("ELENCO CONVOCATI", "SQUAD LIST"), X + 4.6, y);
   var R = Math.max(10, Math.ceil(d.sel.length / 2)), cw = [16, 64, 16, 64], tx = X - 1, top = y + 2, nameFS = 11, minFS = 8.5, nameW = cw[1] - 3.5;
   var fitName = function (n) {
     n = pdfText(n || ""); var sz = nameFS;
@@ -1476,22 +1769,22 @@ function buildPdf(d) {
   doc.setFillColor(BUR[0], BUR[1], BUR[2]);
   doc.triangle(X, y + 0.4, X + 4, y + 0.4, X + 2, y - 3.3, "F");
   set("bold", 8, [255, 255, 255]); doc.text("!", X + 2, y - 0.2, { align: "center" });
-  y = wrap([["NOTE IMPORTANTI ", BUR, "normal", 12], ["Documenti: " + d.documenti, BLK, "normal", 10]], X + 5.2, y, RIGHT - (X + 5.2), 4.6);
+  y = wrap([[L("NOTE IMPORTANTI ", "IMPORTANT NOTES "), BUR, "normal", 12], [L("Documenti: ", "Documents: ") + d.documenti, BLK, "normal", 10]], X + 5.2, y, RIGHT - (X + 5.2), 4.6);
   y += 7;
-  [["Kit di gara: ", d.kit], ["Puntualità: ", d.puntualita], ["Assenze: ", d.assenze]].forEach(function (lt) {
+  [[L("Kit di gara: ", "Match kit: "), d.kit], [L("Puntualità: ", "Punctuality: "), d.puntualita], [L("Assenze: ", "Absences: "), d.assenze]].forEach(function (lt) {
     set("normal", 10, BLK); doc.text("•", X + 3, y);
     y = wrap([[lt[0] + lt[1], BLK, "normal", 10]], X + 8, y, RIGHT - (X + 8), 4.4) + 6;
   });
   y += 3;
   set("normal", 12, BUR); doc.text(pdfText(d.motto), CX, y, { align: "center" });
-  var bottom = Math.min(290, Math.max(T + 252, y + 10));
+  var bottom = Math.min(290, Math.max(T0 + 252, y + 10));
   doc.setDrawColor(FRAME[0], FRAME[1], FRAME[2]); doc.setLineWidth(2.2);
-  doc.rect(L, T, W, bottom - T);
+  doc.rect(L0, T0, W, bottom - T0);
   return doc;
 }
 function pdfName(d) {
   var clean = function (x) { return String(x || "").normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^A-Za-z0-9]+/g, "_").replace(/^_|_$/g, ""); };
-  return "convocazione" + (d.categoria ? "_" + clean(d.categoria) : "") + (d.avversario ? "_" + clean(d.avversario).toUpperCase() : "") + (d.data ? "_" + d.data : "") + ".pdf";
+  return L("convocazione", "callup") + (d.categoria ? "_" + clean(d.categoria) : "") + (d.avversario ? "_" + clean(d.avversario).toUpperCase() : "") + (d.data ? "_" + d.data : "") + ".pdf";
 }
 // Salva o condivide un file binario: app Android → file nella cache + condivisione; telefono → condivisione
 // di sistema; PC → download.
@@ -1527,7 +1820,7 @@ function makeConvPdf(m) {
   loadJsPdf().then(function () {
     var doc = buildPdf(d), b64 = doc.output("datauristring").split(",")[1];
     m.plan.pdf = Date.now(); save();
-    return shareBinary(pdfName(d), b64, "application/pdf", "Convocazione");
+    return shareBinary(pdfName(d), b64, "application/pdf", T("Convocazione"));
   }).catch(function () { toast("Serve la connessione la prima volta per creare il PDF", 3000); });
 }
 
@@ -1574,7 +1867,7 @@ function filePanel() {
     '<div class="note">Per una sola squadra usa Salva su file nella sua rosa. Un file di testo con un nome per riga va nella rosa aperta.</div>';
 }
 function rosterEntries(all) {
-  var mine = { squadra: S.settings.team || "La mia squadra", mia: true, giocatori: S.settings.roster.slice() };
+  var mine = { squadra: S.settings.team || T("La mia squadra"), mia: true, giocatori: S.settings.roster.slice() };
   if (!all) {
     if (ui.rTab !== "opp") return [mine];
     return [{ squadra: S.oppLabels[ui.rOpp] || ui.rOpp, mia: false, giocatori: S.oppRosters[ui.rOpp].slice() }];
@@ -1590,7 +1883,7 @@ function saveFile(name, text) {
   var C = window.Capacitor;
   if (C && C.isNativePlatform && C.isNativePlatform() && C.nativePromise) {
     C.nativePromise("Filesystem", "writeFile", { path: name, data: text, directory: "CACHE", encoding: "utf8" })
-      .then(function (r) { return C.nativePromise("Share", "share", { title: name, url: r.uri, dialogTitle: "Salva il file delle rose" }); })
+      .then(function (r) { return C.nativePromise("Share", "share", { title: name, url: r.uri, dialogTitle: T("Salva il file delle rose") }); })
       .catch(function (err) { if (!/cancel/i.test((err && err.message) || "")) toast("Non è stato possibile salvare il file"); });
     return;
   }
@@ -1613,8 +1906,8 @@ function downloadFile(name, text) {
 }
 function saveRosters(all) {
   var entries = rosterEntries(all);
-  var text = JSON.stringify({ app: "bordocampo", tipo: "rose", salvato: new Date().toISOString(), rose: entries }, null, 2);
-  saveFile(fileName(all ? "Bordocampo rose " + new Date().toISOString().slice(0, 10) : "Rosa " + entries[0].squadra) + ".json", text);
+  var text = JSON.stringify({ app: "misterbook", tipo: "rose", salvato: new Date().toISOString(), rose: entries }, null, 2);
+  saveFile(fileName(all ? L("MisterBook rose ", "MisterBook squads ") + new Date().toISOString().slice(0, 10) : L("Rosa ", "Squad ") + entries[0].squadra) + ".json", text);
 }
 // Carica un file: le rose del JSON vanno nella mia rosa (mia: true) o in quella dell'avversario
 // con lo stesso nome; un file di testo va nella rosa aperta. I nomi già presenti non si duplicano.
@@ -1715,7 +2008,7 @@ function timeline(m) {
   list.forEach(function (e) {
     if (e.period !== cur) {
       cur = e.period;
-      if (m.periods > 1) h += '<div class="tl-period"><span>' + periodName(cur) + "</span></div>";
+      if (m.periods > 1) h += '<div class="tl-period"><span>' + periodName(cur, m.periods) + "</span></div>";
     }
     var side = '<span class="side' + (e.team === "away" ? " r" : "") + '">' + evIcon(m, e) + evText(m, e) + "</span>";
     h += '<button class="ev" data-a="edit" data-mid="' + m.id + '" data-id="' + e.id + '">' +
@@ -1740,39 +2033,39 @@ function cronacaHTML(m) {
 
 /* ---------- PDF della partita: risultato, cronaca minuto per minuto, formazioni ---------- */
 function evLabel(m, e) {
-  if (e.type === "goal") return e.kind === "rigore" ? "Gol su rigore" : e.kind === "autogol" ? "Autogol" : "Gol";
-  if (e.type === "sub") return "Cambio";
-  if (e.type === "red") return "Espulsione";
-  return secondYellow(m, e) ? "Espulsione (2a amm.)" : "Ammonizione";
+  if (e.type === "goal") return T(e.kind === "rigore" ? "Gol su rigore" : e.kind === "autogol" ? "Autogol" : "Gol");
+  if (e.type === "sub") return T("Cambio");
+  if (e.type === "red") return T("Espulsione");
+  return T(secondYellow(m, e) ? "Espulsione (2a amm.)" : "Ammonizione");
 }
 function evDetail(e) {
-  if (e.type === "sub") return "Entra " + (e.on || "?") + ", esce " + (e.off || "?");
+  if (e.type === "sub") return L("Entra ", "On ") + (e.on || "?") + L(", esce ", ", off ") + (e.off || "?");
   return e.player || "-";
 }
 function buildMatchPdf(m) {
   var doc = new window.jspdf.jsPDF({ unit: "mm", format: "a4" }), c = conv(), pl = m.plan || {};
-  var BAND = docColor(c, [28, 90, 52]), GREEN = onWhite(BAND), BINK = inkOn(BAND), INK = [19, 32, 26], MUT = [90, 106, 97], L = 15, R = 195, y;
+  var BAND = docColor(c, [28, 90, 52]), GREEN = onWhite(BAND), BINK = inkOn(BAND), INK = [19, 32, 26], MUT = [90, 106, 97], Lg = L, L0 = 15, R = 195, y;
   var set = function (st, sz, col) { doc.setFont("helvetica", st); doc.setFontSize(sz); doc.setTextColor(col[0], col[1], col[2]); };
   var T = function (t, x, yy, o) { doc.text(pdfText(t), x, yy, o || {}); };
   var lines = function (t, w) { return doc.splitTextToSize(pdfText(t), w); };
   var need = function (h) { if (y + h > 280) { doc.addPage(); y = 18; return true; } return false; };
   // intestazione
   doc.setFillColor(BAND[0], BAND[1], BAND[2]); doc.rect(0, 0, 210, 30, "F");
-  var tx = L;
+  var tx = L0;
   if (c.logo) {
     try {
       var pr = doc.getImageProperties(c.logo), k = Math.min(18 / pr.width, 22 / pr.height);
-      doc.setFillColor(255, 255, 255); doc.roundedRect(L - 1, 3.5, pr.width * k + 2, pr.height * k + 2, 1, 1, "F");
-      doc.addImage(c.logo, L, 4.5, pr.width * k, pr.height * k); tx = L + pr.width * k + 6;
+      doc.setFillColor(255, 255, 255); doc.roundedRect(L0 - 1, 3.5, pr.width * k + 2, pr.height * k + 2, 1, 1, "F");
+      doc.addImage(c.logo, L0, 4.5, pr.width * k, pr.height * k); tx = L0 + pr.width * k + 6;
     } catch (e) {}
   }
-  set("bold", 18, BINK); T("CRONACA DELLA PARTITA", tx, 14);
+  set("bold", 18, BINK); T(Lg("CRONACA DELLA PARTITA", "MATCH REPORT"), tx, 14);
   set("normal", 10, BINK); T([c.club, c.categoria].filter(Boolean).join(" - "), tx, 21);
   y = 40;
   set("normal", 10, MUT);
   var info = [dateLabel(m.date), pl.comp, pl.impianto].filter(Boolean).join("  -  ");
   T(info, 105, y, { align: "center" });
-  if (m.status !== "ended") { y += 5; set("bold", 10, [179, 25, 45]); T("Partita in corso - " + periodName(m.period), 105, y, { align: "center" }); }
+  if (m.status !== "ended") { y += 5; set("bold", 10, [179, 25, 45]); T(Lg("Partita in corso - ", "Match in progress - ") + periodName(m.period, m.periods), 105, y, { align: "center" }); }
   // risultato, con i loghi delle due squadre
   y += 12;
   var logoAt = function (t, x, align) {
@@ -1804,27 +2097,27 @@ function buildMatchPdf(m) {
   }
   // cronaca
   y += 6; need(20);
-  set("bold", 12, GREEN); T("CRONACA", L, y); y += 3;
-  var cols = [L, L + 16, L + 64, L + 106], head = function () {
-    doc.setFillColor(GREEN[0], GREEN[1], GREEN[2]); doc.rect(L, y, R - L, 7, "F");
-    set("bold", 9, inkOn(GREEN)); T("Min.", cols[0] + 2, y + 4.8); T("Squadra", cols[1] + 2, y + 4.8); T("Evento", cols[2] + 2, y + 4.8); T("Giocatori", cols[3] + 2, y + 4.8);
+  set("bold", 12, GREEN); T(Lg("CRONACA", "MATCH LOG"), L0, y); y += 3;
+  var cols = [L0, L0 + 16, L0 + 64, L0 + 106], head = function () {
+    doc.setFillColor(GREEN[0], GREEN[1], GREEN[2]); doc.rect(L0, y, R - L0, 7, "F");
+    set("bold", 9, inkOn(GREEN)); T("Min.", cols[0] + 2, y + 4.8); T(Lg("Squadra", "Team"), cols[1] + 2, y + 4.8); T(Lg("Evento", "Event"), cols[2] + 2, y + 4.8); T(Lg("Giocatori", "Players"), cols[3] + 2, y + 4.8);
     y += 7;
   };
   head();
   var list = sorted(m), cur = 0, zebra = false;
-  if (!list.length) { set("normal", 10, MUT); y += 6; T("Nessun evento registrato.", L + 2, y); y += 4; }
+  if (!list.length) { set("normal", 10, MUT); y += 6; T(Lg("Nessun evento registrato.", "No events recorded."), L0 + 2, y); y += 4; }
   list.forEach(function (e) {
     if (e.period !== cur && m.periods > 1) {
       cur = e.period;
       if (need(14)) head();
       var tint = GREEN.map(function (v) { return Math.round(v + (255 - v) * 0.85); });
-      doc.setFillColor(tint[0], tint[1], tint[2]); doc.rect(L, y, R - L, 6, "F");
-      set("bold", 9, GREEN); T(periodName(cur).toUpperCase(), L + 2, y + 4.2); y += 6;
+      doc.setFillColor(tint[0], tint[1], tint[2]); doc.rect(L0, y, R - L0, 6, "F");
+      set("bold", 9, GREEN); T(periodName(cur, m.periods).toUpperCase(), L0 + 2, y + 4.2); y += 6;
     }
     set("normal", 9.5, INK);
     var tl = lines(teamName(m, e.team), 46), dl = lines(evDetail(e), R - cols[3] - 4), h = Math.max(tl.length, dl.length) * 4.4 + 2.6;
     if (need(h)) head();
-    if (zebra) { doc.setFillColor(244, 247, 245); doc.rect(L, y, R - L, h, "F"); }
+    if (zebra) { doc.setFillColor(244, 247, 245); doc.rect(L0, y, R - L0, h, "F"); }
     zebra = !zebra;
     set("bold", 9.5, INK); T(minuteLabel(m, e.period, e.sec), cols[0] + 2, y + 4.6);
     set("normal", 9.5, INK); doc.text(tl, cols[1] + 2, y + 4.6);
@@ -1833,23 +2126,23 @@ function buildMatchPdf(m) {
     set("normal", 9.5, INK); doc.text(dl, cols[3] + 2, y + 4.6);
     y += h;
   });
-  doc.setDrawColor(200, 210, 204); doc.setLineWidth(0.2); doc.line(L, y, R, y);
+  doc.setDrawColor(200, 210, 204); doc.setLineWidth(0.2); doc.line(L0, y, R, y);
   // formazioni di partenza
   ["home", "away"].forEach(function (t) {
     if (!hasLineup(m, t)) return;
     var Lu = lineupOf(m, t), tit = Lu.slots.filter(Boolean), ben = benchOf(m, t, Lu);
     y += 9; need(24);
-    set("bold", 12, GREEN); T("FORMAZIONE " + teamName(m, t).toUpperCase() + " (" + Lu.mod + ")", L, y); y += 6;
+    set("bold", 12, GREEN); T(Lg("FORMAZIONE ", "LINEUP ") + teamName(m, t).toUpperCase() + " (" + Lu.mod + ")", L0, y); y += 6;
     set("normal", 10, INK);
-    var a = lines("Titolari: " + (tit.join(", ") || "-"), R - L), b = lines("Panchina: " + (ben.join(", ") || "-"), R - L);
-    need(a.length * 5 + b.length * 5); doc.text(a, L, y); y += a.length * 5; doc.text(b, L, y); y += b.length * 5;
+    var a = lines(Lg("Titolari: ", "Starters: ") + (tit.join(", ") || "-"), R - L0), b = lines(Lg("Panchina: ", "Bench: ") + (ben.join(", ") || "-"), R - L0);
+    need(a.length * 5 + b.length * 5); doc.text(a, L0, y); y += a.length * 5; doc.text(b, L0, y); y += b.length * 5;
   });
   // piè di pagina
   var n = doc.getNumberOfPages(), now = new Date();
   for (var pg = 1; pg <= n; pg++) {
     doc.setPage(pg); set("normal", 8, MUT);
-    T("Bordocampo - creato il " + now.toLocaleDateString("it-IT") + " alle " + now.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" }), L, 290);
-    T("Pagina " + pg + " di " + n, R, 290, { align: "right" });
+    T(Lg("MisterBook - creato il ", "MisterBook - created on ") + now.toLocaleDateString(LOC) + Lg(" alle ", " at ") + now.toLocaleTimeString(LOC, { hour: "2-digit", minute: "2-digit" }), L0, 290);
+    T(Lg("Pagina ", "Page ") + pg + Lg(" di ", " of ") + n, R, 290, { align: "right" });
   }
   return doc;
 }
@@ -1858,7 +2151,7 @@ function makeMatchPdf(m) {
   loadJsPdf().then(function () {
     var doc = buildMatchPdf(m), b64 = doc.output("datauristring").split(",")[1];
     var clean = function (x) { return String(x || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Za-z0-9]+/g, "_").replace(/^_|_$/g, ""); };
-    return shareBinary("cronaca_" + clean(m.home) + "-" + clean(m.away) + "_" + String(m.date).slice(0, 10) + ".pdf", b64, "application/pdf", "Cronaca della partita");
+    return shareBinary(L("cronaca_", "report_") + clean(m.home) + "-" + clean(m.away) + "_" + String(m.date).slice(0, 10) + ".pdf", b64, "application/pdf", T("Cronaca della partita"));
   }).catch(function () { toast("Serve la connessione la prima volta per creare il PDF", 3000); });
 }
 // Scelta della squadra a tutto schermo: due schede grandi.
@@ -1928,7 +2221,7 @@ function evListHTML(m, types, title, empty) {
       '<button class="del" data-a="ev-del2" data-id="' + e.id + '">Elimina</button></div>';
   }).join("") + '</div><div class="note">Tocca un evento per correggerlo.</div></section>';
 }
-function guideHTML(n, text) { return '<div class="guide"><b class="gn">' + n + "</b><span>" + text + "</span></div>"; }
+function guideHTML(n, text) { return '<div class="guide"><b class="gn">' + n + "</b><span>" + T(text) + "</span></div>"; }
 function vWizard(m) {
   var w = ui.wz, st = ui.p.step;
   if (!w) { ui.p = {}; return vLive(); }
@@ -2009,15 +2302,15 @@ function vLive() {
     var nm = '<span class="tname">' + (t === m.mySide ? '<span class="mine">noi</span>' : "") + esc(teamName(m, t)) + "</span>";
     return '<div class="side"><div class="nm">' + (t === "home" ? ball + nm : nm + ball) + '</div><div class="score">' + score(m, t) + "</div></div>";
   };
-  var h = '<div class="top"><button class="link" data-a="back">‹ Home</button><span class="title">' + (brk ? "Intervallo" : periodName(m.period)) + "</span><span></span></div>";
+  var h = '<div class="top"><button class="link" data-a="back">‹ Home</button><span class="title">' + (brk ? "Intervallo" : periodName(m.period, m.periods)) + "</span><span></span></div>";
   h += '<section class="board hub">' +
     '<div class="board-top"><span>' + m.periods + " × " + m.minutes + '′</span><span class="pill" id="pill"><i class="dot"></i><span id="pill-t"></span></span></div>' +
     '<div class="clockwrap"><div class="clock"><span id="clk">00:00</span><span class="extra" id="extra"></span></div>' +
     '<div class="cd" id="cdw">Mancano <b id="cd">00:00</b></div></div>' +
     '<div class="scoreline">' + side("home") + '<div class="vs">-</div>' + side("away") + "</div></section>";
-  if (brk) h += '<button class="btn primary big block" data-a="next-period">Inizia il ' + periodName(m.period + 1) + "</button>";
+  if (brk) h += '<button class="btn primary big block" data-a="next-period">Inizia il ' + periodName(m.period + 1, m.periods) + "</button>";
   else h += '<div class="controls"><button class="btn primary big" id="toggle" data-a="toggle"></button>' +
-    '<button class="btn big" data-a="end-period">' + (last ? "Fine partita" : "Fine " + m.period + "° t.") + "</button></div>";
+    '<button class="btn big" data-a="end-period">' + (last ? "Fine partita" : L("Fine " + m.period + "° t.", "End " + periodName(m.period, m.periods))) + "</button></div>";
   h += '<div class="tiles compact">' +
     tile("hub", ic("formation"), "Formazione", "", ' data-v="lineup"') +
     tile("hub", ic("ball"), "Gol", "", ' data-v="goal"', !can) +
@@ -2062,7 +2355,8 @@ function vLineup() {
     '<div class="note">Tocca un nome per spostarlo tra panchina e tribuna.</div>' +
     '<div class="row"><input type="text" id="lu-new" class="grow" autocomplete="off" placeholder="Nuovi giocatori, separati da virgola">' +
     '<button class="btn" data-a="lu-many">Aggiungi</button></div></section>';
-  return h + '<button class="btn primary big block" data-a="lu-done">' + (ui.luNext ? "Avanti: la convocazione" : "Fatto") + "</button>";
+  if (ui.luNext) { ui.navNext = { a: "lu-done" }; return h; }
+  return h + '<button class="btn primary big block" data-a="lu-done">Fatto</button>';
 }
 
 function vSummary() {
@@ -2120,7 +2414,7 @@ function renderLayer() {
       '<button class="btn primary block" data-a="share-close">Chiudi</button></div>';
   }
   var old = layer.querySelector(".sheet"), keep = old ? old.scrollTop : 0;
-  layer.innerHTML = h;
+  layer.innerHTML = trHTML(h);
   var nw = layer.querySelector(".sheet");
   if (nw && keep) { nw.style.animation = "none"; nw.scrollTop = keep; }
   filterAll();
@@ -2168,7 +2462,7 @@ function filterChips(key, q) {
   });
   Array.prototype.forEach.call(box.querySelectorAll(".grp"), function (g) { g.hidden = !g.querySelector(".chip:not([hidden])"); });
   var add = box.querySelector(".add");
-  if (add) { add.hidden = !raw || exact; add.textContent = "Aggiungi \u00ab" + raw + "\u00bb alla rosa"; }
+  if (add) { add.hidden = !raw || exact; add.textContent = L("Aggiungi \u00ab" + raw + "\u00bb alla rosa", "Add \u00ab" + raw + "\u00bb to the squad"); }
 }
 function filterAll() {
   Array.prototype.forEach.call(document.querySelectorAll("[data-picker]"), function (box) {
@@ -2226,7 +2520,7 @@ function sheetHTML(m, e) {
 
 function ask(title, text, ok, fn, danger) { ui.confirm = { title: title, text: text, ok: ok, fn: fn, danger: danger }; renderLayer(); }
 function toast(msg, ms) {
-  var t = document.createElement("div"); t.className = "toast"; t.textContent = msg; document.body.appendChild(t);
+  var t = document.createElement("div"); t.className = "toast"; t.textContent = T(msg); document.body.appendChild(t);
   setTimeout(function () { t.remove(); }, ms || 1800);
 }
 
@@ -2266,12 +2560,12 @@ function tick() {
   }
   var pill = $id("pill"), pt = $id("pill-t");
   if (pill) {
-    if (m.status === "break") { pill.className = "pill"; pt.textContent = "Intervallo"; }
-    else if (m.run) { pill.className = "pill " + (sec >= len ? "over" : "on"); pt.textContent = sec >= len ? "Recupero" : "In corso"; }
-    else { pill.className = "pill"; pt.textContent = m.started ? "In pausa" : "Pronti"; }
+    if (m.status === "break") { pill.className = "pill"; pt.textContent = T("Intervallo"); }
+    else if (m.run) { pill.className = "pill " + (sec >= len ? "over" : "on"); pt.textContent = T(sec >= len ? "Recupero" : "In corso"); }
+    else { pill.className = "pill"; pt.textContent = T(m.started ? "In pausa" : "Pronti"); }
   }
   var tg = $id("toggle");
-  if (tg) tg.textContent = m.run ? "❚❚ Pausa" : m.started ? "▶ Riprendi" : "▶ Avvia";
+  if (tg) tg.textContent = T(m.run ? "❚❚ Pausa" : m.started ? "▶ Riprendi" : "▶ Avvia");
 }
 setInterval(tick, 250);
 document.addEventListener("visibilitychange", function () {
@@ -2339,6 +2633,8 @@ document.addEventListener("click", function (ev) {
 
   switch (a) {
     case "back": back(); break;
+    case "fwd": forward(); break;
+    case "lang": S.settings.lang = el.getAttribute("data-v"); setLang(S.settings.lang); save(); render(); break;
     case "home": reset("home"); break;
     case "setup": planMatch(); go("plan"); break;
     case "plan": go("plan"); break;
@@ -2501,8 +2797,8 @@ document.addEventListener("click", function (ev) {
     case "goal": unlockAudio(); startWizard("goal", el.getAttribute("data-t")); break;
     case "end-period": {
       var last = m.period >= m.periods;
-      ask(last ? "Fine partita?" : "Fine " + periodName(m.period) + "?",
-        last ? "Il cronometro si ferma e vedi il risultato finale con i marcatori." : "Il cronometro si ferma. Riparti quando inizia il " + periodName(m.period + 1) + ".",
+      ask(last ? "Fine partita?" : "Fine " + periodName(m.period, m.periods) + "?",
+        last ? "Il cronometro si ferma e vedi il risultato finale con i marcatori." : "Il cronometro si ferma. Riparti quando inizia il " + periodName(m.period + 1, m.periods) + ".",
         last ? "Chiudi partita" : "Fine tempo",
         function () {
           if (last) return finishMatch();
@@ -2558,7 +2854,7 @@ document.addEventListener("click", function (ev) {
     case "live-copy": copyText(liveURL(liveTarget()), "Link copiato"); break;
     case "live-share": {
       var lm = liveTarget();
-      shareText("Segui in diretta " + lm.home + " - " + lm.away + ": " + liveURL(lm), "Condividi la diretta");
+      shareText(L("Segui in diretta ", "Follow live: ") + lm.home + " - " + lm.away + ": " + liveURL(lm), "Condividi la diretta");
       break;
     }
     case "share-close": ui.share = null; renderLayer(); break;

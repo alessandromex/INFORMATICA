@@ -1,6 +1,6 @@
 {
   "appId": "it.bordocampo.app",
-  "appName": "Bordocampo",
+  "appName": "MisterBook",
   "webDir": "www",
   "android": {
     "backgroundColor": "#1c5a34"

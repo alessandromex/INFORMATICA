@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Bordocampo Diretta</title>
+<title>MisterBook Diretta</title>
 <meta name="theme-color" content="#0d1912">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-180.png">
@@ -138,7 +138,7 @@ h2 { font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacin
 </head>
 <body>
 <main>
-  <div class="brand"><h1>Bordocampo</h1><span class="upd" id="upd">Collegamento&hellip;</span></div>
+  <div class="brand"><h1>MisterBook</h1><span class="upd" id="upd">Collegamento&hellip;</span></div>
   <div id="view"><section class="panel"><div class="empty">Collegamento alla diretta in corso&hellip;</div></section></div>
   <div class="foot">Pagina in sola lettura. Si aggiorna da sola: non serve ricaricare.</div>
 </main>
@@ -148,6 +148,30 @@ h2 { font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacin
 var id = (new URLSearchParams(location.search).get("id") || location.hash.slice(1) || "").replace(/[^A-Za-z0-9_-]/g, "");
 var view = document.getElementById("view"), upd = document.getElementById("upd");
 var S = null, lastAt = 0, connected = false;
+// Lingua di chi guarda: italiano se il telefono è in italiano, altrimenti inglese.
+var EN = !/^it\b/i.test(navigator.language || "it");
+var DICT = {
+  "Collegamento…": "Connecting…", "Collegamento alla diretta in corso…": "Connecting to the live match…",
+  "Pagina in sola lettura. Si aggiorna da sola: non serve ricaricare.": "Read-only page. It updates by itself: no need to reload.",
+  "Marcatore non indicato": "Scorer not specified", "Portiere": "Goalkeeper", "Difensore": "Defender", "Centrocampista": "Midfielder", "Attaccante": "Forward",
+  "Formazione": "Lineup", "Panchina": "Bench", "Cronaca": "Match log", "Ancora nessun gol, cartellino o cambio.": "No goals, cards or substitutions yet.",
+  "Rigore": "Penalty", "Autogol": "Own goal", "Gol": "Goal", "Espulsione": "Red card", "2ª ammonizione, espulso": "Second yellow, sent off", "Ammonizione": "Yellow card",
+  "marcatore non indicato": "scorer not specified", "giocatore non indicato": "player not specified", "non indicato": "not specified", "Cambio": "Substitution",
+  "giocatori non indicati": "players not specified", "Finale": "Full time", "Terminata": "Finished", "Intervallo": "Break", "Recupero": "Added time", "In diretta": "Live",
+  "In pausa": "Paused", "Non ancora iniziata": "Not started yet", "Riconnessione…": "Reconnecting…", "ora": "now", "In attesa di aggiornamenti": "Waiting for updates",
+  "In attesa": "Waiting", "Link incompleto": "Incomplete link",
+  "La diretta non ha ancora dati. Appena l’allenatore avvia la partita qui compaiono risultato, minuto e marcatori. Se la partita è finita da più di 12 ore il link non è più attivo.":
+    "The live page has no data yet. As soon as the coach starts the match, score, minute and scorers appear here. If the match ended more than 12 hours ago the link is no longer active."
+};
+function T(s) { return EN && DICT[s] ? DICT[s] : s; }
+function ord(n) { var k = n % 100; return n + (k >= 11 && k <= 13 ? "th" : ["th", "st", "nd", "rd"][n % 10] || "th"); }
+function perName(n) { return EN ? ord(n) + (S && S.P !== 2 ? " period" : " half") : n + "° tempo"; }
+if (EN) {
+  document.documentElement.lang = "en"; document.title = "MisterBook Live";
+  document.getElementById("upd").textContent = T("Collegamento…");
+  document.querySelector("#view .empty").textContent = T("Collegamento alla diretta in corso…");
+  document.querySelector(".foot").textContent = T("Pagina in sola lettura. Si aggiorna da sola: non serve ricaricare.");
+}
 
 function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
 function two(n) { return (n < 10 ? "0" : "") + n; }
@@ -175,9 +199,9 @@ function scorers(t) {
   var groups = [], by = {};
   S.e.forEach(function (e) {
     if (e[0] !== "g" || e[1] !== t) return;
-    var n = e[4] || "Marcatore non indicato";
+    var n = e[4] || T("Marcatore non indicato");
     if (!by[n]) { by[n] = []; groups.push(n); }
-    by[n].push(minuteLabel(e[2], e[3]) + (e[5] === "r" ? " (rig.)" : e[5] === "o" ? " (aut.)" : ""));
+    by[n].push(minuteLabel(e[2], e[3]) + (e[5] === "r" ? (EN ? " (pen.)" : " (rig.)") : e[5] === "o" ? (EN ? " (o.g.)" : " (aut.)") : ""));
   });
   return groups.map(function (n) { return "<p>" + esc(n + " " + by[n].join(", ")) + "</p>"; }).join("");
 }
@@ -216,10 +240,10 @@ function pitchHTML(mod, slots, stats, opt) {
   return h + "</div>";
 }
 function roleOf(mod, i) {
-  if (i === 0) return "Portiere";
+  if (i === 0) return T("Portiere");
   var lines = mod.split("-").map(Number), k = i - 1;
   for (var l = 0; l < lines.length; l++) {
-    if (k < lines[l]) return l === 0 ? "Difensore" : l === lines.length - 1 ? "Attaccante" : "Centrocampista";
+    if (k < lines[l]) return T(l === 0 ? "Difensore" : l === lines.length - 1 ? "Attaccante" : "Centrocampista");
     k -= lines[l];
   }
   return "";
@@ -251,8 +275,8 @@ function fieldState(ti) {
 function lineupHTML(ti) {
   var fs = fieldState(ti);
   if (!fs) return "";
-  return '<section class="panel"><h2>Formazione ' + esc(name(ti)) + " \u00b7 " + esc(fs.mod) + "</h2>" + pitchHTML(fs.mod, fs.slots, fs.stats) +
-    (fs.bench.length ? '<div class="bench"><span class="empty">Panchina</span>' + fs.bench.map(function (p) {
+  return '<section class="panel"><h2>' + T("Formazione") + " " + esc(name(ti)) + " \u00b7 " + esc(fs.mod) + "</h2>" + pitchHTML(fs.mod, fs.slots, fs.stats) +
+    (fs.bench.length ? '<div class="bench"><span class="empty">' + T("Panchina") + "</span>" + fs.bench.map(function (p) {
       var o = fs.stats[p] && fs.stats[p].outAt;
       return '<span class="bp">' + esc(p) + (o ? "<small>\u25BC " + o + "</small>" : "") + "</span>";
     }).join("") + "</div>" : "") + "</section>";
@@ -264,7 +288,7 @@ function render() {
   h += '<div class="scoreline"><span class="tname">' + esc(S.h) + '</span><span class="score">' + score(0) + " - " + score(1) + '</span><span class="tname">' + esc(S.a) + "</span></div>";
   if (S.P > 1 && (S.pe > 1 || S.st === "ended")) {
     var parts = [];
-    for (var p = 1; p <= Math.min(S.pe, S.P); p++) parts.push(p + "°T " + score(0, p) + "-" + score(1, p));
+    for (var p = 1; p <= Math.min(S.pe, S.P); p++) parts.push((EN ? ord(p) + " " : p + "°T ") + score(0, p) + "-" + score(1, p));
     h += '<div class="partials">' + parts.join(" · ") + "</div>";
   }
   var sh = scorers(0), sa = scorers(1);
@@ -272,20 +296,20 @@ function render() {
   h += "</section>";
 
   h += lineupHTML(0) + lineupHTML(1);
-  h += '<section class="panel"><h2>Cronaca</h2>';
-  if (!S.e.length) h += '<div class="empty">Ancora nessun gol, cartellino o cambio.</div>';
+  h += '<section class="panel"><h2>' + T("Cronaca") + "</h2>";
+  if (!S.e.length) h += '<div class="empty">' + T("Ancora nessun gol, cartellino o cambio.") + "</div>";
   var cur = 0;
   S.e.forEach(function (e, i) {
-    if (e[2] !== cur) { cur = e[2]; if (S.P > 1) h += '<div class="tl-period">' + cur + "° tempo</div>"; }
+    if (e[2] !== cur) { cur = e[2]; if (S.P > 1) h += '<div class="tl-period">' + perName(cur) + "</div>"; }
     var icon, sub;
-    if (e[0] === "g") { icon = ball(); sub = e[5] === "r" ? "Rigore" : e[5] === "o" ? "Autogol" : "Gol"; }
-    else if (e[0] === "r") { icon = '<i class="card r"></i>'; sub = "Espulsione"; }
-    else { var dy = secondYellow(i); icon = '<i class="card ' + (dy ? "yr" : "y") + '"></i>'; sub = dy ? "2ª ammonizione, espulso" : "Ammonizione"; }
-    var who = e[4] ? esc(e[4]) + "<small>" + sub + "</small>" : sub + "<small>" + (e[0] === "g" ? "marcatore non indicato" : "giocatore non indicato") + "</small>";
+    if (e[0] === "g") { icon = ball(); sub = T(e[5] === "r" ? "Rigore" : e[5] === "o" ? "Autogol" : "Gol"); }
+    else if (e[0] === "r") { icon = '<i class="card r"></i>'; sub = T("Espulsione"); }
+    else { var dy = secondYellow(i); icon = '<i class="card ' + (dy ? "yr" : "y") + '"></i>'; sub = T(dy ? "2ª ammonizione, espulso" : "Ammonizione"); }
+    var who = e[4] ? esc(e[4]) + "<small>" + sub + "</small>" : sub + "<small>" + T(e[0] === "g" ? "marcatore non indicato" : "giocatore non indicato") + "</small>";
     if (e[0] === "s") {
       // cambio: [4] = chi esce, [6] = chi entra
       icon = '<svg class="subsvg" viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="up" d="M8 20V5M3.5 9.5L8 5l4.5 4.5"/><path class="down" d="M16 4v15M11.5 14.5L16 19l4.5-4.5"/></svg>';
-      who = e[4] || e[6] ? '<span class="on">' + esc(e[6] || "non indicato") + '</span><span class="off">' + esc(e[4] || "non indicato") + "</span>" : "Cambio<small>giocatori non indicati</small>";
+      who = e[4] || e[6] ? '<span class="on">' + esc(e[6] || T("non indicato")) + '</span><span class="off">' + esc(e[4] || T("non indicato")) + "</span>" : T("Cambio") + "<small>" + T("giocatori non indicati") + "</small>";
     }
     var side = '<span class="side' + (e[1] === 1 ? " r" : "") + '"><span class="ico">' + icon + '</span><span class="who">' + who + "</span></span>";
     h += '<div class="ev">' + (e[1] === 0 ? side : "<span></span>") + '<span class="min">' + minuteLabel(e[2], e[3]) + "</span>" + (e[1] === 1 ? side : "<span></span>") + "</div>";
@@ -302,16 +326,18 @@ function tick() {
   if (!per) return;
   var sec = periodSec(), len = S.M * 60, base = (S.pe - 1) * len;
   if (clk) clk.innerHTML = mmss(base + Math.min(sec, len)) + (sec > len ? "<small>+" + mmss(sec - len) + "</small>" : "");
-  if (S.st === "ended") { per.textContent = "Finale"; pill.className = "pill"; pt.textContent = "Terminata"; }
-  else if (S.st === "break") { per.textContent = "Fine " + S.pe + "° tempo"; pill.className = "pill"; pt.textContent = "Intervallo"; }
+  if (S.st === "ended") { per.textContent = T("Finale"); pill.className = "pill"; pt.textContent = T("Terminata"); }
+  else if (S.st === "break") { per.textContent = (EN ? "End of " : "Fine ") + perName(S.pe); pill.className = "pill"; pt.textContent = T("Intervallo"); }
   else {
-    per.textContent = S.pe + "° tempo";
-    if (S.r) { pill.className = "pill " + (sec >= len ? "over" : "on"); pt.textContent = sec >= len ? "Recupero" : "In diretta"; }
-    else { pill.className = "pill"; pt.textContent = S.sd ? "In pausa" : "Non ancora iniziata"; }
+    per.textContent = perName(S.pe);
+    if (S.r) { pill.className = "pill " + (sec >= len ? "over" : "on"); pt.textContent = T(sec >= len ? "Recupero" : "In diretta"); }
+    else { pill.className = "pill"; pt.textContent = T(S.sd ? "In pausa" : "Non ancora iniziata"); }
   }
   var ago = lastAt ? Math.round((Date.now() - lastAt) / 60000) : null;
-  if (!connected) { upd.className = "upd err"; upd.textContent = "Riconnessione…"; }
-  else { upd.className = "upd"; upd.textContent = lastAt ? "Aggiornata " + (ago < 1 ? "ora" : ago === 1 ? "1 minuto fa" : ago + " minuti fa") : "In attesa di aggiornamenti"; }
+  if (!connected) { upd.className = "upd err"; upd.textContent = T("Riconnessione…"); }
+  else if (!lastAt) { upd.className = "upd"; upd.textContent = T("In attesa di aggiornamenti"); }
+  else if (EN) { upd.className = "upd"; upd.textContent = "Updated " + (ago < 1 ? "just now" : ago === 1 ? "1 minute ago" : ago + " minutes ago"); }
+  else { upd.className = "upd"; upd.textContent = "Aggiornata " + (ago < 1 ? "ora" : ago === 1 ? "1 minuto fa" : ago + " minuti fa"); }
 }
 
 function accept(data) {
@@ -329,11 +355,12 @@ function onMessage(m) {
 }
 function waiting() {
   if (S) return;
-  view.innerHTML = '<section class="panel"><h2>In attesa</h2><div class="empty">La diretta non ha ancora dati. Appena l’allenatore avvia la partita qui compaiono risultato, minuto e marcatori. Se la partita è finita da più di 12 ore il link non è più attivo.</div></section>';
+  view.innerHTML = '<section class="panel"><h2>' + T("In attesa") + '</h2><div class="empty">' + T("La diretta non ha ancora dati. Appena l’allenatore avvia la partita qui compaiono risultato, minuto e marcatori. Se la partita è finita da più di 12 ore il link non è più attivo.") + "</div></section>";
 }
 
 if (!id) {
-  view.innerHTML = '<section class="panel"><h2>Link incompleto</h2><div class="empty">Apri il link completo che ti è stato mandato: deve finire con <b>?id=</b> seguito da un codice.</div></section>';
+  view.innerHTML = EN ? '<section class="panel"><h2>Incomplete link</h2><div class="empty">Open the full link you were sent: it must end with <b>?id=</b> followed by a code.</div></section>'
+    : '<section class="panel"><h2>Link incompleto</h2><div class="empty">Apri il link completo che ti è stato mandato: deve finire con <b>?id=</b> seguito da un codice.</div></section>';
   upd.textContent = "";
   return;
 }

@@ -55,22 +55,26 @@ jobs:
           BC_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
         run: |
           ./gradlew assembleRelease --no-daemon
+          cp app/build/outputs/apk/release/app-release.apk "$GITHUB_WORKSPACE/MisterBook.apk"
+          # stesso APK anche col vecchio nome, per chi ha il link a Bordocampo.apk
           cp app/build/outputs/apk/release/app-release.apk "$GITHUB_WORKSPACE/Bordocampo.apk"
 
       - uses: actions/upload-artifact@v4
         with:
-          name: Bordocampo-apk
-          path: Bordocampo.apk
+          name: MisterBook-apk
+          path: MisterBook.apk
 
       - name: Pubblica la release
         if: github.event_name != 'pull_request'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: android-${{ github.run_number }}
-          name: Bordocampo Android 1.0.${{ github.run_number }}
-          files: Bordocampo.apk
+          name: MisterBook Android 1.0.${{ github.run_number }}
+          files: |
+            MisterBook.apk
+            Bordocampo.apk
           make_latest: true
           body: |
-            Per installare: apri questa pagina dal telefono Android, scarica **Bordocampo.apk** e aprilo.
+            Per installare: apri questa pagina dal telefono Android, scarica **MisterBook.apk** e aprilo (Bordocampo.apk è lo stesso file, col nome precedente dell'app).
             La prima volta Android chiede di consentire l'installazione da questa fonte (Chrome o File): consentila e tocca Installa.
             Le versioni successive si installano sopra la precedente senza perdere le partite salvate.
