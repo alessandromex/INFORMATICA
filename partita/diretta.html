@@ -105,14 +105,21 @@ h2 { font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacin
 .pitch .pl-arc { left: 50%; top: 0; width: 28%; aspect-ratio: 1; border-radius: 50%; transform: translate(-50%, -50%); }
 .pp { position: absolute; z-index: 1; transform: translate(-50%, -50%); max-width: 84px; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 0; }
 .shirt {
-  position: relative; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center;
-  background: var(--kit); color: var(--kit-ink); font: 800 17px/1 var(--font-display); font-variant-numeric: tabular-nums;
-  box-shadow: 0 2px 5px rgba(0,0,0,.35);
+  position: relative; width: 44px; height: 42px; display: grid; place-items: center; padding-top: 6px;
+  color: var(--kit-ink); font: 800 17px/1 var(--font-display); font-variant-numeric: tabular-nums;
+  filter: drop-shadow(0 2px 2px rgba(0,0,0,.4));
 }
-.pp.gk .shirt { background: var(--kit-gk); }
-.pp.empty .shirt { background: rgba(255,255,255,.14); color: #fff; box-shadow: inset 0 0 0 2px rgba(255,255,255,.75); font-size: 22px; font-weight: 500; }
+/* la maglia: sagoma ritagliata, nei colori sociali (tinta unita, strisce, righe o metà e metà) */
+.shirt::before { content: ""; position: absolute; inset: 0; background: var(--kit); clip-path: var(--shirt-shape); }
+.shirt > b { position: relative; font: inherit; text-shadow: var(--kit-sh, none); }
+.pp.gk .shirt::before { background: var(--kit-gk); }
+.pp.empty .shirt { width: 40px; height: 40px; padding-top: 0; border-radius: 50%; filter: none; background: rgba(255,255,255,.14); color: #fff; box-shadow: inset 0 0 0 2px rgba(255,255,255,.75); font-size: 22px; font-weight: 500; }
+.pp.empty .shirt::before { display: none; }
 .pp.out .shirt { opacity: .45; }
-.pp[aria-pressed=true] .shirt { box-shadow: 0 0 0 3px var(--led), 0 2px 5px rgba(0,0,0,.35); }
+.pp[aria-pressed=true] .shirt { filter: drop-shadow(0 0 1.5px var(--led)) drop-shadow(0 0 1.5px var(--led)) drop-shadow(0 0 2px var(--led)); }
+.pp.empty[aria-pressed=true] .shirt { filter: none; box-shadow: inset 0 0 0 2px rgba(255,255,255,.75), 0 0 0 3px var(--led); }
+:root { --shirt-shape: polygon(31% 0, 41% 0, 50% 11%, 59% 0, 69% 0, 100% 19%, 88% 43%, 78% 37%, 78% 100%, 22% 100%, 22% 37%, 12% 43%, 0 19%); }
+.kit-ico { display: inline-block; width: 22px; height: 21px; background: var(--kit); clip-path: var(--shirt-shape); vertical-align: -3px; margin-right: 6px; }
 .pn { max-width: 100%; padding: 1px 5px; border-radius: 4px; background: rgba(0,0,0,.5); color: #fff; font: 700 12px/1.25 var(--font-display); text-transform: uppercase; letter-spacing: .03em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .pn:empty { display: none; }
 .bd { position: absolute; top: -5px; left: calc(50% + 11px); display: flex; gap: 2px; align-items: center; }
@@ -125,7 +132,7 @@ h2 { font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacin
 .b-card.r { background: var(--red); }
 .b-card.yr { background: linear-gradient(135deg, var(--yellow) 50%, var(--red) 50%); }
 .b-in { color: #5fe39a; font-size: 11px; line-height: 1; text-shadow: 0 0 2px #000, 0 0 2px #000; }
-.pitch.mini .shirt { width: 34px; height: 34px; font-size: 15px; }
+.pitch.mini .shirt { width: 38px; height: 36px; font-size: 15px; padding-top: 5px; }
 .pitch .ballsvg .w { fill: #fff; }
 .pitch .ballsvg .k { fill: #101512; }
 .pitch .ballsvg .s, .pitch .ballsvg .ring { stroke: #101512; }
@@ -207,6 +214,12 @@ function scorers(t) {
 }
 
 var ballSVG = ball;
+// Sul campo, come in TV: cognome e iniziale del nome ("Greco L.", "De Luca P."); un nome solo resta com'è.
+function shortName(s) {
+  var w = String(s || "").trim().split(/\s+/), k = 1;
+  while (k < w.length - 1 && /^(de|di|da|del|della|dello|dal|dalla|lo|la|li|le|van|von|der|den|dos|das|mc|mac|o'|d')$/i.test(w[k - 1]) && k < 3) k++;
+  return w.length > k ? w.slice(0, k).join(" ") + " " + w[k].charAt(0).toUpperCase() + "." : w.join(" ");
+}
 function shirtOf(name) {
   var r = /^(\d{1,3})\s+(.+)$/.exec(name || "");
   if (r) return { n: r[1], s: r[2] };
@@ -230,8 +243,9 @@ function pitchHTML(mod, slots, stats, opt) {
       if (s.r) b += '<i class="b-card ' + (s.y >= 2 ? "yr" : "r") + '"></i>';
       else if (s.y) b += '<i class="b-card y"></i>';
       if (s.inAt) b += '<i class="b-in">▲</i>';
-      var inner = '<span class="shirt">' + (name ? esc(sh.n) : "+") + (b ? '<span class="bd">' + b + "</span>" : "") + "</span>" +
-        '<span class="pn">' + esc(name ? sh.s : opt.edit ? roleOf(mod, i) : "") + "</span>";
+      var kst = name && i > 0 && opt.kit ? ' style="--kit:' + opt.kit.bg + ";--kit-ink:" + opt.kit.fg + (opt.kit.sh ? ";--kit-sh:0 0 2px #000,0 0 2px #000,0 0 1px #000" : "") + '"' : "";
+      var inner = '<span class="shirt"' + kst + "><b>" + (name ? esc(sh.n) : "+") + "</b>" + (b ? '<span class="bd">' + b + "</span>" : "") + "</span>" +
+        '<span class="pn">' + esc(name ? shortName(sh.s) : opt.edit ? roleOf(mod, i) : "") + "</span>";
       if (opt.edit) h += '<button class="' + cls + '" data-a="lu-slot" data-i="' + i + '" aria-pressed="' + (opt.sel === i) + '" aria-label="' + esc(roleOf(mod, i) + (name ? ": " + name : "")) + '"' + attr + ">" + inner + "</button>";
       else if (opt.pick && name) h += '<button class="' + cls + '" data-a="pick" data-f="' + opt.pick + '" data-v="' + esc(name) + '" aria-pressed="' + (opt.cur === name) + '"' + attr + ">" + inner + "</button>";
       else h += '<div class="' + cls + '"' + attr + ">" + inner + "</div>";
@@ -272,10 +286,13 @@ function fieldState(ti) {
   });
   return { mod: F.m, slots: cur, bench: bench, stats: st };
 }
+// Colori delle maglie mandati dall'app (S.K); il nome della squadra ha accanto la sua maglietta.
+function kitOf(ti) { return S.K && S.K[ti] && /^[#(),.%\w -]+$/.test(S.K[ti].bg) && /^#[0-9a-f]{6}$/i.test(S.K[ti].fg) ? S.K[ti] : null; }
+function kitIco(ti) { var k = kitOf(ti); return '<span class="kit-ico" style="--kit:' + (k ? k.bg : ti === (S.s === "away" ? 1 : 0) ? "#ffffff" : "#8a8f94") + '"></span>'; }
 function lineupHTML(ti) {
   var fs = fieldState(ti);
   if (!fs) return "";
-  return '<section class="panel"><h2>' + T("Formazione") + " " + esc(name(ti)) + " \u00b7 " + esc(fs.mod) + "</h2>" + pitchHTML(fs.mod, fs.slots, fs.stats) +
+  return '<section class="panel"><h2>' + T("Formazione") + " " + esc(name(ti)) + " \u00b7 " + esc(fs.mod) + "</h2>" + pitchHTML(fs.mod, fs.slots, fs.stats, { kit: kitOf(ti) }) +
     (fs.bench.length ? '<div class="bench"><span class="empty">' + T("Panchina") + "</span>" + fs.bench.map(function (p) {
       var o = fs.stats[p] && fs.stats[p].outAt;
       return '<span class="bp">' + esc(p) + (o ? "<small>\u25BC " + o + "</small>" : "") + "</span>";
@@ -285,7 +302,7 @@ function render() {
   if (!S) return;
   var h = '<section class="board"><div class="board-top"><span id="per"></span><span class="pill" id="pill"><i class="dot"></i><span id="pill-t"></span></span></div>';
   if (S.st !== "ended") h += '<div class="clock" id="clk"></div>';
-  h += '<div class="scoreline"><span class="tname">' + esc(S.h) + '</span><span class="score">' + score(0) + " - " + score(1) + '</span><span class="tname">' + esc(S.a) + "</span></div>";
+  h += '<div class="scoreline"><span class="tname">' + kitIco(0) + esc(S.h) + '</span><span class="score">' + score(0) + " - " + score(1) + '</span><span class="tname">' + kitIco(1) + esc(S.a) + "</span></div>";
   if (S.P > 1 && (S.pe > 1 || S.st === "ended")) {
     var parts = [];
     for (var p = 1; p <= Math.min(S.pe, S.P); p++) parts.push((EN ? ord(p) + " " : p + "°T ") + score(0, p) + "-" + score(1, p));
