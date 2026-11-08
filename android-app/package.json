@@ -1,7 +1,7 @@
 {
   "name": "bordocampo-android",
   "private": true,
-  "description": "App Android di Bordocampo: impacchetta la web app di ../partita con Capacitor.",
+  "description": "App Android di MisterBook: impacchetta la web app di ../partita con Capacitor.",
   "scripts": {
     "web": "node scripts/copy-web.mjs",
     "sync": "npm run web && cap sync android",

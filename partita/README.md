@@ -1,6 +1,8 @@
-# Bordocampo
+# MisterBook
 
-App per iPhone per seguire le partite di calcio della propria squadra: cronometro, conto alla rovescia, gol, ammonizioni ed espulsioni, risultato finale con marcatori e minuti.
+App per allenatori e dirigenti (prima si chiamava Bordocampo): convocazione e distinta, formazione, e durante la partita cronometro, conto alla rovescia, gol, ammonizioni, espulsioni e cambi, con risultato finale, marcatori, minuti e PDF della partita.
+
+**Lingue**: italiano e inglese. Al primo avvio l'app usa la lingua del telefono; si cambia in fondo alla Home (Italiano / English). Chi aveva già dati salvati resta in italiano finché non sceglie un'altra lingua.
 
 È una web app (HTML + JavaScript, nessuna dipendenza): si apre in Safari e si installa sulla schermata Home, dove funziona come un'app anche senza connessione. I dati restano salvati sul telefono.
 
@@ -12,7 +14,7 @@ App per iPhone per seguire le partite di calcio della propria squadra: cronometr
 
 ## Come si usa
 
-L'app è fatta di schermate semplici con poche cose grandi da toccare, pensate per lo schermo del telefono a bordocampo. Si passa da una all'altra con le schede bianche; **‹ Indietro** in alto (o il tasto indietro di Android) torna alla schermata precedente.
+L'app è fatta di schermate semplici con poche cose grandi da toccare, pensate per lo schermo del telefono a bordocampo. Si passa da una all'altra con le schede bianche; **‹ Indietro** in alto (o il tasto indietro di Android) torna alla schermata precedente. In fondo a ogni schermata ci sono anche **‹ Indietro** e **Avanti ›**, così dopo aver scorso la pagina non serve risalire: Avanti porta al passo successivo (nella preparazione della partita) oppure riapre la schermata da cui si è appena tornati indietro.
 
 - **Home**: Nuova partita (o Prossima partita / Riprendi la partita), Rosa, Partite giocate, Società.
 - **Prossima partita** (convocazione e preparazione, con i passi da spuntare):
@@ -24,7 +26,7 @@ L'app è fatta di schermate semplici con poche cose grandi da toccare, pensate p
   Poi **Inizia la partita**: tempi e minuti, e si va in campo. La convocazione dell'ultima partita viene riproposta.
 - **Società**: nome, categoria, logo (resta sul dispositivo), **colori sociali** (principale e secondario, tra colori pronti o personalizzati), valori proposti (competizione, ritrovo, impianto) e note della convocazione (documenti, kit, puntualità, assenze, saluto).
 - **Loghi e colori degli avversari**: in Rosa → Avversari → squadra. I colori vestono le maglie sul campo; nei documenti la convocazione usa i colori della società (cornice e scritte) e il PDF della partita mostra l'intestazione nel colore sociale e i loghi delle due squadre accanto al risultato. Un colore troppo chiaro viene scurito per le scritte.
-- Il file **rosa.json** dell'app Convocazioni si carica in Rosa → Salva e carica: rosa e predefiniti entrano in Bordocampo.
+- Il file **rosa.json** dell'app Convocazioni si carica in Rosa → Salva e carica: rosa e predefiniti entrano in MisterBook.
 - **Partita**: tabellone con minuto, conto alla rovescia e risultato (il pallone accanto al nome registra un gol con un tocco), Avvia/Pausa e Fine tempo, poi le schede **Formazione, Gol, Cartellini, Sostituzioni** e in basso **Cronaca, Diretta, Cronometro**.
 - **Procedure guidate** per Gol, Cartellini e Sostituzioni: una domanda per schermata, con il passo in corso e una riga di aiuto. Il minuto è quello del primo tocco (si può correggere nel riepilogo).
   - **Gol**: squadra (il gol è già registrato) → su azione, rigore o autogol → chi ha segnato → riepilogo.

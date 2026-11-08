@@ -1,4 +1,4 @@
-# Bordocampo per Android
+# MisterBook per Android
 
 L'app Android è la stessa web app di [`../partita`](../partita) impacchettata con [Capacitor](https://capacitorjs.com): funziona senza connessione, tiene lo schermo acceso durante la partita, usa il pannello di condivisione di Android e il tasto indietro chiude i fogli aperti o torna al menu.
 
@@ -6,7 +6,9 @@ L'app Android è la stessa web app di [`../partita`](../partita) impacchettata c
 
 Scarica l'ultima versione da qui, direttamente dal telefono Android:
 
-**https://github.com/alessandromex/INFORMATICA/releases/latest/download/Bordocampo.apk**
+**https://github.com/alessandromex/INFORMATICA/releases/latest/download/MisterBook.apk**
+
+(Il vecchio link con `Bordocampo.apk` continua a funzionare: la release contiene lo stesso APK anche con quel nome. L'identificativo dell'app resta `it.bordocampo.app`, così l'aggiornamento si installa sopra la versione già presente senza perdere i dati.)
 
 Apri il file scaricato. La prima volta Android chiede di consentire l'installazione da questa fonte: consentila e tocca **Installa**. Gli aggiornamenti si installano sopra la versione precedente senza perdere partite e rosa.
 

@@ -1,7 +1,7 @@
 {
-  "name": "Bordocampo",
-  "short_name": "Bordocampo",
-  "description": "Cronometro, gol e cartellini per seguire le partite della tua squadra.",
+  "name": "MisterBook",
+  "short_name": "MisterBook",
+  "description": "MisterBook: convocazione, formazione e partita per allenatori e dirigenti. Call-up, lineup and matchday for coaches and team managers.",
   "lang": "it",
   "start_url": "./",
   "scope": "./",
