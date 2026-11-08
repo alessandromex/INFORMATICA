@@ -236,6 +236,64 @@ input[type=text] {
 .tiles.small .tile .ti svg { width: 32px; height: 32px; }
 .tiles.small .tile .tlab { flex: none; font-size: 15px; }
 .tiles.small .chev { display: none; }
+/* colori sociali */
+.swatches { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.sw { width: 40px; height: 40px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(0,0,0,.25); }
+.sw[aria-pressed=true] { box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px var(--accent); }
+.sw.custom { display: grid; place-items: center; background: var(--soft); font-weight: 700; color: var(--muted); position: relative; overflow: hidden; }
+.sw.custom input { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; }
+.kitprev { display: flex; align-items: center; gap: 12px; }
+.kitprev .shirt { width: 44px; height: 44px; }
+/* procedure guidate di gol, cartellini e cambi */
+.evl { display: flex; flex-direction: column; }
+.evl .er { display: flex; align-items: center; gap: 8px; padding: 8px 0; }
+.evl .er + .er { border-top: 1px solid var(--line); }
+.evl .er .eb { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; text-align: left; padding: 4px 0; }
+.evl .er .mn { font: 700 20px var(--font-display); min-width: 46px; font-variant-numeric: tabular-nums; }
+.evl .er .del { flex: none; min-height: 44px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--line); color: var(--danger); font-weight: 600; background: var(--surface); }
+.recap { display: grid; grid-template-columns: auto 1fr; gap: 10px 14px; align-items: center; font-size: 18px; }
+.recap dt { color: var(--muted); font-size: 14px; text-transform: uppercase; letter-spacing: .06em; }
+.recap dd { margin: 0; font-weight: 700; overflow-wrap: anywhere; }
+.guide { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 12px; background: rgba(0,0,0,.22); color: var(--on-field); font-size: 15px; }
+.guide span b { color: var(--brand); }
+.guide .gn { flex: none; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: var(--brand); color: var(--brand-ink); font: 800 15px var(--font-display); }
+/* convocazione: ogni giocatore della rosa in campo, in panchina o in tribuna */
+.cvhead { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 3; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 8px; border-radius: 12px; background: var(--board); color: var(--board-ink); text-align: center; }
+.cvhead b { display: block; font: 800 28px/1 var(--font-display); font-variant-numeric: tabular-nums; }
+.cvhead span { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--board-muted); }
+.cvhead .over b { color: var(--led); }
+.cvrow { display: flex; align-items: center; gap: 8px; padding: 8px 0; }
+.cvrow + .cvrow { border-top: 1px solid var(--line); }
+.cvrow .nm { flex: 1; min-width: 0; font-weight: 600; overflow-wrap: anywhere; }
+.seg3 { display: grid; grid-template-columns: repeat(3, 58px); gap: 3px; background: var(--soft); border-radius: 10px; padding: 3px; flex: none; }
+.seg3 button { min-height: 40px; border-radius: 8px; font: 600 12px/1.1 var(--font-body); color: var(--muted); }
+.seg3 button[aria-pressed=true][data-v=campo] { background: var(--accent); color: #fff; }
+.seg3 button[aria-pressed=true][data-v=panchina] { background: var(--brand); color: var(--brand-ink); }
+.seg3 button[aria-pressed=true][data-v=tribuna] { background: #6b7a72; color: #fff; }
+.step { flex: none; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font: 800 16px var(--font-display); background: var(--soft); color: var(--muted); }
+.step.ok { background: var(--accent); color: #fff; }
+.fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.fields .wide { grid-column: 1 / -1; }
+input[type=date], input[type=time], textarea.field { width: 100%; min-height: 50px; padding: 0 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--soft); color: var(--ink); font-size: 17px; }
+textarea.field { padding: 10px 12px; min-height: 76px; font: 16px/1.35 var(--font-body); }
+.logoprev { width: 72px; height: 96px; object-fit: contain; background: var(--soft); border-radius: 8px; }
+/* anteprima A4 della convocazione: carta sempre bianca, come la stampa */
+.sheetwrap { width: 100%; overflow: hidden; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,.3); background: #fff; }
+.a4 { width: 595px; height: 842px; background: #fff; color: #000; font-family: "Times New Roman", Times, serif; position: relative; transform-origin: top left; }
+.a4 .fr { position: absolute; left: 34px; top: 62px; width: 527px; min-height: 714px; border: 6px solid var(--cf, #9B3B33); padding: 30px 30px 18px 32px; }
+.a4 .club { text-align: center; color: var(--c1, #800020); font-size: 20px; margin: 6px 0; }
+.a4 .lg { display: block; margin: 0 auto 10px; width: 61px; height: 83px; object-fit: contain; }
+.a4 .tit { text-align: center; color: #323232; font-size: 11.5px; margin: 6px 0 10px; }
+.a4 .tit .c { color: #EE0000; font-weight: 700; } .a4 .tit .u { color: #000; font-weight: 700; font-size: 16px; }
+.a4 .ln { font-size: 11px; margin: 0 0 6px; } .a4 .ln.gap { margin-top: 12px; }
+.a4 .lb { color: var(--c1, #800020); }
+.a4 .el { color: var(--c1, #800020); font-size: 12px; margin: 24px 0 4px; }
+.a4 table { border-collapse: collapse; width: 100%; table-layout: fixed; font-size: 11px; }
+.a4 td { border: .7px solid #000; padding: 3px 5px; height: 20px; overflow-wrap: anywhere; line-height: 1.15; }
+.a4 td.n { color: var(--c1, #800020); width: 48px; }
+.a4 .nt { font-size: 10px; margin-top: 26px; } .a4 .nt .h { color: var(--c1, #800020); font-size: 12px; }
+.a4 ul { font-size: 10px; margin: 8px 0 0; padding-left: 18px; } .a4 li { margin-bottom: 4px; }
+.a4 .motto { text-align: center; color: var(--c1, #800020); font-size: 12px; margin-top: 14px; }
 .tile.big { min-height: 104px; }
 .tile.big .tlab { font-size: 28px; }
 .bigcard { display: block; width: 34px; height: 46px; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,.35); }
@@ -386,18 +444,20 @@ input[type=text] {
 /* ---------- dati ---------- */
 var KEY = "bordocampo-v1";
 var S = load();
-function fresh() { return { settings: { team: "", roster: [], periods: 2, minutes: 45, side: "home" }, match: null, history: [], oppRosters: {}, oppLabels: {}, oppLineups: {} }; }
+function fresh() { return { settings: { team: "", roster: [], periods: 2, minutes: 45, side: "home" }, match: null, history: [], oppRosters: {}, oppLabels: {}, oppLineups: {}, oppInfo: {} }; }
 function load() {
   var d = fresh();
   try {
     var raw = JSON.parse(localStorage.getItem(KEY));
     if (raw && typeof raw === "object") {
       if (raw.settings) Object.assign(d.settings, raw.settings);
+      d.settings.conv = Object.assign({}, raw.settings && raw.settings.conv);
       d.match = raw.match || null;
       d.history = Array.isArray(raw.history) ? raw.history : [];
       if (raw.oppRosters) d.oppRosters = raw.oppRosters;
       if (raw.oppLabels) d.oppLabels = raw.oppLabels;
       if (raw.oppLineups) d.oppLineups = raw.oppLineups;
+      if (raw.oppInfo) d.oppInfo = raw.oppInfo;
     }
   } catch (e) {}
   return d;
@@ -454,22 +514,142 @@ function findMatch(id) {
 }
 function stopClock(m) { if (m.run) { m.acc += Date.now() - m.run; m.run = null; } }
 
-function newMatch(f) {
-  var mine = f.team.trim() || "La mia squadra", opp = f.opp.trim() || "Avversari";
-  S.settings.team = mine; S.settings.periods = f.periods; S.settings.minutes = f.minutes; S.settings.side = f.side;
+/* ---------- loghi e colori sociali ---------- */
+var SWATCHES = [["Granata", "#7E1E2C"], ["Rosso", "#D7263D"], ["Arancione", "#F07F13"], ["Giallo", "#F2C200"], ["Verde", "#1F8A4C"],
+  ["Azzurro", "#3BA3E0"], ["Blu", "#1D3F8F"], ["Viola", "#6B2D8F"], ["Nero", "#111111"], ["Bianco", "#FFFFFF"], ["Grigio", "#8A8F94"]];
+function hexRgb(h) { var r = /^#?([0-9a-f]{6})$/i.exec(h || ""); if (!r) return null; var n = parseInt(r[1], 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
+function rgbHex(c) { return "#" + c.map(function (v) { return ("0" + v.toString(16)).slice(-2); }).join(""); }
+function lum(c) { return (0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2]) / 255; }
+// Colore leggibile su carta bianca: un colore chiaro (giallo, bianco) viene scurito.
+function onWhite(c) { if (!c) return null; c = c.slice(); while (lum(c) > 0.5) c = c.map(function (v) { return Math.round(v * 0.82); }); return c; }
+function inkOn(c) { return lum(c) > 0.6 ? [19, 32, 26] : [255, 255, 255]; }
+// Logo e colori di una squadra della partita: la mia da Società, gli avversari da Rosa → Avversari.
+function teamInfo(m, t) {
+  if (t === m.mySide) { var c = conv(); return { logo: c.logo || "", primary: c.primary || "", secondary: c.secondary || "" }; }
+  return S.oppInfo[oppKey(m)] || {};
+}
+// Colore principale per i documenti: il primo che non sia quasi bianco.
+function docColor(info, fallback) {
+  var a = hexRgb(info.primary), b = hexRgb(info.secondary);
+  var c = a && lum(a) < 0.92 ? a : b && lum(b) < 0.92 ? b : null;
+  return c || fallback;
+}
+// Maglie sul campo nei colori sociali (primario; numero nel secondario se si legge, altrimenti bianco o scuro).
+function kitFor(m, t) {
+  var info = teamInfo(m, t), a = hexRgb(info.primary);
+  if (!a) return null;
+  var b = hexRgb(info.secondary), fg = b && Math.abs(lum(a) - lum(b)) > 0.35 ? b : inkOn(a);
+  return { bg: rgbHex(a), fg: rgbHex(fg) };
+}
+function colorsHTML(scope, info) {
+  var row = function (which, label) {
+    var cur = (info[which] || "").toUpperCase();
+    return "<h4>" + label + '</h4><div class="swatches">' + SWATCHES.map(function (sw) {
+      return '<button class="sw" style="background:' + sw[1] + '" data-a="col-set" data-k="' + scope + '" data-w="' + which + '" data-v="' + sw[1] + '" aria-pressed="' + (cur === sw[1]) + '" aria-label="' + sw[0] + '"></button>';
+    }).join("") + '<label class="sw custom" aria-label="Altro colore">+<input type="color" id="col-' + scope + "-" + which + '" value="' + (cur || "#888888") + '"></label>' +
+      (cur ? '<button class="link" data-a="col-set" data-k="' + scope + '" data-w="' + which + '" data-v="">Nessuno</button>' : "") + "</div>";
+  };
+  var a = hexRgb(info.primary), kit = a ? (function () { var b = hexRgb(info.secondary); return { bg: rgbHex(a), fg: rgbHex(b && Math.abs(lum(a) - lum(b)) > 0.35 ? b : inkOn(a)) }; })() : null;
+  return '<section class="panel"><h2>Colori sociali</h2><div class="grp">' + row("primary", "Colore principale") + "</div><div class=\"grp\">" + row("secondary", "Colore secondario") + "</div>" +
+    (kit ? '<div class="kitprev"><span class="shirt" style="background:' + kit.bg + ";color:" + kit.fg + '">10</span><span class="note">Così le maglie sul campo; nei documenti il colore principale.</span></div>'
+      : '<div class="note">Usati per le maglie sul campo e nei documenti (convocazione e PDF della partita).</div>') + "</section>";
+}
+function logoPanelHTML(scope, logo) {
+  return '<section class="panel"><h2>Logo</h2><div class="row">' + (logo ? '<img class="logoprev" src="' + logo + '" alt="Logo">' : '<div class="logoprev"></div>') +
+    '<div class="grow" style="display:flex;flex-direction:column;gap:8px"><label class="btn" for="' + scope + '-logo-file">' + (logo ? "Cambia logo" : "Carica il logo") + "</label>" +
+    (logo ? '<button class="btn danger" data-a="logo-del" data-k="' + scope + '">Togli il logo</button>' : "") + "</div></div>" +
+    '<input type="file" id="' + scope + '-logo-file" accept="image/*" hidden><div class="note">Resta solo su questo dispositivo.</div></section>';
+}
+function setTeamInfo(scope, patch) {
+  if (scope === "c") S.settings.conv = Object.assign({}, S.settings.conv, patch);
+  else S.oppInfo[ui.rOpp] = Object.assign({}, S.oppInfo[ui.rOpp], patch);
+  save(); render();
+}
+
+/* ---------- prossima partita: convocazione e preparazione ---------- */
+// Testi fissi della convocazione (Home → Società); i campi vuoti usano questi valori.
+var CONV_DEF = {
+  club: "", categoria: "", competizione: "", ritrovoOra: "", ritrovoLuogo: "", inizioOra: "", impianto: "",
+  documenti: "Portare un documento d'identità valido (o tesserino FIGC a cura del dirigente).",
+  kit: "Presentarsi con la divisa ufficiale, parastinchi e scarpe adatte al terreno di gioco.",
+  puntualita: "Si raccomanda la massima puntualità all'orario di ritrovo fissato.",
+  assenze: "In caso di imprevisti o problemi dell'ultimo minuto, avvisare tempestivamente il mister o il dirigente.",
+  motto: ""
+};
+function conv() {
+  var c = Object.assign({}, CONV_DEF, S.settings.conv || {});
+  if (!c.club) c.club = S.settings.team || "";
+  if (!c.motto && S.settings.team) c.motto = "Forza " + S.settings.team;
+  return c;
+}
+function nextSaturday() {
+  var d = new Date(); d.setDate(d.getDate() + ((6 - d.getDay() + 7) % 7));
+  return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2);
+}
+// Nuova partita: nasce "in preparazione" con i dati della convocazione; il cronometro parte solo con Inizia la partita.
+function planMatch() {
+  var c = conv(), side = S.settings.side || "home", mine = S.settings.team || "La mia squadra";
   S.match = {
     id: uid(), date: new Date().toISOString(),
-    home: f.side === "home" ? mine : opp, away: f.side === "home" ? opp : mine, mySide: f.side,
-    periods: f.periods, minutes: f.minutes, period: 1, acc: 0, run: null, status: "play", started: false,
-    events: [], opp: [], seq: 0, lineup: null, oppLineup: null
+    home: side === "home" ? mine : "", away: side === "home" ? "" : mine, mySide: side,
+    periods: S.settings.periods || 2, minutes: S.settings.minutes || 45, period: 1, acc: 0, run: null, status: "planned", started: false,
+    events: [], opp: [], seq: 0, lineup: null, oppLineup: null,
+    plan: { comp: c.competizione, data: nextSaturday(), ritrovoOra: c.ritrovoOra, ritrovoLuogo: c.ritrovoLuogo, inizioOra: c.inizioOra, impianto: c.impianto, az: false }
   };
-  var m = S.match, ot = other(m.mySide);
-  // ripropone le formazioni dell'ultima volta (la mia e quella di questo avversario)
-  if ((S.settings.lineupSlots || []).some(Boolean)) m.lineup = newLineup(m, m.mySide);
-  var mem = S.oppLineups[oppKey(m)];
-  if (mem && (mem.slots || []).some(Boolean)) m.oppLineup = newLineup(m, ot);
+  var m = S.match;
+  m.lineup = newLineup(m, side);
+  if (!S.settings.lineupBench) m.lineup.bench = [];  // prima convocazione: tutti in tribuna finché non li scegli
   save();
 }
+function oppName(m) { return m[other(m.mySide)] || ""; }
+function setOpp(m, name, side) {
+  var mine = S.settings.team || "La mia squadra";
+  m.mySide = side; S.settings.side = side;
+  m.home = side === "home" ? mine : name; m.away = side === "home" ? name : mine;
+  var mem = name && S.oppLineups[oppKey(m)];
+  if (!m.oppLineup && mem && (mem.slots || []).some(Boolean)) m.oppLineup = newLineup(m, other(side));
+}
+function startMatch(m, periods, minutes) {
+  S.settings.periods = periods; S.settings.minutes = minutes;
+  m.periods = periods; m.minutes = minutes; m.status = "play"; m.date = new Date().toISOString();
+  if (!m[other(m.mySide)]) setOpp(m, "Avversari", m.mySide);
+  save();
+}
+// Campo / panchina / tribuna di un giocatore della mia squadra nella prossima partita.
+function cvState(L, n) { return L.slots.indexOf(n) >= 0 ? "campo" : L.bench.indexOf(n) >= 0 ? "panchina" : "tribuna"; }
+function cvSet(m, n, st) {
+  var L = m.lineup, k = L.slots.indexOf(n);
+  if (st === "campo" && k < 0) {
+    var e = L.slots.indexOf("");
+    if (e < 0) { toast("In campo ce ne sono già " + L.slots.length + ": prima mandane uno in panchina", 3000); return false; }
+    L.slots[e] = n;
+  }
+  if (st !== "campo" && k >= 0) L.slots[k] = "";
+  L.bench = L.bench.filter(function (x) { return x !== n; });
+  if (st === "panchina") L.bench.push(n);
+  rememberLineup(m, m.mySide);
+  return true;
+}
+// Convocati in ordine: titolari nell'ordine dei ruoli, poi la panchina (o tutti in ordine alfabetico).
+function convocati(m) {
+  var L = m.lineup;
+  if (!L) return [];
+  var list = L.slots.filter(Boolean).concat(L.bench);
+  if (m.plan && m.plan.az) list = list.slice().sort(function (a, b) { return shirtOf(a).s.localeCompare(shirtOf(b).s, "it"); });
+  return list;
+}
+function convData(m) {
+  var c = conv(), pl = m.plan || {};
+  return {
+    club: c.club, categoria: c.categoria, logo: c.logo || "", color: docColor(c, null), avversario: oppName(m), competizione: pl.comp || c.competizione,
+    data: pl.data, ritrovoOra: pl.ritrovoOra, ritrovoLuogo: pl.ritrovoLuogo, inizioOra: pl.inizioOra, impianto: pl.impianto,
+    documenti: c.documenti, kit: c.kit, puntualita: c.puntualita, assenze: c.assenze, motto: c.motto,
+    sel: convocati(m).map(function (n) { return String(shirtOf(n).s || n).toUpperCase(); })
+  };
+}
+function fmtData(v) { var r = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v || ""); return r ? r[3] + "." + r[2] + "." + r[1] : v || ""; }
+function fmtOra(v) { return (v || "").replace(":", "."); }
+function two0(n) { return ("0" + n).slice(-2); }
 // A partita in corso l'evento prende il minuto attuale; a partita finita parte dal 1' e il minuto si scrive nel foglio.
 function addEvent(type, team, m) {
   m = m || S.match;
@@ -595,10 +775,11 @@ function pitchHTML(mod, slots, stats, opt) {
       if (s.r) b += '<i class="b-card ' + (s.y >= 2 ? "yr" : "r") + '"></i>';
       else if (s.y) b += '<i class="b-card y"></i>';
       if (s.inAt) b += '<i class="b-in">▲</i>';
-      var inner = '<span class="shirt">' + (name ? esc(sh.n) : "+") + (b ? '<span class="bd">' + b + "</span>" : "") + "</span>" +
+      var kst = opt.kit && name && i > 0 ? ' style="background:' + opt.kit.bg + ";color:" + opt.kit.fg + '"' : "";
+      var inner = '<span class="shirt"' + kst + ">" + (name ? esc(sh.n) : "+") + (b ? '<span class="bd">' + b + "</span>" : "") + "</span>" +
         '<span class="pn">' + esc(name ? sh.s : opt.edit ? roleOf(mod, i) : "") + "</span>";
       if (opt.edit) h += '<button class="' + cls + '" data-a="lu-slot" data-i="' + i + '" aria-pressed="' + (opt.sel === i) + '" aria-label="' + esc(roleOf(mod, i) + (name ? ": " + name : "")) + '"' + attr + ">" + inner + "</button>";
-      else if (opt.pick && name) h += '<button class="' + cls + '" data-a="pick" data-f="' + opt.pick + '" data-v="' + esc(name) + '" aria-pressed="' + (opt.cur === name) + '"' + attr + ">" + inner + "</button>";
+      else if (opt.pick && name) h += '<button class="' + cls + '" data-a="' + (opt.act || "pick") + '" data-f="' + opt.pick + '" data-v="' + esc(name) + '" aria-pressed="' + (opt.cur === name) + '"' + attr + ">" + inner + "</button>";
       else h += '<div class="' + cls + '"' + attr + ">" + inner + "</div>";
     }
   });
@@ -628,7 +809,7 @@ function teamLineupHTML(m, t) {
   }
   var st = fieldState(m, null, t);
   return '<section class="panel"><div class="row"><span class="grow muted small">Modulo ' + esc(st.mod) + "</span></div>" +
-    pitchHTML(st.mod, st.slots, st.stats) + benchHTML(st) + "</section>" +
+    pitchHTML(st.mod, st.slots, st.stats, { kit: kitFor(m, t) }) + benchHTML(st) + "</section>" +
     '<button class="btn primary big block" data-a="lu-open" data-mid="' + m.id + '" data-t="' + t + '">Modifica formazione</button>';
 }
 function lineupText(m, t) {
@@ -829,11 +1010,12 @@ var app = document.getElementById("app"), layer = document.getElementById("layer
 
 function render() {
   var v = ui.view;
-  if (v === "live" && !S.match) { v = ui.view = "home"; ui.p = {}; ui.stack = []; }
-  app.innerHTML = v === "setup" ? vSetup() : v === "roster" ? vRoster() : v === "lineup" ? vLineup() : v === "live" ? vLive() :
+  if ((v === "live" && (!S.match || S.match.status === "planned")) || (v === "plan" && (!S.match || S.match.status !== "planned"))) { v = ui.view = "home"; ui.p = {}; ui.stack = []; }
+  app.innerHTML = v === "plan" ? vPlan() : v === "club" ? vClub() : v === "roster" ? vRoster() : v === "lineup" ? vLineup() : v === "live" ? vLive() :
     v === "summary" ? vSummary() : v === "history" ? vHistory() : v === "scan" ? vScan() : vHome();
   renderLayer();
   filterAll();
+  fitSheet();
   tick(true);
 }
 
@@ -870,6 +1052,8 @@ var ICON = {
   clock: svgI('<circle cx="24" cy="27" r="16"/><path d="M24 27V17M19 4h10M24 4v7M37 12l3-3"/>'),
   play: svgI('<circle cx="24" cy="24" r="19"/><path d="M20 16l12 8-12 8z" fill="currentColor"/>'),
   plus: svgI('<circle cx="24" cy="24" r="19"/><path d="M24 15v18M15 24h18"/>'),
+  whistle: svgI('<circle cx="17" cy="29" r="11"/><path d="M26 23l17-9v8l-14 8"/><path d="M8 18l-3-6M14 16l-1-7"/>'),
+  doc: svgI('<path d="M11 4h18l9 9v31H11z"/><path d="M29 4v9h9M17 22h15M17 29h15M17 36h10"/>'),
   cal: svgI('<rect x="6" y="9" width="36" height="33" rx="3"/><path d="M6 18h36M15 5v8M33 5v8M14 26h6M28 26h6M14 34h6"/>'),
   share: svgI('<circle cx="36" cy="11" r="5"/><circle cx="12" cy="24" r="5"/><circle cx="36" cy="37" r="5"/><path d="M16.5 21.5l15-8M16.5 26.5l15 8"/>'),
   camera: svgI('<path d="M5 15a3 3 0 0 1 3-3h6l3-5h14l3 5h6a3 3 0 0 1 3 3v22a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3z"/><circle cx="24" cy="25" r="8"/>'),
@@ -894,10 +1078,12 @@ function logoHTML(small) {
 function vHome() {
   var m = S.match, h = logoHTML(), opps = Object.keys(S.oppRosters).length;
   h += '<div class="tiles">';
-  if (m) h += tile("resume", ic("play"), "Riprendi la partita", esc(m.home + " " + score(m, "home") + " - " + score(m, "away") + " " + m.away) + " · " + periodName(m.period));
-  else h += tile("setup", ic("plus"), "Nuova partita", "Squadre, tempi e via");
+  if (m && m.status === "planned") h += tile("plan", ic("whistle"), "Prossima partita", esc((oppName(m) ? "con " + oppName(m) + " · " : "") + (m.plan.data ? dateLabel(m.plan.data) : "da preparare")));
+  else if (m) h += tile("resume", ic("play"), "Riprendi la partita", esc(m.home + " " + score(m, "home") + " - " + score(m, "away") + " " + m.away) + " · " + periodName(m.period));
+  else h += tile("setup", ic("plus"), "Nuova partita", "Convocazione, formazione e via");
   h += tile("roster", ic("shirt"), "Rosa", S.settings.roster.length + " giocatori" + (opps ? " · " + opps + " avversari" : ""));
   h += tile("history", ic("cal"), "Partite giocate", S.history.length ? S.history.length + " partite" : "Ancora nessuna");
+  h += tile("club", ic("doc"), "Società", "Logo e testi della convocazione");
   return h + "</div>";
 }
 function vHistory() {
@@ -1088,40 +1274,292 @@ function vScan() {
 }
 
 var form = null;
-// Squadre avversarie salvate in Rosa → Avversari, da scegliere con un tocco.
-function oppChooser() {
-  var keys = Object.keys(S.oppRosters).sort(), cur = (form.opp || "").trim().toLowerCase();
-  var h = keys.length ? '<div class="chips">' + keys.map(function (k) {
-    return '<button class="chip" data-a="f-opp-pick" data-v="' + esc(S.oppLabels[k] || k) + '" aria-pressed="' + (k === cur) + '">' + esc(S.oppLabels[k] || k) +
-      " \u00b7 " + S.oppRosters[k].length + "</button>";
-  }).join("") + "</div>" : "";
-  var note = cur && S.oppRosters[cur] ? "Rosa di " + (S.oppLabels[cur] || cur) + ": " + S.oppRosters[cur].length + " giocatori."
-    : keys.length ? "Scegli una squadra salvata oppure scrivi il nome di una nuova." : "Le squadre avversarie inserite in Rosa \u2192 Avversari compariranno qui.";
-  return h + '<div class="row"><span class="note grow">' + esc(note) + '</span><button class="link" data-a="f-opp-roster">Rosa avversari</button></div>';
+// Prossima partita: un elenco di passi da completare, ognuno con la sua schermata semplice.
+function planSteps(m) {
+  var L = m.lineup, cv = convocati(m).length, pl = m.plan;
+  var inCampo = L.slots.filter(Boolean).length, trib = Math.max(0, S.settings.roster.length - cv);
+  return [
+    { k: "opp", t: "Avversario", ok: !!oppName(m), sub: oppName(m) ? (m.mySide === "home" ? "In casa con " : "In trasferta con ") + oppName(m) : "Da scegliere", icon: "opp" },
+    { k: "when", t: "Quando e dove", ok: !!pl.data, sub: (pl.data ? dateLabel(pl.data) : "Data da scegliere") + (pl.ritrovoOra ? " · ritrovo " + pl.ritrovoOra : ""), icon: "cal" },
+    { k: "conv", t: "Convocazione", ok: cv > 0, sub: cv ? inCampo + " in campo · " + L.bench.length + " in panchina · " + trib + " in tribuna" : "Scegli chi convocare dalla rosa", icon: "shirt" },
+    { k: "lineup", t: "Formazione", ok: inCampo === L.slots.length, sub: "Modulo " + L.mod + " · " + inCampo + "/" + L.slots.length + " ruoli", icon: "formation" },
+    { k: "pdf", t: "Convocazione PDF", ok: !!pl.pdf, sub: cv ? (pl.pdf ? "Creata · " : "") + cv + " convocati" : "Servono i convocati", icon: "doc" }
+  ];
 }
-function vSetup() {
-  if (!form) form = { team: S.settings.team || "", opp: "", side: S.settings.side || "home", periods: S.settings.periods || 2, minutes: S.settings.minutes || 45 };
-  if (ui.p.step !== 2) {
-    return topBar("Nuova partita") + '<p class="lead">Chi gioca?<small>Passo 1 di 2</small></p>' +
-      '<section class="panel">' +
-      '<label class="f">La mia squadra<input type="text" id="f-team" autocomplete="off" value="' + esc(form.team) + '" placeholder="Es. Pulcini 2016"></label>' +
-      '<label class="f">Avversario<input type="text" id="f-opp" autocomplete="off" value="' + esc(form.opp) + '" placeholder="Es. Virtus"></label>' +
-      oppChooser() + "</section>" +
-      '<section class="panel"><h2>Giochiamo</h2><div class="seg">' +
-      '<button data-a="f-side" data-v="home" aria-pressed="' + (form.side === "home") + '">In casa</button>' +
-      '<button data-a="f-side" data-v="away" aria-pressed="' + (form.side === "away") + '">In trasferta</button></div></section>' +
-      '<button class="btn primary big block" data-a="f-next">Avanti</button>';
+var PLAN_NEXT = { opp: "when", when: "conv", conv: "lineup", lineup: "pdf" };
+function nextBtn(step, label) { return '<button class="btn primary big block" data-a="p-next" data-v="' + step + '">' + (label || "Avanti") + "</button>"; }
+function vPlan() {
+  var m = S.match, st = ui.p.step, pl = m.plan, c = conv();
+  if (!st) {
+    var steps = planSteps(m), h = topBar("Prossima partita", "Home");
+    h += '<p class="lead">' + esc(oppName(m) ? "con " + oppName(m) : "Prepara la partita") + "<small>" + esc(pl.data ? dateLabel(pl.data) + (pl.inizioOra ? " · inizio " + pl.inizioOra : "") : "Segui i passi: avversario, convocazione, formazione") + "</small></p>";
+    h += '<div class="tiles compact">' + steps.map(function (x, i) {
+      return tile("p-go", '<span class="step' + (x.ok ? " ok" : "") + '">' + (x.ok ? "✓" : i + 1) + "</span>", x.t, esc(x.sub), ' data-v="' + x.k + '"');
+    }).join("") + "</div>";
+    return h + '<button class="btn primary big block" data-a="p-go" data-v="durata">Inizia la partita</button>' +
+      '<button class="danger-link" data-a="p-cancel">Annulla la partita</button>';
   }
-  var presets = [10, 15, 20, 25, 30, 35, 40, 45];
-  return topBar("Nuova partita") + '<p class="lead">Quanto si gioca?<small>Passo 2 di 2</small></p>' +
-    '<section class="panel"><h2>Numero di tempi</h2><div class="stepper">' +
-    '<button data-a="f-per" data-d="-1" aria-label="Meno tempi">−</button><span class="v tabnum">' + form.periods + '</span><button data-a="f-per" data-d="1" aria-label="Più tempi">+</button>' +
-    '<span class="muted">' + (form.periods === 1 ? "tempo unico" : "tempi") + "</span></div></section>" +
-    '<section class="panel"><h2>Minuti per tempo</h2><div class="stepper">' +
-    '<button data-a="f-min" data-d="-1" aria-label="Meno minuti">−</button><span class="v tabnum">' + form.minutes + '′</span><button data-a="f-min" data-d="1" aria-label="Più minuti">+</button></div>' +
-    '<div class="chips">' + presets.map(function (p) { return '<button class="chip" data-a="f-preset" data-v="' + p + '" aria-pressed="' + (form.minutes === p) + '">' + p + "′</button>"; }).join("") + "</div>" +
-    '<div class="muted small">Durata totale: ' + (form.periods * form.minutes) + " minuti</div></section>" +
-    '<button class="btn primary big block" data-a="start">Vai in campo</button>';
+  if (st === "opp") {
+    var keys = Object.keys(S.oppRosters).sort(), cur = oppName(m).toLowerCase();
+    return topBar("Avversario") + '<p class="lead">Contro chi giochiamo?<small>Passo 1 di 5</small></p>' +
+      guideHTML(1, "Scrivi il nome della squadra avversaria oppure toccane una già salvata. Poi scegli <b>In casa</b> o <b>In trasferta</b> e tocca <b>Avanti</b>.") +
+      '<section class="panel"><label class="f">Squadra avversaria<input type="text" id="p-opp" autocomplete="off" value="' + esc(oppName(m)) + '" placeholder="Es. Virtus"></label>' +
+      (keys.length ? '<div class="chips">' + keys.map(function (k) {
+        return '<button class="chip" data-a="p-opp-pick" data-v="' + esc(S.oppLabels[k] || k) + '" aria-pressed="' + (k === cur) + '">' + esc(S.oppLabels[k] || k) + "</button>";
+      }).join("") + "</div>" : "") + "</section>" +
+      '<section class="panel"><h2>Giochiamo</h2><div class="seg">' +
+      '<button data-a="p-side" data-v="home" aria-pressed="' + (m.mySide === "home") + '">In casa</button>' +
+      '<button data-a="p-side" data-v="away" aria-pressed="' + (m.mySide === "away") + '">In trasferta</button></div></section>' + nextBtn("opp");
+  }
+  if (st === "when") {
+    var fld = function (k, label, type, wide, ph) {
+      return '<label class="f' + (wide ? " wide" : "") + '">' + label + '<input type="' + type + '" id="p-f-' + k + '" autocomplete="off" value="' + esc(pl[k] || "") + '"' + (ph ? ' placeholder="' + esc(ph) + '"' : "") + "></label>";
+    };
+    return topBar("Quando e dove") + '<p class="lead">Quando e dove?<small>Passo 2 di 5 · finisce nella convocazione</small></p>' +
+      guideHTML(2, "Tocca ogni casella e inserisci data, orari e luoghi. Le caselle già piene vengono dalla Società: cambiale solo se serve.") +
+      '<section class="panel"><div class="fields">' + fld("data", "Data", "date", false) + fld("inizioOra", "Inizio gara", "time", false) +
+      fld("ritrovoOra", "Ritrovo alle", "time", false) + fld("ritrovoLuogo", "Ritrovo presso", "text", false, "Es. Stadio comunale") +
+      fld("impianto", "Impianto di gioco", "text", true, "Es. Campo sportivo …") + fld("comp", "Competizione", "text", true, "Es. Campionato Under 17") +
+      "</div></section>" + nextBtn("when");
+  }
+  if (st === "conv") {
+    var L = m.lineup, roster = S.settings.roster, cv = convocati(m).length, inC = L.slots.filter(Boolean).length;
+    var h2 = topBar("Convocazione") + '<p class="lead">Chi convochi?<small>Passo 3 di 5</small></p>' +
+      guideHTML(3, "Per ogni giocatore tocca <b>Campo</b> (titolare), <b>Panch.</b> (in panchina) o <b>Tribuna</b> (non convocato). In alto vedi i conteggi.");
+    h2 += '<div class="cvhead"><div><b>' + inC + "/" + L.slots.length + "</b><span>In campo</span></div><div><b>" + L.bench.length + "</b><span>Panchina</span></div>" +
+      '<div class="' + (cv > 20 ? "over" : "") + '"><b>' + cv + "</b><span>Convocati" + (cv > 20 ? " (max 20)" : "") + "</span></div></div>";
+    h2 += '<section class="panel"><h2>Giocatori in campo</h2><div class="seg">' + Object.keys(MODULI).map(function (n) {
+      return '<button data-a="cv-size" data-v="' + n + '" aria-pressed="' + (+n === L.slots.length) + '">' + n + "</button>";
+    }).join("") + "</div></section>";
+    if (!roster.length) return h2 + '<section class="panel"><div class="empty">La rosa è vuota.</div><button class="btn primary block" data-a="r-go" data-v="mine">Inserisci la rosa</button></section>';
+    var sorted2 = roster.slice().sort(function (a, b) { return shirtOf(a).s.localeCompare(shirtOf(b).s, "it"); });
+    h2 += '<section class="panel">' + sorted2.map(function (n) {
+      var s2 = cvState(L, n), b = function (v, l) { return '<button data-a="cv-set" data-v="' + v + '" data-n="' + esc(n) + '" aria-pressed="' + (s2 === v) + '">' + l + "</button>"; };
+      return '<div class="cvrow"><span class="nm">' + esc(n) + '</span><div class="seg3">' + b("campo", "Campo") + b("panchina", "Panch.") + b("tribuna", "Tribuna") + "</div></div>";
+    }).join("") + "</section>";
+    return h2 + '<button class="btn ghost block" data-a="r-go" data-v="mine">Aggiungi o correggi giocatori della rosa</button>' + nextBtn("conv", "Avanti: i ruoli in campo");
+  }
+  if (st === "pdf") {
+    var d = convData(m);
+    return topBar("Convocazione") + '<p class="lead">La convocazione<small>Passo 5 di 5</small></p>' +
+      guideHTML(5, "Controlla il foglio qui sotto, poi tocca <b>Crea e condividi il PDF</b> per mandarlo su WhatsApp o salvarlo.") +
+      '<div class="seg"><button data-a="p-az" data-v="0" aria-pressed="' + !pl.az + '">Ordine: formazione</button><button data-a="p-az" data-v="1" aria-pressed="' + !!pl.az + '">Ordine: A–Z</button></div>' +
+      '<div class="sheetwrap" id="sheetwrap">' + a4HTML(d) + "</div>" +
+      (d.logo ? "" : '<div class="note">Il logo della società si aggiunge in Home → Società, insieme ai testi fissi.</div>') +
+      '<button class="btn primary big block" data-a="p-pdf"' + (d.sel.length ? "" : " disabled") + ">Crea e condividi il PDF</button>" +
+      '<button class="btn ghost block" data-a="club">Modifica logo e testi</button>' + nextBtn("pdf", "Fatto");
+  }
+  if (st === "durata") {
+    if (!form) form = { periods: m.periods, minutes: m.minutes };
+    var presets = [10, 15, 20, 25, 30, 35, 40, 45];
+    return topBar("Inizia la partita") + '<p class="lead">Quanto si gioca?<small>Poi parte la partita con il cronometro</small></p>' +
+      guideHTML("\u2713", "Scegli quanti tempi e quanti minuti per tempo (+ e −, oppure tocca un valore), poi <b>Vai in campo</b>. Il cronometro parte quando tocchi Avvia.") +
+      '<section class="panel"><h2>Numero di tempi</h2><div class="stepper">' +
+      '<button data-a="f-per" data-d="-1" aria-label="Meno tempi">−</button><span class="v tabnum">' + form.periods + '</span><button data-a="f-per" data-d="1" aria-label="Più tempi">+</button>' +
+      '<span class="muted">' + (form.periods === 1 ? "tempo unico" : "tempi") + "</span></div></section>" +
+      '<section class="panel"><h2>Minuti per tempo</h2><div class="stepper">' +
+      '<button data-a="f-min" data-d="-1" aria-label="Meno minuti">−</button><span class="v tabnum">' + form.minutes + '′</span><button data-a="f-min" data-d="1" aria-label="Più minuti">+</button></div>' +
+      '<div class="chips">' + presets.map(function (q) { return '<button class="chip" data-a="f-preset" data-v="' + q + '" aria-pressed="' + (form.minutes === q) + '">' + q + "′</button>"; }).join("") + "</div>" +
+      '<div class="muted small">Durata totale: ' + (form.periods * form.minutes) + " minuti</div></section>" +
+      '<button class="btn primary big block" data-a="start">Vai in campo</button>';
+  }
+  return "";
+}
+// Anteprima A4 della convocazione (stesso schema del PDF).
+function a4HTML(d) {
+  var R = Math.max(10, Math.ceil(d.sel.length / 2)), rows = "";
+  for (var i = 0; i < R; i++) {
+    rows += '<tr><td class="n">N.' + two0(i + 1) + "</td><td>" + esc(d.sel[i] || "") + '</td><td class="n">N.' + two0(i + R + 1) + "</td><td>" + esc(d.sel[i + R] || "") + "</td></tr>";
+  }
+  var cs = d.color ? ' style="--c1:' + rgbHex(onWhite(d.color)) + ";--cf:" + rgbHex(d.color) + '"' : "";
+  return '<div class="a4" id="a4"' + cs + '><div class="fr"><div class="club">' + esc(d.club) + "</div>" +
+    (d.logo ? '<img class="lg" src="' + d.logo + '" alt="">' : "") +
+    '<div class="tit">CONVOCAZIONE GARA UFFICIALE – <span class="c">CATEGORIA</span> <span class="u">' + esc(d.categoria) + "</span></div>" +
+    '<p class="ln"><span class="lb">Avversario:</span> ' + esc(d.avversario) + "</p>" +
+    '<p class="ln"><span class="lb">Competizione:</span> ' + esc(d.competizione) + "</p>" +
+    '<p class="ln gap"><span class="lb">Data:</span> ' + esc(fmtData(d.data)) + "</p>" +
+    '<p class="ln"><span class="lb">Orario Ritrovo:</span> ' + esc(fmtOra(d.ritrovoOra)) + "&nbsp; presso &nbsp;" + esc(d.ritrovoLuogo) + "</p>" +
+    '<p class="ln"><span class="lb">Inizio Gara:</span> ' + esc(fmtOra(d.inizioOra)) + '&nbsp;&nbsp; <span class="lb">Impianto di gioco:</span> ' + esc(d.impianto) + "</p>" +
+    '<div class="el">ELENCO CONVOCATI</div><table>' + rows + "</table>" +
+    '<div class="nt"><span class="h">NOTE IMPORTANTI</span> Documenti: ' + esc(d.documenti) + "</div>" +
+    "<ul><li>Kit di gara: " + esc(d.kit) + "</li><li>Puntualità: " + esc(d.puntualita) + "</li><li>Assenze: " + esc(d.assenze) + "</li></ul>" +
+    '<div class="motto">' + esc(d.motto) + "</div></div></div>";
+}
+function fitSheet() {
+  var w = document.getElementById("sheetwrap"), a = document.getElementById("a4");
+  if (!w || !a) return;
+  var k = (w.clientWidth || 595) / 595;
+  a.style.transform = "scale(" + k + ")"; w.style.height = 842 * k + "px";
+}
+window.addEventListener("resize", fitSheet);
+
+/* ---------- PDF della convocazione (jsPDF, stesso impaginato dell'app Convocazioni) ---------- */
+var JSPDF = "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+function loadJsPdf() {
+  return window.jspdf ? Promise.resolve() : new Promise(function (ok, ko) {
+    var sc = document.createElement("script"); sc.src = JSPDF; sc.onload = function () { ok(); }; sc.onerror = function () { ko(new Error("rete")); };
+    document.head.appendChild(sc);
+  });
+}
+function pdfText(s) { return String(s == null ? "" : s).replace(/[′]/g, "'").replace(/[–—]/g, "-").replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/…/g, "...").replace(/[^\x00-\xFF]/g, ""); }
+function buildPdf(d) {
+  var doc = new window.jspdf.jsPDF({ unit: "mm", format: "a4" });
+  var BUR = d.color ? onWhite(d.color) : [128, 0, 32], FRAME = d.color || [155, 59, 51], RED = [238, 0, 0], GREY = [50, 50, 50], BLK = [0, 0, 0];
+  var set = function (style, size, col) { doc.setFont("times", style); doc.setFontSize(size); doc.setTextColor(col[0], col[1], col[2]); };
+  var line = function (segs, x, y) { segs.forEach(function (sg) { set(sg[2] || "normal", sg[3], sg[1]); var t = pdfText(sg[0]); doc.text(t, x, y); x += doc.getTextWidth(t); }); return x; };
+  var wrap = function (segs, x, y, maxW, lh) {
+    var cx = x;
+    segs.forEach(function (sg) {
+      set(sg[2] || "normal", sg[3], sg[1]);
+      var words = pdfText(sg[0]).split(" ");
+      words.forEach(function (w, k) {
+        var tail = k < words.length - 1 ? " " : "";
+        if (w && cx > x && cx + doc.getTextWidth(w) > x + maxW) { y += lh; cx = x; }
+        if (w || tail) { doc.text(w + tail, cx, y); cx += doc.getTextWidth(w + tail); }
+      });
+    });
+    return y;
+  };
+  var L = 12, T = 22, W = 186, CX = 105, X = 25, RIGHT = L + W - 12;
+  set("normal", 20, BUR); doc.text(pdfText(d.club), CX, 41, { align: "center" });
+  if (d.logo) {
+    try {
+      var pr = doc.getImageProperties(d.logo), k = Math.min(21.4 / pr.width, 29.2 / pr.height), lw = pr.width * k, lh2 = pr.height * k;
+      doc.addImage(d.logo, CX - lw / 2, 45 + (29.2 - lh2) / 2, lw, lh2);
+    } catch (e) {}
+  }
+  var titleSegs = [["CONVOCAZIONE GARA UFFICIALE - ", GREY, "normal", 11.5], ["CATEGORIA ", RED, "bold", 11.5], [d.categoria, BLK, "bold", 16]], tw = 0;
+  titleSegs.forEach(function (sg) { set(sg[2], sg[3], sg[1]); tw += doc.getTextWidth(pdfText(sg[0])); });
+  line(titleSegs, CX - tw / 2, 84);
+  var FS = 11;
+  line([["Avversario: ", BUR, "normal", FS], [d.avversario, BLK, "normal", FS]], X, 93);
+  line([["Competizione: ", BUR, "normal", FS], [d.competizione, BLK, "normal", FS]], X, 99);
+  line([["Data: ", BUR, "normal", FS], [fmtData(d.data), BLK, "normal", FS]], X, 107);
+  line([["Orario Ritrovo: ", BUR, "normal", FS], [fmtOra(d.ritrovoOra) + "   presso   " + d.ritrovoLuogo, BLK, "normal", FS]], X, 113.5);
+  line([["Inizio Gara: ", BUR, "normal", FS], [fmtOra(d.inizioOra) + "    ", BLK, "normal", FS], ["Impianto di gioco: ", BUR, "normal", FS], [d.impianto, BLK, "normal", FS]], X, 120);
+  var y = 134;
+  doc.setDrawColor(110, 110, 110); doc.setLineWidth(0.3); doc.setFillColor(245, 240, 225);
+  doc.roundedRect(X, y - 3.6, 3.2, 4.2, 0.4, 0.4, "FD");
+  doc.setFillColor(150, 110, 60); doc.rect(X + 0.9, y - 4.1, 1.4, 0.9, "F");
+  doc.setDrawColor(150, 150, 150); doc.setLineWidth(0.2); doc.line(X + 0.7, y - 2.2, X + 2.5, y - 2.2); doc.line(X + 0.7, y - 1.3, X + 2.5, y - 1.3); doc.line(X + 0.7, y - 0.4, X + 2.0, y - 0.4);
+  set("normal", 12, BUR); doc.text("ELENCO CONVOCATI", X + 4.6, y);
+  var R = Math.max(10, Math.ceil(d.sel.length / 2)), cw = [16, 64, 16, 64], tx = X - 1, top = y + 2, nameFS = 11, minFS = 8.5, nameW = cw[1] - 3.5;
+  var fitName = function (n) {
+    n = pdfText(n || ""); var sz = nameFS;
+    doc.setFont("times", "normal");
+    while (sz > minFS) { doc.setFontSize(sz); if (doc.getTextWidth(n) <= nameW) return { lines: [n], size: sz }; sz -= 0.5; }
+    doc.setFontSize(minFS); return { lines: doc.splitTextToSize(n, nameW), size: minFS };
+  };
+  var rows = [];
+  for (var i = 0; i < R; i++) {
+    var a = fitName(d.sel[i]), b = fitName(d.sel[i + R]), nl = Math.max(a.lines.length, b.lines.length);
+    rows.push({ a: a, b: b, h: Math.max(6.6, 2.6 + nl * 4.0) });
+  }
+  var ry = top, xs = [tx, tx + cw[0], tx + cw[0] + cw[1], tx + cw[0] + cw[1] + cw[2], tx + cw[0] + cw[1] + cw[2] + cw[3]];
+  doc.setDrawColor(0, 0, 0); doc.setLineWidth(0.25);
+  rows.forEach(function (r, i2) {
+    var h = r.h;
+    doc.rect(tx, ry, xs[4] - tx, h);
+    for (var q = 1; q < 4; q++) doc.line(xs[q], ry, xs[q], ry + h);
+    var base = ry + h / 2 + 1.4;
+    set("normal", nameFS, BUR);
+    doc.text("N." + two0(i2 + 1), xs[0] + 1.8, base);
+    doc.text("N." + two0(i2 + R + 1), xs[2] + 1.8, base);
+    [[r.a, xs[1]], [r.b, xs[3]]].forEach(function (pc) {
+      var cc = pc[0]; set("normal", cc.size, BLK);
+      var st2 = ry + h / 2 - (cc.lines.length - 1) * 2 + 1.3;
+      cc.lines.forEach(function (t, k2) { doc.text(t, pc[1] + 1.8, st2 + k2 * 4.0); });
+    });
+    ry += h;
+  });
+  y = ry + 12;
+  doc.setFillColor(BUR[0], BUR[1], BUR[2]);
+  doc.triangle(X, y + 0.4, X + 4, y + 0.4, X + 2, y - 3.3, "F");
+  set("bold", 8, [255, 255, 255]); doc.text("!", X + 2, y - 0.2, { align: "center" });
+  y = wrap([["NOTE IMPORTANTI ", BUR, "normal", 12], ["Documenti: " + d.documenti, BLK, "normal", 10]], X + 5.2, y, RIGHT - (X + 5.2), 4.6);
+  y += 7;
+  [["Kit di gara: ", d.kit], ["Puntualità: ", d.puntualita], ["Assenze: ", d.assenze]].forEach(function (lt) {
+    set("normal", 10, BLK); doc.text("•", X + 3, y);
+    y = wrap([[lt[0] + lt[1], BLK, "normal", 10]], X + 8, y, RIGHT - (X + 8), 4.4) + 6;
+  });
+  y += 3;
+  set("normal", 12, BUR); doc.text(pdfText(d.motto), CX, y, { align: "center" });
+  var bottom = Math.min(290, Math.max(T + 252, y + 10));
+  doc.setDrawColor(FRAME[0], FRAME[1], FRAME[2]); doc.setLineWidth(2.2);
+  doc.rect(L, T, W, bottom - T);
+  return doc;
+}
+function pdfName(d) {
+  var clean = function (x) { return String(x || "").normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^A-Za-z0-9]+/g, "_").replace(/^_|_$/g, ""); };
+  return "convocazione" + (d.categoria ? "_" + clean(d.categoria) : "") + (d.avversario ? "_" + clean(d.avversario).toUpperCase() : "") + (d.data ? "_" + d.data : "") + ".pdf";
+}
+// Salva o condivide un file binario: app Android → file nella cache + condivisione; telefono → condivisione
+// di sistema; PC → download.
+function shareBinary(name, base64, mime, title) {
+  var C = window.Capacitor;
+  if (C && C.isNativePlatform && C.isNativePlatform() && C.nativePromise) {
+    return C.nativePromise("Filesystem", "writeFile", { path: name, data: base64, directory: "CACHE" })
+      .then(function (r) { return C.nativePromise("Share", "share", { title: title, url: r.uri, dialogTitle: title }); })
+      .catch(function (err) { if (!/cancel/i.test((err && err.message) || "")) toast("Non è stato possibile salvare il file"); });
+  }
+  var bin = atob(base64), arr = new Uint8Array(bin.length);
+  for (var i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+  var blob = new Blob([arr], { type: mime }), file = null;
+  try { file = new File([blob], name, { type: mime }); } catch (e) {}
+  var phone = window.matchMedia && matchMedia("(pointer: coarse)").matches;
+  if (file && phone && navigator.canShare && navigator.canShare({ files: [file] })) {
+    return navigator.share({ files: [file], title: title }).catch(function (err) { if (!err || err.name !== "AbortError") downloadBlob(name, blob); });
+  }
+  downloadBlob(name, blob);
+  return Promise.resolve();
+}
+function downloadBlob(name, blob) {
+  var a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click();
+  setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 30000);
+  toast("File salvato: " + name, 2500);
+}
+function makeConvPdf(m) {
+  var d = convData(m);
+  if (!d.sel.length) { toast("Prima scegli i convocati"); return; }
+  toast("Preparo il PDF…");
+  loadJsPdf().then(function () {
+    var doc = buildPdf(d), b64 = doc.output("datauristring").split(",")[1];
+    m.plan.pdf = Date.now(); save();
+    return shareBinary(pdfName(d), b64, "application/pdf", "Convocazione");
+  }).catch(function () { toast("Serve la connessione la prima volta per creare il PDF", 3000); });
+}
+
+// Società: nome, categoria, logo e testi fissi della convocazione.
+function vClub() {
+  var c = conv(), fld = function (k, label, ph) {
+    return '<label class="f wide">' + label + '<input type="text" id="c-' + k + '" autocomplete="off" value="' + esc(c[k]) + '"' + (ph ? ' placeholder="' + esc(ph) + '"' : "") + "></label>";
+  }, area = function (k, label) { return '<label class="f wide">' + label + '<textarea class="field" id="c-' + k + '">' + esc(c[k]) + "</textarea></label>"; };
+  return topBar("Società") +
+    '<section class="panel"><div class="fields">' + fld("club", "Società", "Es. A.S.D. Polisportiva") + fld("categoria", "Categoria", "Es. Under 17") +
+    "</div></section>" +
+    logoPanelHTML("c", c.logo) + colorsHTML("c", c) +
+    '<section class="panel"><h2>Valori proposti per la prossima partita</h2><div class="fields">' + fld("competizione", "Competizione") +
+    '<label class="f">Ritrovo alle<input type="time" id="c-ritrovoOra" value="' + esc(c.ritrovoOra) + '"></label>' +
+    '<label class="f">Inizio gara<input type="time" id="c-inizioOra" value="' + esc(c.inizioOra) + '"></label>' +
+    fld("ritrovoLuogo", "Ritrovo presso") + fld("impianto", "Impianto di gioco") + "</div></section>" +
+    '<section class="panel"><h2>Note della convocazione</h2><div class="fields">' + area("documenti", "Documenti") + area("kit", "Kit di gara") +
+    area("puntualita", "Puntualità") + area("assenze", "Assenze") + fld("motto", "Saluto finale", "Es. Forza ragazzi") + "</div></section>" +
+    '<div class="note">Le modifiche si salvano da sole.</div>';
+}
+// Logo ridotto (max 400 px) per non appesantire i dati salvati sul telefono.
+function loadLogo(file, scope) {
+  var img = new Image(), url = URL.createObjectURL(file);
+  img.onload = function () {
+    var k = Math.min(1, 400 / Math.max(img.width, img.height)), c = document.createElement("canvas");
+    c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+    var g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0, c.width, c.height);
+    URL.revokeObjectURL(url);
+    setTeamInfo(scope || "c", { logo: c.toDataURL("image/jpeg", 0.88) });
+  };
+  img.onerror = function () { URL.revokeObjectURL(url); toast("Immagine non valida"); };
+  img.src = url;
 }
 
 // Rosa: scheda della mia squadra e scheda degli avversari (una rosa per ogni squadra avversaria).
@@ -1184,6 +1622,14 @@ function loadRosters(text, fname) {
   var data = null, entries;
   try { data = JSON.parse(text); } catch (e) {}
   if (data && Array.isArray(data.rose)) entries = data.rose;
+  else if (data && Array.isArray(data.rosa)) {
+    // rosa.json dell'app Convocazioni: { rosa: ["COGNOME NOME", …], predefiniti: { club, categoria, … } }
+    var pd = data.predefiniti || {};
+    entries = [{ squadra: S.settings.team || pd.club || "", mia: true, giocatori: data.rosa.map(function (x) { return titleCase(String(x)); }) }];
+    var cc = {};
+    ["club", "categoria", "competizione", "ritrovoOra", "ritrovoLuogo", "inizioOra", "impianto", "documenti", "kit", "puntualita", "assenze", "motto"].forEach(function (k) { if (pd[k]) cc[k] = String(pd[k]); });
+    S.settings.conv = Object.assign({}, S.settings.conv, cc);
+  }
   else if (data && Array.isArray(data.giocatori)) entries = [data];
   else {
     var opp = ui.rTab === "opp";
@@ -1243,8 +1689,12 @@ function vRoster() {
   if (!r) { ui.p = { sec: "opps" }; return vRoster(); }
   h = topBar(sec === "opp" ? "Avversario" : "La mia squadra");
   if (sec === "mine") h += '<section class="panel"><label class="f">Nome della squadra<input type="text" id="r-team" autocomplete="off" value="' + esc(S.settings.team) + '" placeholder="La mia squadra"></label></section>';
-  else h += '<p class="lead">' + esc(S.oppLabels[ui.rOpp] || ui.rOpp) + "</p>";
+  else {
+    var oi = S.oppInfo[ui.rOpp] || {};
+    h += '<p class="lead">' + esc(S.oppLabels[ui.rOpp] || ui.rOpp) + "</p>" + logoPanelHTML("o", oi.logo) + colorsHTML("o", oi);
+  }
   h += '<div class="tiles">' + tile("scan-open", ic("camera"), "Leggi dalla distinta", "Dalla foto della distinta, o dal testo copiato") + "</div>";
+  h += guideHTML("?", "Scrivi cognome e nome (con il numero di maglia davanti, se vuoi, es. 10 Rossi Mario) e tocca <b>Aggiungi</b>. Puoi scriverne tanti separati da virgola.");
   h += '<section class="panel"><h2>Aggiungi giocatori</h2><div class="row"><input type="text" id="r-new" class="grow" autocomplete="off" placeholder="Es. 10 Rossi"><button class="btn primary" data-a="r-add">Aggiungi</button></div>' +
     '<div class="note">Anche tanti insieme, separati da virgola. Il numero di maglia prima del nome compare sul campo.</div></section>' +
     '<section class="panel"><h2>' + r.length + " giocatori</h2>";
@@ -1276,13 +1726,140 @@ function timeline(m) {
   return h;
 }
 function cronacaHTML(m) {
-  var h = '<section class="panel"><div class="note">Tocca un evento per correggere giocatori, tipo, minuto o squadra.</div><div class="tl">' + timeline(m) + "</div></section>";
+  var h = '<p class="lead">' + esc(m.home) + " " + score(m, "home") + " - " + score(m, "away") + " " + esc(m.away) + "<small>" + sorted(m).length + " eventi</small></p>" +
+    guideHTML("?", "Tocca un evento per <b>correggerlo</b> (giocatori, tipo, minuto, squadra) o per <b>eliminarlo</b>. In fondo crei il PDF della partita da condividere.");
+  h += '<section class="panel"><div class="tl">' + timeline(m) + "</div></section>";
   var y = cardsOf(m, "yellow"), r = cardsOf(m, "red"), subs = subsOf(m);
   var block = function (title, list, icon) {
     return list.length ? "<h2>" + title + '</h2><div class="list">' + list.map(function (s) { return '<div class="item"><span class="ico">' + icon + '</span><span class="grow">' + esc(s) + "</span></div>"; }).join("") + "</div>" : "";
   };
   if (y.length || r.length || subs.length) h += '<section class="panel">' + block("Ammoniti", y, '<i class="card y"></i>') + block("Espulsi", r, '<i class="card r"></i>') + block("Cambi", subs, subSVG()) + "</section>";
-  return h;
+  if (m.status === "ended") h += '<button class="btn ghost block" data-a="s-go" data-v="fix">Aggiungi un evento dimenticato</button>';
+  return h + '<button class="btn primary big block" data-a="m-pdf" data-mid="' + m.id + '">Crea e condividi il PDF</button>';
+}
+
+/* ---------- PDF della partita: risultato, cronaca minuto per minuto, formazioni ---------- */
+function evLabel(m, e) {
+  if (e.type === "goal") return e.kind === "rigore" ? "Gol su rigore" : e.kind === "autogol" ? "Autogol" : "Gol";
+  if (e.type === "sub") return "Cambio";
+  if (e.type === "red") return "Espulsione";
+  return secondYellow(m, e) ? "Espulsione (2a amm.)" : "Ammonizione";
+}
+function evDetail(e) {
+  if (e.type === "sub") return "Entra " + (e.on || "?") + ", esce " + (e.off || "?");
+  return e.player || "-";
+}
+function buildMatchPdf(m) {
+  var doc = new window.jspdf.jsPDF({ unit: "mm", format: "a4" }), c = conv(), pl = m.plan || {};
+  var BAND = docColor(c, [28, 90, 52]), GREEN = onWhite(BAND), BINK = inkOn(BAND), INK = [19, 32, 26], MUT = [90, 106, 97], L = 15, R = 195, y;
+  var set = function (st, sz, col) { doc.setFont("helvetica", st); doc.setFontSize(sz); doc.setTextColor(col[0], col[1], col[2]); };
+  var T = function (t, x, yy, o) { doc.text(pdfText(t), x, yy, o || {}); };
+  var lines = function (t, w) { return doc.splitTextToSize(pdfText(t), w); };
+  var need = function (h) { if (y + h > 280) { doc.addPage(); y = 18; return true; } return false; };
+  // intestazione
+  doc.setFillColor(BAND[0], BAND[1], BAND[2]); doc.rect(0, 0, 210, 30, "F");
+  var tx = L;
+  if (c.logo) {
+    try {
+      var pr = doc.getImageProperties(c.logo), k = Math.min(18 / pr.width, 22 / pr.height);
+      doc.setFillColor(255, 255, 255); doc.roundedRect(L - 1, 3.5, pr.width * k + 2, pr.height * k + 2, 1, 1, "F");
+      doc.addImage(c.logo, L, 4.5, pr.width * k, pr.height * k); tx = L + pr.width * k + 6;
+    } catch (e) {}
+  }
+  set("bold", 18, BINK); T("CRONACA DELLA PARTITA", tx, 14);
+  set("normal", 10, BINK); T([c.club, c.categoria].filter(Boolean).join(" - "), tx, 21);
+  y = 40;
+  set("normal", 10, MUT);
+  var info = [dateLabel(m.date), pl.comp, pl.impianto].filter(Boolean).join("  -  ");
+  T(info, 105, y, { align: "center" });
+  if (m.status !== "ended") { y += 5; set("bold", 10, [179, 25, 45]); T("Partita in corso - " + periodName(m.period), 105, y, { align: "center" }); }
+  // risultato, con i loghi delle due squadre
+  y += 12;
+  var logoAt = function (t, x, align) {
+    var lg = teamInfo(m, t).logo;
+    if (!lg) return false;
+    try {
+      var pp = doc.getImageProperties(lg), kk = Math.min(16 / pp.width, 18 / pp.height), w2 = pp.width * kk;
+      doc.addImage(lg, align === "right" ? x - w2 : x, y - 4, w2, pp.height * kk); return true;
+    } catch (e) { return false; }
+  };
+  if (logoAt("home", 90, "right") | logoAt("away", 120, "left")) y += 20;
+  ["home", "away"].forEach(function (t) {
+    var col = hexRgb(teamInfo(m, t).primary);
+    if (col && lum(col) < 0.92) { doc.setFillColor(col[0], col[1], col[2]); doc.rect(t === "home" ? 60 : 120, y + 3.2, 30, 1.2, "F"); }
+  });
+  set("bold", 13, INK);
+  var hn = lines(m.home.toUpperCase(), 66), an = lines(m.away.toUpperCase(), 66);
+  doc.text(hn, 90, y, { align: "right" }); doc.text(an, 120, y);
+  set("bold", 26, INK); T(score(m, "home") + " - " + score(m, "away"), 105, y + 2, { align: "center" });
+  y += Math.max(hn.length, an.length) * 5.5 + 4;
+  if (m.periods > 1) { set("normal", 10, MUT); T(partials(m).join("   "), 105, y, { align: "center" }); y += 7; }
+  // marcatori
+  set("normal", 10, INK);
+  var sh = scorersOf(m, "home"), sa = scorersOf(m, "away"), rows = Math.max(sh.length, sa.length);
+  for (var i = 0; i < rows; i++) {
+    if (sh[i]) doc.text(lines(sh[i], 80), 90, y, { align: "right" });
+    if (sa[i]) doc.text(lines(sa[i], 70), 120, y);
+    y += 5;
+  }
+  // cronaca
+  y += 6; need(20);
+  set("bold", 12, GREEN); T("CRONACA", L, y); y += 3;
+  var cols = [L, L + 16, L + 64, L + 106], head = function () {
+    doc.setFillColor(GREEN[0], GREEN[1], GREEN[2]); doc.rect(L, y, R - L, 7, "F");
+    set("bold", 9, inkOn(GREEN)); T("Min.", cols[0] + 2, y + 4.8); T("Squadra", cols[1] + 2, y + 4.8); T("Evento", cols[2] + 2, y + 4.8); T("Giocatori", cols[3] + 2, y + 4.8);
+    y += 7;
+  };
+  head();
+  var list = sorted(m), cur = 0, zebra = false;
+  if (!list.length) { set("normal", 10, MUT); y += 6; T("Nessun evento registrato.", L + 2, y); y += 4; }
+  list.forEach(function (e) {
+    if (e.period !== cur && m.periods > 1) {
+      cur = e.period;
+      if (need(14)) head();
+      var tint = GREEN.map(function (v) { return Math.round(v + (255 - v) * 0.85); });
+      doc.setFillColor(tint[0], tint[1], tint[2]); doc.rect(L, y, R - L, 6, "F");
+      set("bold", 9, GREEN); T(periodName(cur).toUpperCase(), L + 2, y + 4.2); y += 6;
+    }
+    set("normal", 9.5, INK);
+    var tl = lines(teamName(m, e.team), 46), dl = lines(evDetail(e), R - cols[3] - 4), h = Math.max(tl.length, dl.length) * 4.4 + 2.6;
+    if (need(h)) head();
+    if (zebra) { doc.setFillColor(244, 247, 245); doc.rect(L, y, R - L, h, "F"); }
+    zebra = !zebra;
+    set("bold", 9.5, INK); T(minuteLabel(m, e.period, e.sec), cols[0] + 2, y + 4.6);
+    set("normal", 9.5, INK); doc.text(tl, cols[1] + 2, y + 4.6);
+    set(e.type === "goal" ? "bold" : "normal", 9.5, e.type === "red" || (e.type === "yellow" && secondYellow(m, e)) ? [179, 25, 45] : INK);
+    T(evLabel(m, e), cols[2] + 2, y + 4.6);
+    set("normal", 9.5, INK); doc.text(dl, cols[3] + 2, y + 4.6);
+    y += h;
+  });
+  doc.setDrawColor(200, 210, 204); doc.setLineWidth(0.2); doc.line(L, y, R, y);
+  // formazioni di partenza
+  ["home", "away"].forEach(function (t) {
+    if (!hasLineup(m, t)) return;
+    var Lu = lineupOf(m, t), tit = Lu.slots.filter(Boolean), ben = benchOf(m, t, Lu);
+    y += 9; need(24);
+    set("bold", 12, GREEN); T("FORMAZIONE " + teamName(m, t).toUpperCase() + " (" + Lu.mod + ")", L, y); y += 6;
+    set("normal", 10, INK);
+    var a = lines("Titolari: " + (tit.join(", ") || "-"), R - L), b = lines("Panchina: " + (ben.join(", ") || "-"), R - L);
+    need(a.length * 5 + b.length * 5); doc.text(a, L, y); y += a.length * 5; doc.text(b, L, y); y += b.length * 5;
+  });
+  // piè di pagina
+  var n = doc.getNumberOfPages(), now = new Date();
+  for (var pg = 1; pg <= n; pg++) {
+    doc.setPage(pg); set("normal", 8, MUT);
+    T("Bordocampo - creato il " + now.toLocaleDateString("it-IT") + " alle " + now.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" }), L, 290);
+    T("Pagina " + pg + " di " + n, R, 290, { align: "right" });
+  }
+  return doc;
+}
+function makeMatchPdf(m) {
+  toast("Preparo il PDF…");
+  loadJsPdf().then(function () {
+    var doc = buildMatchPdf(m), b64 = doc.output("datauristring").split(",")[1];
+    var clean = function (x) { return String(x || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Za-z0-9]+/g, "_").replace(/^_|_$/g, ""); };
+    return shareBinary("cronaca_" + clean(m.home) + "-" + clean(m.away) + "_" + String(m.date).slice(0, 10) + ".pdf", b64, "application/pdf", "Cronaca della partita");
+  }).catch(function () { toast("Serve la connessione la prima volta per creare il PDF", 3000); });
 }
 // Scelta della squadra a tutto schermo: due schede grandi.
 function teamPickHTML(m, title, sub) {
@@ -1292,18 +1869,127 @@ function teamPickHTML(m, title, sub) {
     }).join("") + "</div>";
 }
 
+/* ---------- procedure guidate: gol, cartellini, sostituzioni ---------- */
+// Una domanda per schermata, con il passo in corso e una riga di aiuto. Il minuto è quello del primo tocco.
+// Il gol si registra subito (il minuto non si perde), cartellini e cambi alla conferma finale.
+var WZ_STEPS = { goal: ["team", "kind", "player", "ok"], card: ["team", "card", "player", "ok"], sub: ["team", "off", "on", "ok"] };
+var WZ_TITLE = { goal: "Gol", card: "Cartellini", sub: "Sostituzioni" };
+function startWizard(type, team) {
+  var m = S.match;
+  ui.wz = { type: type, team: "", kind: "azione", card: "", player: "", off: "", on: "", period: m.period, sec: periodSec(m), eid: "" };
+  ui.wzQ = "";
+  if (team) { go("live", { sec: "w", step: "team" }); wzTeam(team); }
+  else go("live", { sec: "w", step: "team" });
+}
+function wzEvent(m) { var w = ui.wz; return w && w.eid ? m.events.filter(function (x) { return x.id === w.eid; })[0] : null; }
+function wzNext() {
+  var steps = WZ_STEPS[ui.wz.type], i = steps.indexOf(ui.p.step);
+  ui.wzQ = "";
+  go("live", { sec: "w", step: steps[i + 1] });
+}
+function wzTeam(t) {
+  var m = S.match, w = ui.wz;
+  w.team = t;
+  if (w.type === "goal" && !w.eid) {
+    var e = { id: uid(), n: ++m.seq, type: "goal", team: t, period: w.period, sec: w.sec, player: "", kind: "azione" };
+    m.events.push(e); w.eid = e.id; save();
+    toast("Gol di " + teamName(m, t) + " registrato al " + minuteLabel(m, w.period, w.sec), 2500);
+  }
+  wzNext();
+}
+// Squadra del giocatore da scegliere: nell'autogol è l'altra.
+function wzPlayerTeam() { var w = ui.wz; return w.type === "goal" && w.kind === "autogol" ? other(w.team) : w.team; }
+function wzSet(field, v) {
+  var m = S.match, w = ui.wz, e = wzEvent(m);
+  w[field] = v;
+  if (e) { e[field] = v; save(); }
+  wzNext();
+}
+function wzConfirm() {
+  var m = S.match, w = ui.wz, msg;
+  if (w.type === "goal") { msg = "Gol salvato"; }
+  else {
+    var e = { id: uid(), n: ++m.seq, type: w.type === "card" ? w.card : "sub", team: w.team, period: w.period, sec: w.sec, player: "", kind: "" };
+    if (w.type === "sub") { e.on = w.on; e.off = w.off; msg = "Cambio salvato: entra " + (w.on || "?") + ", esce " + (w.off || "?"); }
+    else { e.player = w.player; msg = (w.card === "red" ? "Espulsione" : "Ammonizione") + " salvata"; }
+    m.events.push(e);
+  }
+  save(); ui.wz = null;
+  reset("live", {}, [{ view: "home", p: {} }]);
+  toast(msg, 3000);
+}
+// Eventi già inseriti di quel tipo, da correggere (tocco) o eliminare.
+function evListHTML(m, types, title, empty) {
+  var list = sorted(m).filter(function (e) { return types.indexOf(e.type) >= 0; });
+  if (!list.length) return '<div class="note">' + empty + "</div>";
+  return '<section class="panel"><h2>' + title + '</h2><div class="evl">' + list.map(function (e) {
+    return '<div class="er"><button class="eb" data-a="edit" data-mid="' + m.id + '" data-id="' + e.id + '"><span class="mn">' + minuteLabel(m, e.period, e.sec) + "</span>" + evIcon(m, e) +
+      '<span class="who">' + evText(m, e).replace(/^<span class="who">|<\/span>$/g, "") + "<small>" + esc(teamName(m, e.team)) + "</small></span></button>" +
+      '<button class="del" data-a="ev-del2" data-id="' + e.id + '">Elimina</button></div>';
+  }).join("") + '</div><div class="note">Tocca un evento per correggerlo.</div></section>';
+}
+function guideHTML(n, text) { return '<div class="guide"><b class="gn">' + n + "</b><span>" + text + "</span></div>"; }
+function vWizard(m) {
+  var w = ui.wz, st = ui.p.step;
+  if (!w) { ui.p = {}; return vLive(); }
+  var steps = WZ_STEPS[w.type], n = steps.indexOf(st) + 1, pas = "Passo " + n + " di " + steps.length;
+  var min = minuteLabel(m, w.period, w.sec), h = topBar(WZ_TITLE[w.type]);
+  if (st === "team") {
+    var q = { goal: "Chi ha segnato il gol?", card: "A quale squadra il cartellino?", sub: "Quale squadra fa il cambio?" }[w.type];
+    h += '<p class="lead">' + q + "<small>" + pas + " · minuto " + min + "</small></p>";
+    h += guideHTML(n, w.type === "goal" ? "Tocca la squadra che ha segnato: il gol viene registrato subito al " + min + ", poi aggiungi i dettagli." : "Tocca la squadra. Il minuto " + min + " è già preso.");
+    h += '<div class="tiles">' + ["home", "away"].map(function (t) {
+      return tile("wz-team", ic(t === m.mySide ? "shirt" : "opp"), esc(teamName(m, t)), (t === m.mySide ? "La mia squadra · " : "") + score(m, t) + " gol", ' data-t="' + t + '"', false, "big");
+    }).join("") + "</div>";
+    if (w.type === "sub") h += evListHTML(m, ["sub"], "Cambi fatti", "Nessun cambio ancora.");
+    if (w.type === "card") h += evListHTML(m, ["yellow", "red"], "Cartellini dati", "Nessun cartellino ancora.");
+    if (w.type === "goal") h += evListHTML(m, ["goal"], "Gol segnati", "Nessun gol ancora.");
+    return h;
+  }
+  var tn = esc(teamName(m, w.team));
+  if (st === "kind") {
+    return h + '<p class="lead">Com’è arrivato il gol?<small>' + pas + " · " + tn + " · " + min + "</small></p>" +
+      guideHTML(n, "Tocca il tipo di gol. Se è un autogol, poi sceglierai il giocatore dell’altra squadra.") +
+      '<div class="tiles">' + tile("wz-kind", ic("ball"), "Su azione", "Gol normale", ' data-v="azione"') + tile("wz-kind", ic("ball"), "Rigore", "", ' data-v="rigore"') +
+      tile("wz-kind", ic("ball"), "Autogol", "Segnato da un avversario nella propria porta", ' data-v="autogol"') + "</div>";
+  }
+  if (st === "card") {
+    return h + '<p class="lead">Che cartellino?<small>' + pas + " · " + tn + " · " + min + "</small></p>" + guideHTML(n, "Tocca il colore del cartellino.") +
+      '<div class="tiles">' + tile("wz-card", ic("yellow"), "Ammonizione", "Cartellino giallo", ' data-v="yellow"') + tile("wz-card", ic("red"), "Espulsione", "Cartellino rosso", ' data-v="red"') + "</div>";
+  }
+  if (st === "player" || st === "off" || st === "on") {
+    var pt = st === "player" ? wzPlayerTeam() : w.team, names = playersOf(m, pt), fs = hasLineup(m, pt) ? fieldState(m, null, pt) : null;
+    var onField = fs ? fs.slots.filter(Boolean) : [], bench = fs ? fs.bench : [];
+    var rest = names.filter(function (x) { return onField.indexOf(x) < 0 && bench.indexOf(x) < 0; });
+    var q2, g2, groups;
+    if (st === "off") { q2 = "Chi esce dal campo?"; g2 = "Tocca il giocatore che <b>esce</b>" + (fs ? " sul campo o nell’elenco." : " nell’elenco."); groups = fs ? [["In campo", onField], ["Altri della rosa", rest.concat(bench)]] : [["Rosa", names]]; }
+    else if (st === "on") { q2 = "Chi entra?"; g2 = "Esce <b>" + esc(w.off || "giocatore non indicato") + "</b>. Ora tocca il giocatore che <b>entra</b>."; groups = fs ? [["Panchina", bench.filter(function (x) { return x !== w.off; })], ["Altri della rosa", rest]] : [["Rosa", names.filter(function (x) { return x !== w.off; })]]; }
+    else { q2 = w.type === "goal" ? (w.kind === "autogol" ? "Chi ha fatto l’autogol?" : "Chi ha segnato?") : "A chi il cartellino?"; g2 = "Tocca il giocatore" + (fs ? " sul campo o nell’elenco." : " nell’elenco.") + " Se non lo sai, tocca Non indicato."; groups = fs ? [["In campo", onField], ["Panchina", bench], ["Altri della rosa", rest]] : [["Rosa", names]]; }
+    h += '<p class="lead">' + q2 + "<small>" + pas + " · " + esc(teamName(m, pt)) + " · " + min + "</small></p>" + guideHTML(n, g2);
+    if (st !== "on" && fs) h += pitchHTML(fs.mod, fs.slots, fs.stats, { mini: true, pick: st, act: "wz-pick", cur: w[st], kit: kitFor(m, pt) });
+    h += '<section class="panel">' + (names.length ? "" : '<div class="note">La rosa di ' + esc(teamName(m, pt)) + " è vuota: scrivi il nome qui sotto.</div>") +
+      chooserHTML({ key: "wz", input: "wz-q", q: ui.wzQ, groups: groups, act: "wz-pick", attrs: ' data-f="' + st + '"', cur: w[st], none: true, add: "wz-new", team: teamName(m, pt) }) + "</section>";
+    return h;
+  }
+  // riepilogo
+  var e = wzEvent(m), rows = [["Minuto", min], ["Squadra", tn]];
+  if (w.type === "goal") rows.push(["Tipo", { azione: "Su azione", rigore: "Rigore", autogol: "Autogol" }[w.kind]], [w.kind === "autogol" ? "Autogol di" : "Marcatore", esc(w.player || "non indicato")]);
+  if (w.type === "card") rows.push(["Cartellino", w.card === "red" ? "Rosso · espulsione" : "Giallo · ammonizione"], ["Giocatore", esc(w.player || "non indicato")]);
+  if (w.type === "sub") rows.push(["Esce", esc(w.off || "non indicato")], ["Entra", esc(w.on || "non indicato")]);
+  h += '<p class="lead">' + (w.type === "goal" ? "Gol registrato" : "Controlla e conferma") + "<small>" + pas + "</small></p>" +
+    guideHTML(n, w.type === "goal" ? "Il gol è già salvato. Controlla i dati e tocca Fatto." : "Se è tutto giusto tocca <b>Conferma</b>. Per cambiare qualcosa usa Indietro.");
+  h += '<section class="panel"><dl class="recap">' + rows.map(function (r) { return "<dt>" + r[0] + "</dt><dd>" + r[1] + "</dd>"; }).join("") + "</dl>" +
+    '<div class="row" style="justify-content:space-between"><span class="muted small">Correggi il minuto</span><div class="stepper">' +
+    '<button data-a="wz-min" data-d="-60" aria-label="Un minuto prima">−</button><button data-a="wz-min" data-d="60" aria-label="Un minuto dopo">+</button></div></div></section>';
+  h += '<button class="btn primary big block" data-a="wz-ok">' + (w.type === "goal" ? "Fatto" : "Conferma") + "</button>";
+  if (e) h += '<button class="danger-link" data-a="wz-drop">Elimina questo gol</button>';
+  return h;
+}
+
 function vLive() {
   var m = S.match, brk = m.status === "break", last = m.period >= m.periods, can = m.status === "play", sec = ui.p.sec;
-  if (sec === "team") {
-    var what = { goal: ["Gol", "Il minuto si registra subito, poi scegli il marcatore."], card: ["Ammonizioni", "Poi scegli il cartellino."],
-      sub: ["Sostituzioni", "Poi scegli chi esce e chi entra."], lineup: ["Formazione", ""] }[ui.p.act];
-    return teamPickHTML(m, what[0], what[1]);
-  }
-  if (sec === "cardtype") {
-    return topBar("Ammonizioni") + '<p class="lead">' + esc(teamName(m, ui.p.t)) + "<small>Che cartellino?</small></p>" +
-      '<div class="tiles">' + tile("ct", ic("yellow"), "Ammonizione", "Cartellino giallo", ' data-c="yellow"') +
-      tile("ct", ic("red"), "Espulsione", "Cartellino rosso", ' data-c="red"') + "</div>";
-  }
+  if (sec === "w") return vWizard(m);
+  if (sec === "team") return teamPickHTML(m, "Formazione", "");
   if (sec === "lineup") return topBar("Formazione") + '<p class="lead">' + esc(teamName(m, ui.p.t)) + "</p>" + teamLineupHTML(m, ui.p.t);
   if (sec === "cronaca") return topBar("Cronaca") + cronacaHTML(m);
   if (sec === "diretta") return topBar("Diretta") + livePanel(m);
@@ -1335,7 +2021,7 @@ function vLive() {
   h += '<div class="tiles compact">' +
     tile("hub", ic("formation"), "Formazione", "", ' data-v="lineup"') +
     tile("hub", ic("ball"), "Gol", "", ' data-v="goal"', !can) +
-    tile("hub", ic("yellow"), "Ammonizioni", "", ' data-v="card"', !can) +
+    tile("hub", ic("yellow"), "Cartellini", "Ammonizioni ed espulsioni", ' data-v="card"', !can) +
     tile("hub", ic("sub"), "Sostituzioni", "", ' data-v="sub"', !can) + "</div>";
   h += '<div class="tiles small">' + tile("hub", ic("list"), "Cronaca", "", ' data-v="cronaca"') +
     tile("hub", ic("live"), "Diretta", "", ' data-v="diretta"') + tile("hub", ic("clock"), "Cronometro", "", ' data-v="tempo"') + "</div>";
@@ -1351,16 +2037,17 @@ function vLineup() {
   var size = modSize(L.mod), sel = ui.luSlot, roster = playersOf(m, t), bench = benchOf(m, t, L);
   var out = roster.filter(function (p) { return L.slots.indexOf(p) < 0 && bench.indexOf(p) < 0; });
   var chip = function (p, act, extra) { return '<button class="chip' + (extra || "") + '" data-a="' + act + '" data-v="' + esc(p) + '">' + esc(p) + "</button>"; };
-  var h = topBar("Formazione") + '<p class="lead">' + esc(teamName(m, t)) + "</p>";
+  var h = topBar("Formazione") + '<p class="lead">' + esc(teamName(m, t)) + (ui.luNext ? "<small>Passo 4 di 5</small>" : "") + "</p>" +
+    guideHTML(ui.luNext ? 4 : "?", "Scegli quanti giocano e il modulo. Poi tocca un cerchio sul campo e il giocatore da mettere in quel ruolo.");
   h += '<section class="panel"><h2>Giocatori in campo</h2><div class="seg">' + Object.keys(MODULI).map(function (n) {
     return '<button data-a="lu-size" data-v="' + n + '" aria-pressed="' + (+n === size) + '">' + n + "</button>";
   }).join("") + '</div><div class="chips">' + (MODULI[size] || [L.mod]).map(function (mod) {
     return '<button class="chip" data-a="lu-mod" data-v="' + mod + '" aria-pressed="' + (mod === L.mod) + '">' + mod + "</button>";
   }).join("") + "</div></section>";
-  h += pitchHTML(L.mod, L.slots, null, { edit: true, sel: sel });
+  h += pitchHTML(L.mod, L.slots, null, { edit: true, sel: sel, kit: kitFor(m, t) });
   if (sel != null) {
     h += '<section class="panel"><h2>' + roleOf(L.mod, sel) + (L.slots[sel] ? ": " + esc(L.slots[sel]) : "") + "</h2>" +
-      chooserHTML({ key: "lu", input: "lu-q", q: ui.luQ, groups: [["Panchina", bench], ["Non convocati", out]], act: "lu-pick", attrs: "",
+      chooserHTML({ key: "lu", input: "lu-q", q: ui.luQ, groups: [["Panchina", bench], ["In campo · scambia il ruolo", L.slots.filter(function (n) { return n && n !== L.slots[sel]; })], ["Tribuna", out]], act: "lu-pick", attrs: "",
         cur: "", add: "lu-add", team: teamName(m, t) }) +
       (roster.length ? "" : '<div class="note">La rosa è vuota: scrivi i nomi qui sotto, separati da virgola.</div>') +
       '<div class="controls">' + (L.slots[sel] ? '<button class="btn danger" data-a="lu-clear">Togli dal campo</button>' : "<span></span>") +
@@ -1370,12 +2057,12 @@ function vLineup() {
   }
   h += '<section class="panel"><h2>Panchina \u00b7 ' + bench.length + "</h2>" +
     (bench.length ? '<div class="chips">' + bench.map(function (p) { return chip(p, "lu-bench", " on"); }).join("") + "</div>" : '<div class="empty">Nessun giocatore in panchina.</div>') +
-    "<h2>Altri della rosa \u00b7 non convocati</h2>" +
+    "<h2>Tribuna \u00b7 non convocati</h2>" +
     (out.length ? '<div class="chips">' + out.map(function (p) { return chip(p, "lu-bench"); }).join("") + "</div>" : '<div class="empty">Tutta la rosa è in campo o in panchina.</div>') +
-    '<div class="note">Tocca un nome per spostarlo tra panchina e non convocati.</div>' +
+    '<div class="note">Tocca un nome per spostarlo tra panchina e tribuna.</div>' +
     '<div class="row"><input type="text" id="lu-new" class="grow" autocomplete="off" placeholder="Nuovi giocatori, separati da virgola">' +
     '<button class="btn" data-a="lu-many">Aggiungi</button></div></section>';
-  return h + '<button class="btn primary big block" data-a="lu-done">Fatto</button>';
+  return h + '<button class="btn primary big block" data-a="lu-done">' + (ui.luNext ? "Avanti: la convocazione" : "Fatto") + "</button>";
 }
 
 function vSummary() {
@@ -1403,7 +2090,8 @@ function vSummary() {
     ((sh.length || sa.length) ? '<div class="scorers"><div>' + sh.map(function (s) { return "<p>" + esc(s) + "</p>"; }).join("") + '</div><div class="r">' + sa.map(function (s) { return "<p>" + esc(s) + "</p>"; }).join("") + "</div></div>" : "") +
     "</section>";
   h += '<div class="tiles compact">' +
-    tile("s-go", ic("list"), "Cronaca", sorted(m).length + " eventi", ' data-v="cronaca"') +
+    tile("s-go", ic("list"), "Cronaca", sorted(m).length + " eventi · rivedi e correggi", ' data-v="cronaca"') +
+    tile("m-pdf", ic("doc"), "PDF della partita", "Risultato, cronaca e formazioni da condividere", ' data-mid="' + m.id + '"') +
     tile("s-go", ic("formation"), "Formazioni", "", ' data-v="lineup"') +
     tile("s-go", ic("pen"), "Correggi il risultato", "Aggiungi un evento dimenticato", ' data-v="fix"') +
     tile("share", ic("share"), "Condividi il risultato", "Marcatori, minuti e cartellini") +
@@ -1431,7 +2119,10 @@ function renderLayer() {
       '<textarea class="textout" id="share-text" readonly>' + esc(ui.share) + "</textarea>" +
       '<button class="btn primary block" data-a="share-close">Chiudi</button></div>';
   }
+  var old = layer.querySelector(".sheet"), keep = old ? old.scrollTop : 0;
   layer.innerHTML = h;
+  var nw = layer.querySelector(".sheet");
+  if (nw && keep) { nw.style.animation = "none"; nw.scrollTop = keep; }
   filterAll();
   var ta = document.getElementById("share-text");
   if (ta) { ta.focus(); ta.select(); }
@@ -1507,7 +2198,7 @@ function sheetHTML(m, e) {
   if (e.type === "sub") {
     if (fs) {
       var onField = fs.slots.filter(Boolean), rest = but.apply(null, [names].concat(onField, fs.bench));
-      h += "<h2>Esce \u00b7 tocca il giocatore in campo</h2>" + pitchHTML(fs.mod, fs.slots, fs.stats, { mini: true, pick: "off", cur: e.off });
+      h += "<h2>Esce \u00b7 tocca il giocatore in campo</h2>" + pitchHTML(fs.mod, fs.slots, fs.stats, { mini: true, pick: "off", cur: e.off, kit: kitFor(m, pt) });
       h += pickerHTML(m, e, "off", "Oppure scegli chi esce", [["In campo", but(onField, e.on)], ["Panchina", but(fs.bench, e.on)], ["Altri della rosa", but(rest, e.on)]], pt);
       h += pickerHTML(m, e, "on", "Entra", [["Panchina", but(fs.bench, e.off)], ["Altri della rosa", but(rest, e.off)]], pt);
     } else {
@@ -1518,7 +2209,7 @@ function sheetHTML(m, e) {
     var label = e.kind === "autogol" ? "Autore dell'autogol (" + esc(teamName(m, pt)) + ")" : "Giocatore" + (e.type === "goal" ? " che ha segnato" : "");
     if (fs) {
       var off = fs.slots.filter(Boolean);
-      h += "<h2>" + label + " \u00b7 tocca in campo</h2>" + pitchHTML(fs.mod, fs.slots, fs.stats, { mini: true, pick: "player", cur: e.player });
+      h += "<h2>" + label + " \u00b7 tocca in campo</h2>" + pitchHTML(fs.mod, fs.slots, fs.stats, { mini: true, pick: "player", cur: e.player, kit: kitFor(m, pt) });
       h += pickerHTML(m, e, "player", "Oppure scegli dall'elenco", [["In campo", off], ["Panchina", fs.bench], ["Altri della rosa", names]], pt);
     } else {
       h += pickerHTML(m, e, "player", label, [["Rosa", names]], pt);
@@ -1605,7 +2296,11 @@ function lineupAction(a, el) {
     if (!v) { document.getElementById("lu-q").focus(); return; }
     addToRoster(roster, v);
   }
-  if (a === "lu-pick" || a === "lu-add") {
+  var was = L.slots.indexOf(v);
+  if (a === "lu-pick" && ui.luSlot != null && was >= 0 && was !== ui.luSlot) {
+    // giocatore già in campo: scambia i due ruoli
+    L.slots[was] = L.slots[ui.luSlot]; L.slots[ui.luSlot] = v; ui.luSlot = null;
+  } else if (a === "lu-pick" || a === "lu-add") {
     if (ui.luSlot == null) ui.luSlot = L.slots.indexOf("");
     if (ui.luSlot < 0) { ui.luSlot = null; toast("Tocca prima un ruolo sul campo"); return; }
     toBench(L.slots[ui.luSlot]);  // chi c'era torna in panchina
@@ -1623,10 +2318,14 @@ function lineupAction(a, el) {
   rememberLineup(m, t); save(); render();
   if (a === "lu-many") { var again = document.getElementById("lu-new"); if (again) again.focus(); }
 }
-function readForm() {
-  var a = document.getElementById("f-team"), b = document.getElementById("f-opp");
-  if (a) form.team = a.value;
-  if (b) form.opp = b.value;
+function openLineup(lm, lt) {
+  if (!lineupOf(lm, lt)) setLineup(lm, lt, newLineup(lm, lt));
+  var LL = lineupOf(lm, lt);
+  if (!LL.bench) LL.bench = benchOf(lm, lt, LL).slice();
+  ui.lmid = lm.id; ui.luTeam = lt; ui.luQ = "";
+  var empty = LL.slots.indexOf("");
+  ui.luSlot = empty >= 0 ? empty : null;
+  save(); go("lineup");
 }
 function splitNames(s) { return s.split(/[,;\n]+/).map(function (x) { return x.trim(); }).filter(Boolean); }
 function addToRoster(list, name) { if (list.indexOf(name) < 0) list.push(name); }
@@ -1641,7 +2340,9 @@ document.addEventListener("click", function (ev) {
   switch (a) {
     case "back": back(); break;
     case "home": reset("home"); break;
-    case "setup": form = null; go("setup", { step: 1 }); break;
+    case "setup": planMatch(); go("plan"); break;
+    case "plan": go("plan"); break;
+    case "club": go("club"); break;
     case "resume": go("live"); break;
     case "roster": go("roster"); break;
     case "history": go("history"); break;
@@ -1669,31 +2370,93 @@ document.addEventListener("click", function (ev) {
     }
     case "hub": {
       var hv = el.getAttribute("data-v");
-      go("live", /^(goal|card|sub|lineup)$/.test(hv) ? { sec: "team", act: hv } : { sec: hv }); break;
+      if (/^(goal|card|sub)$/.test(hv)) { unlockAudio(); startWizard(hv); break; }
+      go("live", hv === "lineup" ? { sec: "team", act: hv } : { sec: hv }); break;
+    }
+    case "wz-team": wzTeam(el.getAttribute("data-t")); break;
+    case "wz-kind": {
+      var wk = el.getAttribute("data-v"), we = wzEvent(m);
+      if ((wk === "autogol") !== (ui.wz.kind === "autogol")) { ui.wz.player = ""; if (we) we.player = ""; }
+      ui.wz.kind = wk; if (we) { we.kind = wk; save(); }
+      wzNext(); break;
+    }
+    case "wz-card": ui.wz.card = el.getAttribute("data-v"); wzNext(); break;
+    case "wz-pick": wzSet(el.getAttribute("data-f"), el.getAttribute("data-v")); break;
+    case "wz-new": {
+      var wq = (document.getElementById("wz-q").value || "").trim(), wf = el.getAttribute("data-f");
+      if (!wq) break;
+      addToRoster(playersOf(m, wf === "player" ? wzPlayerTeam() : ui.wz.team), wq); save();
+      wzSet(wf, wq); break;
+    }
+    case "wz-min": {
+      ui.wz.sec = Math.max(0, ui.wz.sec + +el.getAttribute("data-d"));
+      var wm = wzEvent(m); if (wm) { wm.sec = ui.wz.sec; save(); }
+      render(); break;
+    }
+    case "wz-ok": wzConfirm(); break;
+    case "wz-drop": {
+      var wid = ui.wz.eid;
+      ask("Eliminare questo gol?", "Il gol viene tolto dal risultato.", "Elimina il gol", function () {
+        m.events = m.events.filter(function (x) { return x.id !== wid; }); save(); ui.wz = null;
+        reset("live", {}, [{ view: "home", p: {} }]); toast("Gol eliminato");
+      }, true);
+      break;
+    }
+    case "ev-del2": {
+      var did = el.getAttribute("data-id"), dm = S.match, de = dm.events.filter(function (x) { return x.id === did; })[0];
+      var what2 = de.type === "sub" ? "il cambio" : de.type === "goal" ? "il gol" : de.type === "red" ? "l\u2019espulsione" : "l\u2019ammonizione";
+      ask("Eliminare " + what2 + "?", minuteLabel(dm, de.period, de.sec) + " · " + teamName(dm, de.team) + ". L\u2019evento viene tolto dalla cronaca" + (de.type === "goal" ? " e dal risultato." : "."), "Elimina", function () {
+        dm.events = dm.events.filter(function (x) { return x.id !== did; }); save(); render(); toast("Eliminato");
+      }, true);
+      break;
     }
     case "tp": {
-      // squadra scelta: gol e cambi si registrano subito e si torna alla partita
+      // squadra scelta per la formazione (partita) o per aggiungere un evento (riepilogo)
       var tt = el.getAttribute("data-t"), act = ui.p.act;
       if (act === "fix") { go("summary", { sec: "fixtype", t: tt }); break; }
       if (act === "lineup") { go(ui.view, { sec: "lineup", t: tt }); break; }
-      if (act === "card") { go("live", { sec: "cardtype", t: tt }); break; }
-      unlockAudio(); reset("live", {}, [{ view: "home", p: {} }]); addEvent(act, tt); break;
-    }
-    case "ct": { var ctt = ui.p.t; reset("live", {}, [{ view: "home", p: {} }]); addEvent(el.getAttribute("data-c"), ctt); break; }
-    case "f-next": readForm(); go("setup", { step: 2 }); break;
-    case "f-side": readForm(); form.side = el.getAttribute("data-v"); render(); break;
-    case "f-per": readForm(); form.periods = Math.min(8, Math.max(1, form.periods + +el.getAttribute("data-d"))); render(); break;
-    case "f-min": readForm(); form.minutes = Math.min(90, Math.max(1, form.minutes + +el.getAttribute("data-d"))); render(); break;
-    case "f-preset": readForm(); form.minutes = +el.getAttribute("data-v"); render(); break;
-    case "f-opp-pick": readForm(); form.opp = el.getAttribute("data-v"); render(); break;
-    case "f-opp-roster": {
-      readForm();
-      var fk = (form.opp || "").trim().toLowerCase();
-      if (fk && !S.oppRosters[fk]) { S.oppRosters[fk] = []; S.oppLabels[fk] = form.opp.trim(); save(); }
-      if (fk) { ui.rOpp = fk; go("roster", { sec: "opp" }); } else go("roster", { sec: "opps" });
       break;
     }
-    case "start": readForm(); newMatch(form); form = null; reset("live", {}, [{ view: "home", p: {} }]); break;
+    case "f-per": form.periods = Math.min(8, Math.max(1, form.periods + +el.getAttribute("data-d"))); render(); break;
+    case "f-min": form.minutes = Math.min(90, Math.max(1, form.minutes + +el.getAttribute("data-d"))); render(); break;
+    case "f-preset": form.minutes = +el.getAttribute("data-v"); render(); break;
+    case "start": startMatch(m, form.periods, form.minutes); form = null; reset("live", {}, [{ view: "home", p: {} }]); break;
+    case "p-go": {
+      var pv = el.getAttribute("data-v");
+      if (pv === "lineup") { ui.luNext = null; openLineup(m, m.mySide); break; }
+      if (pv === "durata") form = null;
+      go("plan", { step: pv }); break;
+    }
+    case "p-next": {
+      var cur2 = el.getAttribute("data-v");
+      if (cur2 === "opp") {
+        var on2 = document.getElementById("p-opp").value.trim();
+        if (!on2) { toast("Scrivi o scegli la squadra avversaria"); document.getElementById("p-opp").focus(); break; }
+        setOpp(m, on2, m.mySide); save();
+      }
+      if (cur2 === "pdf") { reset("plan", {}, [{ view: "home", p: {} }]); break; }
+      if (cur2 === "conv") { ui.luNext = "pdf"; openLineup(m, m.mySide); break; }
+      go("plan", { step: PLAN_NEXT[cur2] }); break;
+    }
+    case "p-opp-pick": document.getElementById("p-opp").value = el.getAttribute("data-v"); setOpp(m, el.getAttribute("data-v"), m.mySide); save(); render(); break;
+    case "p-side": { var po = document.getElementById("p-opp").value.trim(); setOpp(m, po || oppName(m), el.getAttribute("data-v")); save(); render(); break; }
+    case "cv-set": if (cvSet(m, el.getAttribute("data-n"), el.getAttribute("data-v"))) { save(); render(); } break;
+    case "cv-size": {
+      var CL = m.lineup;
+      CL.mod = MODULI[el.getAttribute("data-v")][0];
+      CL.slots.slice(modSize(CL.mod)).forEach(function (n) { if (n && CL.bench.indexOf(n) < 0) CL.bench.push(n); });
+      CL.slots = fitSlots(CL.slots, modSize(CL.mod)); rememberLineup(m, m.mySide); save(); render(); break;
+    }
+    case "p-az": m.plan.az = el.getAttribute("data-v") === "1"; save(); render(); break;
+    case "p-pdf": makeConvPdf(m); break;
+    case "m-pdf": makeMatchPdf(findMatch(el.getAttribute("data-mid"))); break;
+    case "p-cancel":
+      ask("Annullare la partita?", "Convocazione e dati della partita vengono cancellati. Rosa e formazione restano.", "Annulla la partita", function () {
+        S.match = null; save(); reset("home");
+      }, true);
+      break;
+    case "logo-del": setTeamInfo(el.getAttribute("data-k"), { logo: "" }); break;
+    case "col-set": { var cp = {}; cp[el.getAttribute("data-w")] = el.getAttribute("data-v"); setTeamInfo(el.getAttribute("data-k"), cp); break; }
 
     case "r-add": {
       var inp = document.getElementById("r-new");
@@ -1735,8 +2498,7 @@ document.addEventListener("click", function (ev) {
       if (periodSec(m) < lenSec(m)) m.beeped = false;
       save(); tick(); break;
     }
-    case "goal": unlockAudio(); addEvent("goal", el.getAttribute("data-t")); break;
-    case "card": addEvent(el.getAttribute("data-c"), el.getAttribute("data-t")); break;
+    case "goal": unlockAudio(); startWizard("goal", el.getAttribute("data-t")); break;
     case "end-period": {
       var last = m.period >= m.periods;
       ask(last ? "Fine partita?" : "Fine " + periodName(m.period) + "?",
@@ -1801,17 +2563,11 @@ document.addEventListener("click", function (ev) {
     }
     case "share-close": ui.share = null; renderLayer(); break;
 
-    case "lu-open": {
-      var lm = findMatch(el.getAttribute("data-mid")), lt = el.getAttribute("data-t") || lm.mySide;
-      if (!lineupOf(lm, lt)) setLineup(lm, lt, newLineup(lm, lt));
-      var LL = lineupOf(lm, lt);
-      if (!LL.bench) LL.bench = benchOf(lm, lt, LL).slice();
-      ui.lmid = lm.id; ui.luTeam = lt; ui.luQ = "";
-      var empty = LL.slots.indexOf("");
-      ui.luSlot = empty >= 0 ? empty : null;
-      save(); go("lineup"); break;
-    }
-    case "lu-done": ui.luSlot = null; back(); break;
+    case "lu-open": { var lm = findMatch(el.getAttribute("data-mid")); ui.luNext = null; openLineup(lm, el.getAttribute("data-t") || lm.mySide); break; }
+    case "lu-done":
+      ui.luSlot = null;
+      if (ui.luNext) { var nx = ui.luNext; ui.luNext = null; go("plan", { step: nx }); } else back();
+      break;
     case "lu-size": case "lu-mod": case "lu-slot": case "lu-pick": case "lu-add": case "lu-clear": case "lu-bench": case "lu-many":
       lineupAction(a, el); break;
     case "del-match":
@@ -1826,6 +2582,9 @@ document.addEventListener("input", function (ev) {
   var id = ev.target.id;
   if (/^new-/.test(id)) { ui.newPlayer[id.slice(4)] = ev.target.value; filterChips(id.slice(4), ev.target.value); }
   if (id === "lu-q") { ui.luQ = ev.target.value; filterChips("lu", ev.target.value); }
+  if (id === "wz-q") { ui.wzQ = ev.target.value; filterChips("wz", ev.target.value); }
+  if (/^p-f-/.test(id) && S.match && S.match.plan) { S.match.plan[id.slice(4)] = ev.target.value; save(); }
+  if (/^c-/.test(id) && id !== "c-logo-file" && !/^col-/.test(id)) { var cs = {}; cs[id.slice(2)] = ev.target.value; S.settings.conv = Object.assign({}, S.settings.conv, cs); save(); }
 });
 // Invio: se la ricerca trova un solo nome lo sceglie. Un nome nuovo si aggiunge solo col pulsante.
 function enterPick(key) {
@@ -1835,6 +2594,9 @@ function enterPick(key) {
 }
 document.addEventListener("change", function (ev) {
   if (ev.target.id === "r-team") { S.settings.team = ev.target.value.trim(); save(); }
+  if (/^[co]-logo-file$/.test(ev.target.id) && ev.target.files && ev.target.files[0]) { loadLogo(ev.target.files[0], ev.target.id.charAt(0)); ev.target.value = ""; }
+  var cm = /^col-([co])-(primary|secondary)$/.exec(ev.target.id);
+  if (cm) { var cc2 = {}; cc2[cm[2]] = ev.target.value.toUpperCase(); setTeamInfo(cm[1], cc2); }
   if (ev.target.id === "scan-file" && ev.target.files && ev.target.files[0]) { readPhoto(ev.target.files[0]); ev.target.value = ""; }
   if (ev.target.id === "r-file" && ev.target.files && ev.target.files[0]) {
     var f = ev.target.files[0], rd = new FileReader();
@@ -1854,6 +2616,7 @@ document.addEventListener("keydown", function (ev) {
   if (id === "r-new") { ev.preventDefault(); document.querySelector('[data-a="r-add"]').click(); }
   if (/^new-/.test(id) && ev.target.value.trim()) { ev.preventDefault(); enterPick(id.slice(4)); }
   if (id === "lu-q" && ev.target.value.trim()) { ev.preventDefault(); enterPick("lu"); }
+  if (id === "wz-q" && ev.target.value.trim()) { ev.preventDefault(); enterPick("wz"); }
   if (id === "r-oppname") { ev.preventDefault(); document.querySelector('[data-a="r-oppnew"]').click(); }
   if (id === "lu-new") { ev.preventDefault(); document.querySelector('[data-a="lu-many"]').click(); }
   if (id === "r-team" || id === "ev-minute") ev.target.blur();
