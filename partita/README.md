@@ -24,7 +24,12 @@ L'app è fatta di schermate semplici con poche cose grandi da toccare, pensate p
   Poi **Inizia la partita**: tempi e minuti, e si va in campo. La convocazione dell'ultima partita viene riproposta.
 - **Società**: nome, categoria, logo (resta sul dispositivo), valori proposti (competizione, ritrovo, impianto) e note della convocazione (documenti, kit, puntualità, assenze, saluto).
 - Il file **rosa.json** dell'app Convocazioni si carica in Rosa → Salva e carica: rosa e predefiniti entrano in Bordocampo.
-- **Partita**: tabellone con minuto, conto alla rovescia e risultato (il pallone accanto al nome registra un gol con un tocco), Avvia/Pausa e Fine tempo, poi le schede **Formazione, Gol, Ammonizioni, Sostituzioni** e in basso **Cronaca, Diretta, Cronometro**. Ogni scheda chiede prima la squadra, poi il resto.
+- **Partita**: tabellone con minuto, conto alla rovescia e risultato (il pallone accanto al nome registra un gol con un tocco), Avvia/Pausa e Fine tempo, poi le schede **Formazione, Gol, Cartellini, Sostituzioni** e in basso **Cronaca, Diretta, Cronometro**.
+- **Procedure guidate** per Gol, Cartellini e Sostituzioni: una domanda per schermata, con il passo in corso e una riga di aiuto. Il minuto è quello del primo tocco (si può correggere nel riepilogo).
+  - **Gol**: squadra (il gol è già registrato) → su azione, rigore o autogol → chi ha segnato → riepilogo.
+  - **Cartellini**: squadra → giallo o rosso → giocatore → conferma.
+  - **Sostituzioni**: squadra → **chi esce** (sul campo o nell'elenco) → **chi entra** (dalla panchina) → conferma.
+  - Nella prima schermata di ognuna c'è l'elenco di quelli già inseriti, con **Elimina** per togliere un errore e il tocco per correggerlo.
 - **Finale**: risultato con marcatori e le schede Cronaca, Formazioni, Correggi il risultato, Condividi il risultato.
 
 

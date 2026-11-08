@@ -236,6 +236,19 @@ input[type=text] {
 .tiles.small .tile .ti svg { width: 32px; height: 32px; }
 .tiles.small .tile .tlab { flex: none; font-size: 15px; }
 .tiles.small .chev { display: none; }
+/* procedure guidate di gol, cartellini e cambi */
+.evl { display: flex; flex-direction: column; }
+.evl .er { display: flex; align-items: center; gap: 8px; padding: 8px 0; }
+.evl .er + .er { border-top: 1px solid var(--line); }
+.evl .er .eb { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; text-align: left; padding: 4px 0; }
+.evl .er .mn { font: 700 20px var(--font-display); min-width: 46px; font-variant-numeric: tabular-nums; }
+.evl .er .del { flex: none; min-height: 44px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--line); color: var(--danger); font-weight: 600; background: var(--surface); }
+.recap { display: grid; grid-template-columns: auto 1fr; gap: 10px 14px; align-items: center; font-size: 18px; }
+.recap dt { color: var(--muted); font-size: 14px; text-transform: uppercase; letter-spacing: .06em; }
+.recap dd { margin: 0; font-weight: 700; overflow-wrap: anywhere; }
+.guide { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 12px; background: rgba(0,0,0,.22); color: var(--on-field); font-size: 15px; }
+.guide span b { color: var(--brand); }
+.guide .gn { flex: none; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: var(--brand); color: var(--brand-ink); font: 800 15px var(--font-display); }
 /* convocazione: ogni giocatore della rosa in campo, in panchina o in tribuna */
 .cvhead { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 3; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 8px; border-radius: 12px; background: var(--board); color: var(--board-ink); text-align: center; }
 .cvhead b { display: block; font: 800 28px/1 var(--font-display); font-variant-numeric: tabular-nums; }
@@ -704,7 +717,7 @@ function pitchHTML(mod, slots, stats, opt) {
       var inner = '<span class="shirt">' + (name ? esc(sh.n) : "+") + (b ? '<span class="bd">' + b + "</span>" : "") + "</span>" +
         '<span class="pn">' + esc(name ? sh.s : opt.edit ? roleOf(mod, i) : "") + "</span>";
       if (opt.edit) h += '<button class="' + cls + '" data-a="lu-slot" data-i="' + i + '" aria-pressed="' + (opt.sel === i) + '" aria-label="' + esc(roleOf(mod, i) + (name ? ": " + name : "")) + '"' + attr + ">" + inner + "</button>";
-      else if (opt.pick && name) h += '<button class="' + cls + '" data-a="pick" data-f="' + opt.pick + '" data-v="' + esc(name) + '" aria-pressed="' + (opt.cur === name) + '"' + attr + ">" + inner + "</button>";
+      else if (opt.pick && name) h += '<button class="' + cls + '" data-a="' + (opt.act || "pick") + '" data-f="' + opt.pick + '" data-v="' + esc(name) + '" aria-pressed="' + (opt.cur === name) + '"' + attr + ">" + inner + "</button>";
       else h += '<div class="' + cls + '"' + attr + ">" + inner + "</div>";
     }
   });
@@ -1227,6 +1240,7 @@ function vPlan() {
   if (st === "opp") {
     var keys = Object.keys(S.oppRosters).sort(), cur = oppName(m).toLowerCase();
     return topBar("Avversario") + '<p class="lead">Contro chi giochiamo?<small>Passo 1 di 5</small></p>' +
+      guideHTML(1, "Scrivi il nome della squadra avversaria oppure toccane una già salvata. Poi scegli <b>In casa</b> o <b>In trasferta</b> e tocca <b>Avanti</b>.") +
       '<section class="panel"><label class="f">Squadra avversaria<input type="text" id="p-opp" autocomplete="off" value="' + esc(oppName(m)) + '" placeholder="Es. Virtus"></label>' +
       (keys.length ? '<div class="chips">' + keys.map(function (k) {
         return '<button class="chip" data-a="p-opp-pick" data-v="' + esc(S.oppLabels[k] || k) + '" aria-pressed="' + (k === cur) + '">' + esc(S.oppLabels[k] || k) + "</button>";
@@ -1240,6 +1254,7 @@ function vPlan() {
       return '<label class="f' + (wide ? " wide" : "") + '">' + label + '<input type="' + type + '" id="p-f-' + k + '" autocomplete="off" value="' + esc(pl[k] || "") + '"' + (ph ? ' placeholder="' + esc(ph) + '"' : "") + "></label>";
     };
     return topBar("Quando e dove") + '<p class="lead">Quando e dove?<small>Passo 2 di 5 · finisce nella convocazione</small></p>' +
+      guideHTML(2, "Tocca ogni casella e inserisci data, orari e luoghi. Le caselle già piene vengono dalla Società: cambiale solo se serve.") +
       '<section class="panel"><div class="fields">' + fld("data", "Data", "date", false) + fld("inizioOra", "Inizio gara", "time", false) +
       fld("ritrovoOra", "Ritrovo alle", "time", false) + fld("ritrovoLuogo", "Ritrovo presso", "text", false, "Es. Stadio comunale") +
       fld("impianto", "Impianto di gioco", "text", true, "Es. Campo sportivo …") + fld("comp", "Competizione", "text", true, "Es. Campionato Under 17") +
@@ -1247,7 +1262,8 @@ function vPlan() {
   }
   if (st === "conv") {
     var L = m.lineup, roster = S.settings.roster, cv = convocati(m).length, inC = L.slots.filter(Boolean).length;
-    var h2 = topBar("Convocazione") + '<p class="lead">Chi convochi?<small>Passo 3 di 5 · per ogni giocatore: in campo, in panchina o in tribuna</small></p>';
+    var h2 = topBar("Convocazione") + '<p class="lead">Chi convochi?<small>Passo 3 di 5</small></p>' +
+      guideHTML(3, "Per ogni giocatore tocca <b>Campo</b> (titolare), <b>Panch.</b> (in panchina) o <b>Tribuna</b> (non convocato). In alto vedi i conteggi.");
     h2 += '<div class="cvhead"><div><b>' + inC + "/" + L.slots.length + "</b><span>In campo</span></div><div><b>" + L.bench.length + "</b><span>Panchina</span></div>" +
       '<div class="' + (cv > 20 ? "over" : "") + '"><b>' + cv + "</b><span>Convocati" + (cv > 20 ? " (max 20)" : "") + "</span></div></div>";
     h2 += '<section class="panel"><h2>Giocatori in campo</h2><div class="seg">' + Object.keys(MODULI).map(function (n) {
@@ -1263,7 +1279,8 @@ function vPlan() {
   }
   if (st === "pdf") {
     var d = convData(m);
-    return topBar("Convocazione") + '<p class="lead">La convocazione<small>Passo 5 di 5 · da mandare ai ragazzi e alle famiglie</small></p>' +
+    return topBar("Convocazione") + '<p class="lead">La convocazione<small>Passo 5 di 5</small></p>' +
+      guideHTML(5, "Controlla il foglio qui sotto, poi tocca <b>Crea e condividi il PDF</b> per mandarlo su WhatsApp o salvarlo.") +
       '<div class="seg"><button data-a="p-az" data-v="0" aria-pressed="' + !pl.az + '">Ordine: formazione</button><button data-a="p-az" data-v="1" aria-pressed="' + !!pl.az + '">Ordine: A–Z</button></div>' +
       '<div class="sheetwrap" id="sheetwrap">' + a4HTML(d) + "</div>" +
       (d.logo ? "" : '<div class="note">Il logo della società si aggiunge in Home → Società, insieme ai testi fissi.</div>') +
@@ -1274,6 +1291,7 @@ function vPlan() {
     if (!form) form = { periods: m.periods, minutes: m.minutes };
     var presets = [10, 15, 20, 25, 30, 35, 40, 45];
     return topBar("Inizia la partita") + '<p class="lead">Quanto si gioca?<small>Poi parte la partita con il cronometro</small></p>' +
+      guideHTML("\u2713", "Scegli quanti tempi e quanti minuti per tempo (+ e −, oppure tocca un valore), poi <b>Vai in campo</b>. Il cronometro parte quando tocchi Avvia.") +
       '<section class="panel"><h2>Numero di tempi</h2><div class="stepper">' +
       '<button data-a="f-per" data-d="-1" aria-label="Meno tempi">−</button><span class="v tabnum">' + form.periods + '</span><button data-a="f-per" data-d="1" aria-label="Più tempi">+</button>' +
       '<span class="muted">' + (form.periods === 1 ? "tempo unico" : "tempi") + "</span></div></section>" +
@@ -1614,6 +1632,7 @@ function vRoster() {
   if (sec === "mine") h += '<section class="panel"><label class="f">Nome della squadra<input type="text" id="r-team" autocomplete="off" value="' + esc(S.settings.team) + '" placeholder="La mia squadra"></label></section>';
   else h += '<p class="lead">' + esc(S.oppLabels[ui.rOpp] || ui.rOpp) + "</p>";
   h += '<div class="tiles">' + tile("scan-open", ic("camera"), "Leggi dalla distinta", "Dalla foto della distinta, o dal testo copiato") + "</div>";
+  h += guideHTML("?", "Scrivi cognome e nome (con il numero di maglia davanti, se vuoi, es. 10 Rossi Mario) e tocca <b>Aggiungi</b>. Puoi scriverne tanti separati da virgola.");
   h += '<section class="panel"><h2>Aggiungi giocatori</h2><div class="row"><input type="text" id="r-new" class="grow" autocomplete="off" placeholder="Es. 10 Rossi"><button class="btn primary" data-a="r-add">Aggiungi</button></div>' +
     '<div class="note">Anche tanti insieme, separati da virgola. Il numero di maglia prima del nome compare sul campo.</div></section>' +
     '<section class="panel"><h2>' + r.length + " giocatori</h2>";
@@ -1661,18 +1680,127 @@ function teamPickHTML(m, title, sub) {
     }).join("") + "</div>";
 }
 
+/* ---------- procedure guidate: gol, cartellini, sostituzioni ---------- */
+// Una domanda per schermata, con il passo in corso e una riga di aiuto. Il minuto è quello del primo tocco.
+// Il gol si registra subito (il minuto non si perde), cartellini e cambi alla conferma finale.
+var WZ_STEPS = { goal: ["team", "kind", "player", "ok"], card: ["team", "card", "player", "ok"], sub: ["team", "off", "on", "ok"] };
+var WZ_TITLE = { goal: "Gol", card: "Cartellini", sub: "Sostituzioni" };
+function startWizard(type, team) {
+  var m = S.match;
+  ui.wz = { type: type, team: "", kind: "azione", card: "", player: "", off: "", on: "", period: m.period, sec: periodSec(m), eid: "" };
+  ui.wzQ = "";
+  if (team) { go("live", { sec: "w", step: "team" }); wzTeam(team); }
+  else go("live", { sec: "w", step: "team" });
+}
+function wzEvent(m) { var w = ui.wz; return w && w.eid ? m.events.filter(function (x) { return x.id === w.eid; })[0] : null; }
+function wzNext() {
+  var steps = WZ_STEPS[ui.wz.type], i = steps.indexOf(ui.p.step);
+  ui.wzQ = "";
+  go("live", { sec: "w", step: steps[i + 1] });
+}
+function wzTeam(t) {
+  var m = S.match, w = ui.wz;
+  w.team = t;
+  if (w.type === "goal" && !w.eid) {
+    var e = { id: uid(), n: ++m.seq, type: "goal", team: t, period: w.period, sec: w.sec, player: "", kind: "azione" };
+    m.events.push(e); w.eid = e.id; save();
+    toast("Gol di " + teamName(m, t) + " registrato al " + minuteLabel(m, w.period, w.sec), 2500);
+  }
+  wzNext();
+}
+// Squadra del giocatore da scegliere: nell'autogol è l'altra.
+function wzPlayerTeam() { var w = ui.wz; return w.type === "goal" && w.kind === "autogol" ? other(w.team) : w.team; }
+function wzSet(field, v) {
+  var m = S.match, w = ui.wz, e = wzEvent(m);
+  w[field] = v;
+  if (e) { e[field] = v; save(); }
+  wzNext();
+}
+function wzConfirm() {
+  var m = S.match, w = ui.wz, msg;
+  if (w.type === "goal") { msg = "Gol salvato"; }
+  else {
+    var e = { id: uid(), n: ++m.seq, type: w.type === "card" ? w.card : "sub", team: w.team, period: w.period, sec: w.sec, player: "", kind: "" };
+    if (w.type === "sub") { e.on = w.on; e.off = w.off; msg = "Cambio salvato: entra " + (w.on || "?") + ", esce " + (w.off || "?"); }
+    else { e.player = w.player; msg = (w.card === "red" ? "Espulsione" : "Ammonizione") + " salvata"; }
+    m.events.push(e);
+  }
+  save(); ui.wz = null;
+  reset("live", {}, [{ view: "home", p: {} }]);
+  toast(msg, 3000);
+}
+// Eventi già inseriti di quel tipo, da correggere (tocco) o eliminare.
+function evListHTML(m, types, title, empty) {
+  var list = sorted(m).filter(function (e) { return types.indexOf(e.type) >= 0; });
+  if (!list.length) return '<div class="note">' + empty + "</div>";
+  return '<section class="panel"><h2>' + title + '</h2><div class="evl">' + list.map(function (e) {
+    return '<div class="er"><button class="eb" data-a="edit" data-mid="' + m.id + '" data-id="' + e.id + '"><span class="mn">' + minuteLabel(m, e.period, e.sec) + "</span>" + evIcon(m, e) +
+      '<span class="who">' + evText(m, e).replace(/^<span class="who">|<\/span>$/g, "") + "<small>" + esc(teamName(m, e.team)) + "</small></span></button>" +
+      '<button class="del" data-a="ev-del2" data-id="' + e.id + '">Elimina</button></div>';
+  }).join("") + '</div><div class="note">Tocca un evento per correggerlo.</div></section>';
+}
+function guideHTML(n, text) { return '<div class="guide"><b class="gn">' + n + "</b><span>" + text + "</span></div>"; }
+function vWizard(m) {
+  var w = ui.wz, st = ui.p.step;
+  if (!w) { ui.p = {}; return vLive(); }
+  var steps = WZ_STEPS[w.type], n = steps.indexOf(st) + 1, pas = "Passo " + n + " di " + steps.length;
+  var min = minuteLabel(m, w.period, w.sec), h = topBar(WZ_TITLE[w.type]);
+  if (st === "team") {
+    var q = { goal: "Chi ha segnato il gol?", card: "A quale squadra il cartellino?", sub: "Quale squadra fa il cambio?" }[w.type];
+    h += '<p class="lead">' + q + "<small>" + pas + " · minuto " + min + "</small></p>";
+    h += guideHTML(n, w.type === "goal" ? "Tocca la squadra che ha segnato: il gol viene registrato subito al " + min + ", poi aggiungi i dettagli." : "Tocca la squadra. Il minuto " + min + " è già preso.");
+    h += '<div class="tiles">' + ["home", "away"].map(function (t) {
+      return tile("wz-team", ic(t === m.mySide ? "shirt" : "opp"), esc(teamName(m, t)), (t === m.mySide ? "La mia squadra · " : "") + score(m, t) + " gol", ' data-t="' + t + '"', false, "big");
+    }).join("") + "</div>";
+    if (w.type === "sub") h += evListHTML(m, ["sub"], "Cambi fatti", "Nessun cambio ancora.");
+    if (w.type === "card") h += evListHTML(m, ["yellow", "red"], "Cartellini dati", "Nessun cartellino ancora.");
+    if (w.type === "goal") h += evListHTML(m, ["goal"], "Gol segnati", "Nessun gol ancora.");
+    return h;
+  }
+  var tn = esc(teamName(m, w.team));
+  if (st === "kind") {
+    return h + '<p class="lead">Com’è arrivato il gol?<small>' + pas + " · " + tn + " · " + min + "</small></p>" +
+      guideHTML(n, "Tocca il tipo di gol. Se è un autogol, poi sceglierai il giocatore dell’altra squadra.") +
+      '<div class="tiles">' + tile("wz-kind", ic("ball"), "Su azione", "Gol normale", ' data-v="azione"') + tile("wz-kind", ic("ball"), "Rigore", "", ' data-v="rigore"') +
+      tile("wz-kind", ic("ball"), "Autogol", "Segnato da un avversario nella propria porta", ' data-v="autogol"') + "</div>";
+  }
+  if (st === "card") {
+    return h + '<p class="lead">Che cartellino?<small>' + pas + " · " + tn + " · " + min + "</small></p>" + guideHTML(n, "Tocca il colore del cartellino.") +
+      '<div class="tiles">' + tile("wz-card", ic("yellow"), "Ammonizione", "Cartellino giallo", ' data-v="yellow"') + tile("wz-card", ic("red"), "Espulsione", "Cartellino rosso", ' data-v="red"') + "</div>";
+  }
+  if (st === "player" || st === "off" || st === "on") {
+    var pt = st === "player" ? wzPlayerTeam() : w.team, names = playersOf(m, pt), fs = hasLineup(m, pt) ? fieldState(m, null, pt) : null;
+    var onField = fs ? fs.slots.filter(Boolean) : [], bench = fs ? fs.bench : [];
+    var rest = names.filter(function (x) { return onField.indexOf(x) < 0 && bench.indexOf(x) < 0; });
+    var q2, g2, groups;
+    if (st === "off") { q2 = "Chi esce dal campo?"; g2 = "Tocca il giocatore che <b>esce</b>" + (fs ? " sul campo o nell’elenco." : " nell’elenco."); groups = fs ? [["In campo", onField], ["Altri della rosa", rest.concat(bench)]] : [["Rosa", names]]; }
+    else if (st === "on") { q2 = "Chi entra?"; g2 = "Esce <b>" + esc(w.off || "giocatore non indicato") + "</b>. Ora tocca il giocatore che <b>entra</b>."; groups = fs ? [["Panchina", bench.filter(function (x) { return x !== w.off; })], ["Altri della rosa", rest]] : [["Rosa", names.filter(function (x) { return x !== w.off; })]]; }
+    else { q2 = w.type === "goal" ? (w.kind === "autogol" ? "Chi ha fatto l’autogol?" : "Chi ha segnato?") : "A chi il cartellino?"; g2 = "Tocca il giocatore" + (fs ? " sul campo o nell’elenco." : " nell’elenco.") + " Se non lo sai, tocca Non indicato."; groups = fs ? [["In campo", onField], ["Panchina", bench], ["Altri della rosa", rest]] : [["Rosa", names]]; }
+    h += '<p class="lead">' + q2 + "<small>" + pas + " · " + esc(teamName(m, pt)) + " · " + min + "</small></p>" + guideHTML(n, g2);
+    if (st !== "on" && fs) h += pitchHTML(fs.mod, fs.slots, fs.stats, { mini: true, pick: st, act: "wz-pick", cur: w[st] });
+    h += '<section class="panel">' + (names.length ? "" : '<div class="note">La rosa di ' + esc(teamName(m, pt)) + " è vuota: scrivi il nome qui sotto.</div>") +
+      chooserHTML({ key: "wz", input: "wz-q", q: ui.wzQ, groups: groups, act: "wz-pick", attrs: ' data-f="' + st + '"', cur: w[st], none: true, add: "wz-new", team: teamName(m, pt) }) + "</section>";
+    return h;
+  }
+  // riepilogo
+  var e = wzEvent(m), rows = [["Minuto", min], ["Squadra", tn]];
+  if (w.type === "goal") rows.push(["Tipo", { azione: "Su azione", rigore: "Rigore", autogol: "Autogol" }[w.kind]], [w.kind === "autogol" ? "Autogol di" : "Marcatore", esc(w.player || "non indicato")]);
+  if (w.type === "card") rows.push(["Cartellino", w.card === "red" ? "Rosso · espulsione" : "Giallo · ammonizione"], ["Giocatore", esc(w.player || "non indicato")]);
+  if (w.type === "sub") rows.push(["Esce", esc(w.off || "non indicato")], ["Entra", esc(w.on || "non indicato")]);
+  h += '<p class="lead">' + (w.type === "goal" ? "Gol registrato" : "Controlla e conferma") + "<small>" + pas + "</small></p>" +
+    guideHTML(n, w.type === "goal" ? "Il gol è già salvato. Controlla i dati e tocca Fatto." : "Se è tutto giusto tocca <b>Conferma</b>. Per cambiare qualcosa usa Indietro.");
+  h += '<section class="panel"><dl class="recap">' + rows.map(function (r) { return "<dt>" + r[0] + "</dt><dd>" + r[1] + "</dd>"; }).join("") + "</dl>" +
+    '<div class="row" style="justify-content:space-between"><span class="muted small">Correggi il minuto</span><div class="stepper">' +
+    '<button data-a="wz-min" data-d="-60" aria-label="Un minuto prima">−</button><button data-a="wz-min" data-d="60" aria-label="Un minuto dopo">+</button></div></div></section>';
+  h += '<button class="btn primary big block" data-a="wz-ok">' + (w.type === "goal" ? "Fatto" : "Conferma") + "</button>";
+  if (e) h += '<button class="danger-link" data-a="wz-drop">Elimina questo gol</button>';
+  return h;
+}
+
 function vLive() {
   var m = S.match, brk = m.status === "break", last = m.period >= m.periods, can = m.status === "play", sec = ui.p.sec;
-  if (sec === "team") {
-    var what = { goal: ["Gol", "Il minuto si registra subito, poi scegli il marcatore."], card: ["Ammonizioni", "Poi scegli il cartellino."],
-      sub: ["Sostituzioni", "Poi scegli chi esce e chi entra."], lineup: ["Formazione", ""] }[ui.p.act];
-    return teamPickHTML(m, what[0], what[1]);
-  }
-  if (sec === "cardtype") {
-    return topBar("Ammonizioni") + '<p class="lead">' + esc(teamName(m, ui.p.t)) + "<small>Che cartellino?</small></p>" +
-      '<div class="tiles">' + tile("ct", ic("yellow"), "Ammonizione", "Cartellino giallo", ' data-c="yellow"') +
-      tile("ct", ic("red"), "Espulsione", "Cartellino rosso", ' data-c="red"') + "</div>";
-  }
+  if (sec === "w") return vWizard(m);
+  if (sec === "team") return teamPickHTML(m, "Formazione", "");
   if (sec === "lineup") return topBar("Formazione") + '<p class="lead">' + esc(teamName(m, ui.p.t)) + "</p>" + teamLineupHTML(m, ui.p.t);
   if (sec === "cronaca") return topBar("Cronaca") + cronacaHTML(m);
   if (sec === "diretta") return topBar("Diretta") + livePanel(m);
@@ -1704,7 +1832,7 @@ function vLive() {
   h += '<div class="tiles compact">' +
     tile("hub", ic("formation"), "Formazione", "", ' data-v="lineup"') +
     tile("hub", ic("ball"), "Gol", "", ' data-v="goal"', !can) +
-    tile("hub", ic("yellow"), "Ammonizioni", "", ' data-v="card"', !can) +
+    tile("hub", ic("yellow"), "Cartellini", "Ammonizioni ed espulsioni", ' data-v="card"', !can) +
     tile("hub", ic("sub"), "Sostituzioni", "", ' data-v="sub"', !can) + "</div>";
   h += '<div class="tiles small">' + tile("hub", ic("list"), "Cronaca", "", ' data-v="cronaca"') +
     tile("hub", ic("live"), "Diretta", "", ' data-v="diretta"') + tile("hub", ic("clock"), "Cronometro", "", ' data-v="tempo"') + "</div>";
@@ -1720,7 +1848,8 @@ function vLineup() {
   var size = modSize(L.mod), sel = ui.luSlot, roster = playersOf(m, t), bench = benchOf(m, t, L);
   var out = roster.filter(function (p) { return L.slots.indexOf(p) < 0 && bench.indexOf(p) < 0; });
   var chip = function (p, act, extra) { return '<button class="chip' + (extra || "") + '" data-a="' + act + '" data-v="' + esc(p) + '">' + esc(p) + "</button>"; };
-  var h = topBar("Formazione") + '<p class="lead">' + esc(teamName(m, t)) + "</p>";
+  var h = topBar("Formazione") + '<p class="lead">' + esc(teamName(m, t)) + (ui.luNext ? "<small>Passo 4 di 5</small>" : "") + "</p>" +
+    guideHTML(ui.luNext ? 4 : "?", "Scegli quanti giocano e il modulo. Poi tocca un cerchio sul campo e il giocatore da mettere in quel ruolo.");
   h += '<section class="panel"><h2>Giocatori in campo</h2><div class="seg">' + Object.keys(MODULI).map(function (n) {
     return '<button data-a="lu-size" data-v="' + n + '" aria-pressed="' + (+n === size) + '">' + n + "</button>";
   }).join("") + '</div><div class="chips">' + (MODULI[size] || [L.mod]).map(function (mod) {
@@ -1800,7 +1929,10 @@ function renderLayer() {
       '<textarea class="textout" id="share-text" readonly>' + esc(ui.share) + "</textarea>" +
       '<button class="btn primary block" data-a="share-close">Chiudi</button></div>';
   }
+  var old = layer.querySelector(".sheet"), keep = old ? old.scrollTop : 0;
   layer.innerHTML = h;
+  var nw = layer.querySelector(".sheet");
+  if (nw && keep) { nw.style.animation = "none"; nw.scrollTop = keep; }
   filterAll();
   var ta = document.getElementById("share-text");
   if (ta) { ta.focus(); ta.select(); }
@@ -2048,17 +2180,53 @@ document.addEventListener("click", function (ev) {
     }
     case "hub": {
       var hv = el.getAttribute("data-v");
-      go("live", /^(goal|card|sub|lineup)$/.test(hv) ? { sec: "team", act: hv } : { sec: hv }); break;
+      if (/^(goal|card|sub)$/.test(hv)) { unlockAudio(); startWizard(hv); break; }
+      go("live", hv === "lineup" ? { sec: "team", act: hv } : { sec: hv }); break;
+    }
+    case "wz-team": wzTeam(el.getAttribute("data-t")); break;
+    case "wz-kind": {
+      var wk = el.getAttribute("data-v"), we = wzEvent(m);
+      if ((wk === "autogol") !== (ui.wz.kind === "autogol")) { ui.wz.player = ""; if (we) we.player = ""; }
+      ui.wz.kind = wk; if (we) { we.kind = wk; save(); }
+      wzNext(); break;
+    }
+    case "wz-card": ui.wz.card = el.getAttribute("data-v"); wzNext(); break;
+    case "wz-pick": wzSet(el.getAttribute("data-f"), el.getAttribute("data-v")); break;
+    case "wz-new": {
+      var wq = (document.getElementById("wz-q").value || "").trim(), wf = el.getAttribute("data-f");
+      if (!wq) break;
+      addToRoster(playersOf(m, wf === "player" ? wzPlayerTeam() : ui.wz.team), wq); save();
+      wzSet(wf, wq); break;
+    }
+    case "wz-min": {
+      ui.wz.sec = Math.max(0, ui.wz.sec + +el.getAttribute("data-d"));
+      var wm = wzEvent(m); if (wm) { wm.sec = ui.wz.sec; save(); }
+      render(); break;
+    }
+    case "wz-ok": wzConfirm(); break;
+    case "wz-drop": {
+      var wid = ui.wz.eid;
+      ask("Eliminare questo gol?", "Il gol viene tolto dal risultato.", "Elimina il gol", function () {
+        m.events = m.events.filter(function (x) { return x.id !== wid; }); save(); ui.wz = null;
+        reset("live", {}, [{ view: "home", p: {} }]); toast("Gol eliminato");
+      }, true);
+      break;
+    }
+    case "ev-del2": {
+      var did = el.getAttribute("data-id"), dm = S.match, de = dm.events.filter(function (x) { return x.id === did; })[0];
+      var what2 = de.type === "sub" ? "il cambio" : de.type === "goal" ? "il gol" : de.type === "red" ? "l\u2019espulsione" : "l\u2019ammonizione";
+      ask("Eliminare " + what2 + "?", minuteLabel(dm, de.period, de.sec) + " · " + teamName(dm, de.team) + ". L\u2019evento viene tolto dalla cronaca" + (de.type === "goal" ? " e dal risultato." : "."), "Elimina", function () {
+        dm.events = dm.events.filter(function (x) { return x.id !== did; }); save(); render(); toast("Eliminato");
+      }, true);
+      break;
     }
     case "tp": {
-      // squadra scelta: gol e cambi si registrano subito e si torna alla partita
+      // squadra scelta per la formazione (partita) o per aggiungere un evento (riepilogo)
       var tt = el.getAttribute("data-t"), act = ui.p.act;
       if (act === "fix") { go("summary", { sec: "fixtype", t: tt }); break; }
       if (act === "lineup") { go(ui.view, { sec: "lineup", t: tt }); break; }
-      if (act === "card") { go("live", { sec: "cardtype", t: tt }); break; }
-      unlockAudio(); reset("live", {}, [{ view: "home", p: {} }]); addEvent(act, tt); break;
+      break;
     }
-    case "ct": { var ctt = ui.p.t; reset("live", {}, [{ view: "home", p: {} }]); addEvent(el.getAttribute("data-c"), ctt); break; }
     case "f-per": form.periods = Math.min(8, Math.max(1, form.periods + +el.getAttribute("data-d"))); render(); break;
     case "f-min": form.minutes = Math.min(90, Math.max(1, form.minutes + +el.getAttribute("data-d"))); render(); break;
     case "f-preset": form.minutes = +el.getAttribute("data-v"); render(); break;
@@ -2138,8 +2306,7 @@ document.addEventListener("click", function (ev) {
       if (periodSec(m) < lenSec(m)) m.beeped = false;
       save(); tick(); break;
     }
-    case "goal": unlockAudio(); addEvent("goal", el.getAttribute("data-t")); break;
-    case "card": addEvent(el.getAttribute("data-c"), el.getAttribute("data-t")); break;
+    case "goal": unlockAudio(); startWizard("goal", el.getAttribute("data-t")); break;
     case "end-period": {
       var last = m.period >= m.periods;
       ask(last ? "Fine partita?" : "Fine " + periodName(m.period) + "?",
@@ -2223,6 +2390,7 @@ document.addEventListener("input", function (ev) {
   var id = ev.target.id;
   if (/^new-/.test(id)) { ui.newPlayer[id.slice(4)] = ev.target.value; filterChips(id.slice(4), ev.target.value); }
   if (id === "lu-q") { ui.luQ = ev.target.value; filterChips("lu", ev.target.value); }
+  if (id === "wz-q") { ui.wzQ = ev.target.value; filterChips("wz", ev.target.value); }
   if (/^p-f-/.test(id) && S.match && S.match.plan) { S.match.plan[id.slice(4)] = ev.target.value; save(); }
   if (/^c-/.test(id) && id !== "c-logo-file") { var cs = {}; cs[id.slice(2)] = ev.target.value; S.settings.conv = Object.assign({}, S.settings.conv, cs); save(); }
 });
@@ -2254,6 +2422,7 @@ document.addEventListener("keydown", function (ev) {
   if (id === "r-new") { ev.preventDefault(); document.querySelector('[data-a="r-add"]').click(); }
   if (/^new-/.test(id) && ev.target.value.trim()) { ev.preventDefault(); enterPick(id.slice(4)); }
   if (id === "lu-q" && ev.target.value.trim()) { ev.preventDefault(); enterPick("lu"); }
+  if (id === "wz-q" && ev.target.value.trim()) { ev.preventDefault(); enterPick("wz"); }
   if (id === "r-oppname") { ev.preventDefault(); document.querySelector('[data-a="r-oppnew"]').click(); }
   if (id === "lu-new") { ev.preventDefault(); document.querySelector('[data-a="lu-many"]').click(); }
   if (id === "r-team" || id === "ev-minute") ev.target.blur();
