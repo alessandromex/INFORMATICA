@@ -30,7 +30,8 @@ L'app è fatta di schermate semplici con poche cose grandi da toccare, pensate p
   - **Cartellini**: squadra → giallo o rosso → giocatore → conferma.
   - **Sostituzioni**: squadra → **chi esce** (sul campo o nell'elenco) → **chi entra** (dalla panchina) → conferma.
   - Nella prima schermata di ognuna c'è l'elenco di quelli già inseriti, con **Elimina** per togliere un errore e il tocco per correggerlo.
-- **Finale**: risultato con marcatori e le schede Cronaca, Formazioni, Correggi il risultato, Condividi il risultato.
+- **Finale**: risultato con marcatori e le schede Cronaca, PDF della partita, Formazioni, Correggi il risultato, Condividi il risultato.
+- **Cronaca e PDF della partita**: nella Cronaca (durante la partita o a partita finita) rivedi tutti gli eventi; toccandone uno lo correggi o lo elimini, e a partita finita puoi aggiungerne uno dimenticato. **Crea e condividi il PDF** produce la cronaca della partita (logo e società, data, competizione, impianto, risultato con parziali e marcatori, tabella minuto per minuto con gol, cartellini e cambi, formazioni con panchina) da mandare o stampare.
 
 
 - **Rosa**: nella scheda **La mia squadra** inserisci il nome della squadra e i giocatori (anche più nomi insieme separati da virgola). Nella scheda **Avversari** crei una rosa per ogni squadra avversaria: viene proposta in automatico quando giochi contro una squadra con lo stesso nome.

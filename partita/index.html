@@ -1338,7 +1338,7 @@ function loadJsPdf() {
     document.head.appendChild(sc);
   });
 }
-function pdfText(s) { return String(s == null ? "" : s).replace(/[–—]/g, "-").replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/…/g, "...").replace(/[^\x00-\xFF]/g, ""); }
+function pdfText(s) { return String(s == null ? "" : s).replace(/[′]/g, "'").replace(/[–—]/g, "-").replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/…/g, "...").replace(/[^\x00-\xFF]/g, ""); }
 function buildPdf(d) {
   var doc = new window.jspdf.jsPDF({ unit: "mm", format: "a4" });
   var BUR = [128, 0, 32], RED = [238, 0, 0], GREY = [50, 50, 50], BLK = [0, 0, 0];
@@ -1664,13 +1664,126 @@ function timeline(m) {
   return h;
 }
 function cronacaHTML(m) {
-  var h = '<section class="panel"><div class="note">Tocca un evento per correggere giocatori, tipo, minuto o squadra.</div><div class="tl">' + timeline(m) + "</div></section>";
+  var h = '<p class="lead">' + esc(m.home) + " " + score(m, "home") + " - " + score(m, "away") + " " + esc(m.away) + "<small>" + sorted(m).length + " eventi</small></p>" +
+    guideHTML("?", "Tocca un evento per <b>correggerlo</b> (giocatori, tipo, minuto, squadra) o per <b>eliminarlo</b>. In fondo crei il PDF della partita da condividere.");
+  h += '<section class="panel"><div class="tl">' + timeline(m) + "</div></section>";
   var y = cardsOf(m, "yellow"), r = cardsOf(m, "red"), subs = subsOf(m);
   var block = function (title, list, icon) {
     return list.length ? "<h2>" + title + '</h2><div class="list">' + list.map(function (s) { return '<div class="item"><span class="ico">' + icon + '</span><span class="grow">' + esc(s) + "</span></div>"; }).join("") + "</div>" : "";
   };
   if (y.length || r.length || subs.length) h += '<section class="panel">' + block("Ammoniti", y, '<i class="card y"></i>') + block("Espulsi", r, '<i class="card r"></i>') + block("Cambi", subs, subSVG()) + "</section>";
-  return h;
+  if (m.status === "ended") h += '<button class="btn ghost block" data-a="s-go" data-v="fix">Aggiungi un evento dimenticato</button>';
+  return h + '<button class="btn primary big block" data-a="m-pdf" data-mid="' + m.id + '">Crea e condividi il PDF</button>';
+}
+
+/* ---------- PDF della partita: risultato, cronaca minuto per minuto, formazioni ---------- */
+function evLabel(m, e) {
+  if (e.type === "goal") return e.kind === "rigore" ? "Gol su rigore" : e.kind === "autogol" ? "Autogol" : "Gol";
+  if (e.type === "sub") return "Cambio";
+  if (e.type === "red") return "Espulsione";
+  return secondYellow(m, e) ? "Espulsione (2a amm.)" : "Ammonizione";
+}
+function evDetail(e) {
+  if (e.type === "sub") return "Entra " + (e.on || "?") + ", esce " + (e.off || "?");
+  return e.player || "-";
+}
+function buildMatchPdf(m) {
+  var doc = new window.jspdf.jsPDF({ unit: "mm", format: "a4" }), c = conv(), pl = m.plan || {};
+  var GREEN = [28, 90, 52], INK = [19, 32, 26], MUT = [90, 106, 97], L = 15, R = 195, y;
+  var set = function (st, sz, col) { doc.setFont("helvetica", st); doc.setFontSize(sz); doc.setTextColor(col[0], col[1], col[2]); };
+  var T = function (t, x, yy, o) { doc.text(pdfText(t), x, yy, o || {}); };
+  var lines = function (t, w) { return doc.splitTextToSize(pdfText(t), w); };
+  var need = function (h) { if (y + h > 280) { doc.addPage(); y = 18; return true; } return false; };
+  // intestazione
+  doc.setFillColor(GREEN[0], GREEN[1], GREEN[2]); doc.rect(0, 0, 210, 30, "F");
+  var tx = L;
+  if (c.logo) {
+    try {
+      var pr = doc.getImageProperties(c.logo), k = Math.min(18 / pr.width, 22 / pr.height);
+      doc.setFillColor(255, 255, 255); doc.roundedRect(L - 1, 3.5, pr.width * k + 2, pr.height * k + 2, 1, 1, "F");
+      doc.addImage(c.logo, L, 4.5, pr.width * k, pr.height * k); tx = L + pr.width * k + 6;
+    } catch (e) {}
+  }
+  set("bold", 18, [255, 255, 255]); T("CRONACA DELLA PARTITA", tx, 14);
+  set("normal", 10, [235, 242, 237]); T([c.club, c.categoria].filter(Boolean).join(" - "), tx, 21);
+  y = 40;
+  set("normal", 10, MUT);
+  var info = [dateLabel(m.date), pl.comp, pl.impianto].filter(Boolean).join("  -  ");
+  T(info, 105, y, { align: "center" });
+  if (m.status !== "ended") { y += 5; set("bold", 10, [179, 25, 45]); T("Partita in corso - " + periodName(m.period), 105, y, { align: "center" }); }
+  // risultato
+  y += 12;
+  set("bold", 13, INK);
+  var hn = lines(m.home.toUpperCase(), 66), an = lines(m.away.toUpperCase(), 66);
+  doc.text(hn, 90, y, { align: "right" }); doc.text(an, 120, y);
+  set("bold", 26, INK); T(score(m, "home") + " - " + score(m, "away"), 105, y + 2, { align: "center" });
+  y += Math.max(hn.length, an.length) * 5.5 + 4;
+  if (m.periods > 1) { set("normal", 10, MUT); T(partials(m).join("   "), 105, y, { align: "center" }); y += 7; }
+  // marcatori
+  set("normal", 10, INK);
+  var sh = scorersOf(m, "home"), sa = scorersOf(m, "away"), rows = Math.max(sh.length, sa.length);
+  for (var i = 0; i < rows; i++) {
+    if (sh[i]) doc.text(lines(sh[i], 80), 90, y, { align: "right" });
+    if (sa[i]) doc.text(lines(sa[i], 70), 120, y);
+    y += 5;
+  }
+  // cronaca
+  y += 6; need(20);
+  set("bold", 12, GREEN); T("CRONACA", L, y); y += 3;
+  var cols = [L, L + 16, L + 64, L + 106], head = function () {
+    doc.setFillColor(GREEN[0], GREEN[1], GREEN[2]); doc.rect(L, y, R - L, 7, "F");
+    set("bold", 9, [255, 255, 255]); T("Min.", cols[0] + 2, y + 4.8); T("Squadra", cols[1] + 2, y + 4.8); T("Evento", cols[2] + 2, y + 4.8); T("Giocatori", cols[3] + 2, y + 4.8);
+    y += 7;
+  };
+  head();
+  var list = sorted(m), cur = 0, zebra = false;
+  if (!list.length) { set("normal", 10, MUT); y += 6; T("Nessun evento registrato.", L + 2, y); y += 4; }
+  list.forEach(function (e) {
+    if (e.period !== cur && m.periods > 1) {
+      cur = e.period;
+      if (need(14)) head();
+      doc.setFillColor(222, 233, 226); doc.rect(L, y, R - L, 6, "F");
+      set("bold", 9, GREEN); T(periodName(cur).toUpperCase(), L + 2, y + 4.2); y += 6;
+    }
+    set("normal", 9.5, INK);
+    var tl = lines(teamName(m, e.team), 46), dl = lines(evDetail(e), R - cols[3] - 4), h = Math.max(tl.length, dl.length) * 4.4 + 2.6;
+    if (need(h)) head();
+    if (zebra) { doc.setFillColor(244, 247, 245); doc.rect(L, y, R - L, h, "F"); }
+    zebra = !zebra;
+    set("bold", 9.5, INK); T(minuteLabel(m, e.period, e.sec), cols[0] + 2, y + 4.6);
+    set("normal", 9.5, INK); doc.text(tl, cols[1] + 2, y + 4.6);
+    set(e.type === "goal" ? "bold" : "normal", 9.5, e.type === "red" || (e.type === "yellow" && secondYellow(m, e)) ? [179, 25, 45] : INK);
+    T(evLabel(m, e), cols[2] + 2, y + 4.6);
+    set("normal", 9.5, INK); doc.text(dl, cols[3] + 2, y + 4.6);
+    y += h;
+  });
+  doc.setDrawColor(200, 210, 204); doc.setLineWidth(0.2); doc.line(L, y, R, y);
+  // formazioni di partenza
+  ["home", "away"].forEach(function (t) {
+    if (!hasLineup(m, t)) return;
+    var Lu = lineupOf(m, t), tit = Lu.slots.filter(Boolean), ben = benchOf(m, t, Lu);
+    y += 9; need(24);
+    set("bold", 12, GREEN); T("FORMAZIONE " + teamName(m, t).toUpperCase() + " (" + Lu.mod + ")", L, y); y += 6;
+    set("normal", 10, INK);
+    var a = lines("Titolari: " + (tit.join(", ") || "-"), R - L), b = lines("Panchina: " + (ben.join(", ") || "-"), R - L);
+    need(a.length * 5 + b.length * 5); doc.text(a, L, y); y += a.length * 5; doc.text(b, L, y); y += b.length * 5;
+  });
+  // piè di pagina
+  var n = doc.getNumberOfPages(), now = new Date();
+  for (var pg = 1; pg <= n; pg++) {
+    doc.setPage(pg); set("normal", 8, MUT);
+    T("Bordocampo - creato il " + now.toLocaleDateString("it-IT") + " alle " + now.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" }), L, 290);
+    T("Pagina " + pg + " di " + n, R, 290, { align: "right" });
+  }
+  return doc;
+}
+function makeMatchPdf(m) {
+  toast("Preparo il PDF…");
+  loadJsPdf().then(function () {
+    var doc = buildMatchPdf(m), b64 = doc.output("datauristring").split(",")[1];
+    var clean = function (x) { return String(x || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Za-z0-9]+/g, "_").replace(/^_|_$/g, ""); };
+    return shareBinary("cronaca_" + clean(m.home) + "-" + clean(m.away) + "_" + String(m.date).slice(0, 10) + ".pdf", b64, "application/pdf", "Cronaca della partita");
+  }).catch(function () { toast("Serve la connessione la prima volta per creare il PDF", 3000); });
 }
 // Scelta della squadra a tutto schermo: due schede grandi.
 function teamPickHTML(m, title, sub) {
@@ -1901,7 +2014,8 @@ function vSummary() {
     ((sh.length || sa.length) ? '<div class="scorers"><div>' + sh.map(function (s) { return "<p>" + esc(s) + "</p>"; }).join("") + '</div><div class="r">' + sa.map(function (s) { return "<p>" + esc(s) + "</p>"; }).join("") + "</div></div>" : "") +
     "</section>";
   h += '<div class="tiles compact">' +
-    tile("s-go", ic("list"), "Cronaca", sorted(m).length + " eventi", ' data-v="cronaca"') +
+    tile("s-go", ic("list"), "Cronaca", sorted(m).length + " eventi · rivedi e correggi", ' data-v="cronaca"') +
+    tile("m-pdf", ic("doc"), "PDF della partita", "Risultato, cronaca e formazioni da condividere", ' data-mid="' + m.id + '"') +
     tile("s-go", ic("formation"), "Formazioni", "", ' data-v="lineup"') +
     tile("s-go", ic("pen"), "Correggi il risultato", "Aggiungi un evento dimenticato", ' data-v="fix"') +
     tile("share", ic("share"), "Condividi il risultato", "Marcatori, minuti e cartellini") +
@@ -2259,6 +2373,7 @@ document.addEventListener("click", function (ev) {
     }
     case "p-az": m.plan.az = el.getAttribute("data-v") === "1"; save(); render(); break;
     case "p-pdf": makeConvPdf(m); break;
+    case "m-pdf": makeMatchPdf(findMatch(el.getAttribute("data-mid"))); break;
     case "p-cancel":
       ask("Annullare la partita?", "Convocazione e dati della partita vengono cancellati. Rosa e formazione restano.", "Annulla la partita", function () {
         S.match = null; save(); reset("home");
