@@ -1,5 +1,5 @@
 // Cache per usare l'app anche senza connessione a bordo campo.
-const CACHE = "misterbook-v17";
+const CACHE = "misterbook-v18";
 const FILES = ["./", "index.html", "manifest.webmanifest", "icon-180.png", "icon-192.png", "icon-512.png"];
 
 self.addEventListener("install", (e) => {

@@ -272,6 +272,9 @@ input[type=text] {
 .seg3 button[aria-pressed=true][data-v=campo] { background: var(--accent); color: #fff; }
 .seg3 button[aria-pressed=true][data-v=panchina] { background: var(--brand); color: var(--brand-ink); }
 .seg3 button[aria-pressed=true][data-v=tribuna] { background: #6b7a72; color: #fff; }
+.seg3.two { grid-template-columns: repeat(2, 64px); }
+.seg3 button[aria-pressed=true][data-v=theirs] { background: var(--accent); color: #fff; }
+.seg3 button[aria-pressed=true][data-v=mine] { background: #6b7a72; color: #fff; }
 .step { flex: none; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font: 800 16px var(--font-display); background: var(--soft); color: var(--muted); }
 .step.ok { background: var(--accent); color: #fff; }
 .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -654,7 +657,24 @@ var EN = {
   "Il link resta attivo per 12 ore dall’ultimo aggiornamento.": "The link stays active for 12 hours after the last update.",
   "Nessuna connessione: riprovo tra poco. La partita resta salvata sul telefono.": "No connection: retrying shortly. The match stays saved on the phone.",
   "Invio aggiornamento…": "Sending update…", "Maglia": "Shirt", "Tinta unita": "Plain", "Strisce": "Stripes", "Righe": "Hoops", "Metà": "Halves",
-  "Ultimi eventi": "Latest events", "Tutta la cronaca": "Full match log", "1 ROSSI MARIO&#10;2 BIANCHI LUCA&#10;…": "1 SMITH JOHN&#10;2 BROWN TOM&#10;…", "In attesa del primo invio": "Waiting for the first update"
+  "Ultimi eventi": "Latest events", "Staff": "Staff", "Mister e dirigente": "Coach and team manager",
+  "Passatevi rosa, formazione o la prossima partita con un link su WhatsApp.": "Pass each other the squad, lineup or next match with a WhatsApp link.",
+  "Invia allo staff": "Send to staff", "Rosa, formazione o prossima partita": "Squad, lineup or next match", "Ricevi dallo staff": "Receive from staff",
+  "Incolla il link che ti hanno mandato": "Paste the link you were sent", "Invia o ricevi rosa e formazione": "Send or receive squad and lineup",
+  "Cosa vuoi mandare?": "What do you want to send?", "Si apre WhatsApp (o un'altra app) con il link da mandare.": "WhatsApp (or another app) opens with the link to send.",
+  "Tocca cosa mandare e scegli a chi. Chi lo riceve vede prima un riepilogo: i giocatori nuovi, quelli diversi e quelli che ha solo lui, e decide cosa tenere.":
+    "Tap what to send and choose who gets it. The receiver first sees a summary: new players, different ones and the ones only they have, and decides what to keep.",
+  "Solo la rosa": "Squad only", "Rosa e formazione": "Squad and lineup", "Tutta la prossima partita": "The whole next match",
+  "I nomi dei giocatori viaggiano dentro il link: mandalo solo allo staff della squadra.": "Player names travel inside the link: send it to the team staff only.",
+  "Incolla il link": "Paste the link", "Tieni premuto sul link ricevuto su WhatsApp, copia e incolla qui.": "Press and hold the link you got on WhatsApp, copy it and paste it here.",
+  "Leggi il link": "Read the link", "Il link non è valido o è incompleto": "The link is not valid or is incomplete",
+  "Usi l’app MisterBook su Android? Apri l’app, vai in Rosa → Staff → Ricevi dallo staff e incolla lo stesso link: così i dati vanno nell’app.":
+    "Using the MisterBook app on Android? Open the app, go to Squad → Staff → Receive from staff and paste the same link: that way the data goes into the app.",
+  "Prima la rosa: tocca i nomi per decidere chi aggiungere o togliere. Poi la formazione usa i giocatori della tua rosa. Infine tocca <b>Ricevi</b>.":
+    "Squad first: tap the names to decide who to add or remove. Then the lineup uses the players in your squad. Finally tap <b>Receive</b>.",
+  "Uguali": "Same", "Nuovi": "New", "Solo tuoi": "Only yours", "Nuovi · da aggiungere": "New · to add", "Scritti in modo diverso": "Written differently",
+  "Solo nella tua rosa · tocca per togliere": "Only in your squad · tap to remove", "Le due rose sono già uguali.": "The two squads are already the same.",
+  "Rendi la mia rosa uguale a questa": "Make my squad the same as this", "Ricevi": "Receive", "Tutta la cronaca": "Full match log", "1 ROSSI MARIO&#10;2 BIANCHI LUCA&#10;…": "1 SMITH JOHN&#10;2 BROWN TOM&#10;…", "In attesa del primo invio": "Waiting for the first update"
 };
 // Frasi con parti variabili (nomi, numeri, minuti): espressione regolare → traduzione.
 var ENP = [
@@ -672,6 +692,7 @@ var ENP = [
   [/^(\d+) in campo · (\d+) in panchina · (\d+) in tribuna$/, "$1 on the pitch · $2 on the bench · $3 in the stands"],
   [/^Modulo (\S+) · (\d+)\/(\d+) ruoli$/, "Formation $1 · $2/$3 positions"],
   [/^Modulo (.+)$/, "Formation $1"],
+  [/^Formazione · (.+)$/, "Lineup · $1"],
   [/^Passo (\d+) di (\d+)(?: · ([\s\S]+))?$/, function (_, a, b, r) { return "Step " + a + " of " + b + (r ? " · " + T(r) : ""); }],
   [/^minuto (.+)$/, "minute $1"],
   [/^con (.+?) · (.+)$/, function (_, a, b) { return "vs " + a + " · " + T(b); }],
@@ -1264,6 +1285,235 @@ function livePanel(m) {
     '<div class="note">Il link resta attivo per 12 ore dall’ultimo aggiornamento.</div></section>';
 }
 
+/* ---------- staff: passare rosa, formazione o prossima partita tra mister e dirigente ---------- */
+// Tutto viaggia nel link (dopo il #, che il sito non riceve): niente server. Chi riceve vede un
+// riepilogo: prima si allinea la rosa (i giocatori si riconoscono dal nome, numero e maiuscole
+// a parte), poi la formazione usa i giocatori della sua rosa.
+function staffNorm(n) {
+  return String(n || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase()
+    .replace(/^\s*\d{1,3}[\s.)-]+/, "").replace(/[^a-z0-9' ]+/g, " ").trim().split(/\s+/).sort().join(" ");
+}
+function b64urlEncode(str) {
+  var bytes = new TextEncoder().encode(str), bin = "";
+  for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+  return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+function b64urlDecode(s) {
+  var bin = atob(s.replace(/-/g, "+").replace(/_/g, "/")), bytes = new Uint8Array(bin.length);
+  for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return new TextDecoder().decode(bytes);
+}
+// Formazione della mia squadra da mandare: quella della prossima partita, altrimenti l'ultima usata.
+function myLineupForStaff() {
+  var m = S.match;
+  if (m && m.lineup && m.lineup.slots.some(Boolean)) return { mod: m.lineup.mod, slots: m.lineup.slots.slice(), bench: benchOf(m, m.mySide, m.lineup).slice() };
+  if (S.settings.lineupSlots && S.settings.lineupSlots.some(Boolean)) return { mod: S.settings.lineupMod, slots: S.settings.lineupSlots.slice(), bench: (S.settings.lineupBench || []).slice() };
+  return null;
+}
+function staffPayload(kind) {
+  var d = { v: 1, k: kind, team: S.settings.team || "", roster: S.settings.roster.slice() };
+  if (kind !== "rosa") d.lu = myLineupForStaff();
+  var m = S.match;
+  if (kind === "match" && m && m.status === "planned") {
+    var ok = oppKey(m);
+    d.m = { opp: oppName(m), side: m.mySide, periods: m.periods, minutes: m.minutes,
+      plan: { comp: m.plan.comp, data: m.plan.data, ritrovoOra: m.plan.ritrovoOra, ritrovoLuogo: m.plan.ritrovoLuogo, inizioOra: m.plan.inizioOra, impianto: m.plan.impianto, az: !!m.plan.az } };
+    if (oppName(m) && S.oppRosters[ok]) d.opp = S.oppRosters[ok].slice();
+  }
+  return d;
+}
+function staffURL(d) {
+  var base = /github\.io$/.test(location.hostname) ? location.href.split("#")[0].split("?")[0] : PAGES;
+  return base + "#staff=" + b64urlEncode(JSON.stringify(d));
+}
+function staffSend(kind) {
+  var d = staffPayload(kind), team = d.team || T("La mia squadra"), url = staffURL(d);
+  var what = kind === "rosa" ? L("la rosa di " + team + " (" + d.roster.length + " giocatori)", "the " + team + " squad (" + d.roster.length + " players)")
+    : kind === "form" ? L("rosa e formazione di " + team, team + " squad and lineup")
+    : L("la prossima partita di " + team + (d.m && d.m.opp ? " con " + d.m.opp : ""), team + "'s next match" + (d.m && d.m.opp ? " vs " + d.m.opp : ""));
+  shareText(L("MisterBook: ti mando " + what + ".\nApri il link per riceverla (nell'app: Rosa → Staff → Ricevi, incolla il link):\n", "MisterBook: here is " + what + ".\nOpen the link to receive it (in the app: Squad → Staff → Receive, paste the link):\n") + url, "Invia allo staff");
+}
+// Legge un link (o un testo che lo contiene) e controlla i dati: arrivano da fuori, quindi solo testi corti.
+function staffParse(text) {
+  var r = /#staff=([A-Za-z0-9_-]+)/.exec(String(text || ""));
+  if (!r) return null;
+  var d;
+  try { d = JSON.parse(b64urlDecode(r[1])); } catch (e) { return null; }
+  if (!d || d.v !== 1 || !Array.isArray(d.roster)) return null;
+  var str = function (x, n) { return typeof x === "string" ? x.slice(0, n || 80).trim() : ""; };
+  var list = function (a, max) { return (Array.isArray(a) ? a : []).slice(0, max || 200).map(function (x) { return str(x); }); };
+  var out = { k: ["rosa", "form", "match"].indexOf(d.k) >= 0 ? d.k : "rosa", team: str(d.team), roster: list(d.roster).filter(Boolean) };
+  if (d.lu && typeof d.lu.mod === "string" && /^\d(-\d){1,4}$/.test(d.lu.mod)) {
+    out.lu = { mod: d.lu.mod, slots: fitSlots(list(d.lu.slots, 11), modSize(d.lu.mod)), bench: list(d.lu.bench, 40).filter(Boolean) };
+  }
+  if (out.k === "match" && d.m && typeof d.m === "object") {
+    var p = d.m.plan || {};
+    out.m = { opp: str(d.m.opp), side: d.m.side === "away" ? "away" : "home", periods: Math.min(8, Math.max(1, +d.m.periods || 2)), minutes: Math.min(90, Math.max(1, +d.m.minutes || 45)),
+      plan: { comp: str(p.comp), data: /^\d{4}-\d{2}-\d{2}$/.test(p.data) ? p.data : "", ritrovoOra: /^\d{2}:\d{2}$/.test(p.ritrovoOra) ? p.ritrovoOra : "", ritrovoLuogo: str(p.ritrovoLuogo),
+        inizioOra: /^\d{2}:\d{2}$/.test(p.inizioOra) ? p.inizioOra : "", impianto: str(p.impianto), az: !!p.az } };
+    out.opp = list(d.opp).filter(Boolean);
+  }
+  if (out.k !== "rosa" && !out.lu && !out.m) out.k = "rosa";
+  return out;
+}
+// Confronto tra la rosa in arrivo e la mia: nuovi, con differenze (es. numero di maglia), solo miei, uguali.
+function staffDiff(inc) {
+  var mine = S.settings.roster, byNorm = {}, seen = {}, res = { add: [], diff: [], only: [], same: 0 };
+  mine.forEach(function (n) { byNorm[staffNorm(n)] = n; });
+  inc.roster.forEach(function (n) {
+    var k = staffNorm(n);
+    if (!k || seen[k]) return;
+    seen[k] = 1;
+    if (!(k in byNorm)) res.add.push(n);
+    else if (byNorm[k] !== n) res.diff.push({ mine: byNorm[k], theirs: n, k: k });
+    else res.same++;
+  });
+  mine.forEach(function (n) { if (!seen[staffNorm(n)]) res.only.push(n); });
+  return res;
+}
+function staffOpen(inc) {
+  var df = staffDiff(inc), ch = { add: {}, diff: {}, only: {} };
+  df.add.forEach(function (n) { ch.add[n] = true; });
+  df.diff.forEach(function (x) { ch.diff[x.k] = "theirs"; });
+  df.only.forEach(function (n) { ch.only[n] = false; });
+  ui.staff = { inc: inc, ch: ch, apply: true };
+}
+// Rinomina un giocatore della mia rosa anche nella formazione salvata e nella partita aperta.
+function staffRename(from, to) {
+  var swap = function (a) { return a ? a.map(function (x) { return x === from ? to : x; }) : a; };
+  var r = S.settings.roster, i = r.indexOf(from);
+  if (i >= 0) r[i] = to;
+  S.settings.lineupSlots = swap(S.settings.lineupSlots); S.settings.lineupBench = swap(S.settings.lineupBench);
+  var m = S.match;
+  if (m) {
+    if (m.lineup) { m.lineup.slots = swap(m.lineup.slots); if (m.lineup.bench) m.lineup.bench = swap(m.lineup.bench); }
+    m.events.forEach(function (e) {
+      if (playerTeam(e) !== m.mySide) return;  // solo i giocatori della mia squadra
+      ["player", "on", "off"].forEach(function (f) { if (e[f] === from) e[f] = to; });
+    });
+  }
+}
+function staffRemove(n) {
+  var drop = function (a) { return a ? a.map(function (x) { return x === n ? "" : x; }) : a; };
+  var cut = function (a) { return a ? a.filter(function (x) { return x !== n; }) : a; };
+  S.settings.roster = S.settings.roster.filter(function (x) { return x !== n; });
+  S.settings.lineupSlots = drop(S.settings.lineupSlots); S.settings.lineupBench = cut(S.settings.lineupBench);
+  var m = S.match;
+  if (m && m.status === "planned" && m.lineup) { m.lineup.slots = drop(m.lineup.slots); m.lineup.bench = cut(m.lineup.bench); }
+}
+function staffImport() {
+  var st = ui.staff, inc = st.inc, df = staffDiff(inc), ch = st.ch, added = 0;
+  df.diff.forEach(function (x) { if (ch.diff[x.k] === "theirs") staffRename(x.mine, x.theirs); });
+  df.add.forEach(function (n) { if (ch.add[n]) { S.settings.roster.push(n); added++; } });
+  df.only.forEach(function (n) { if (ch.only[n]) staffRemove(n); });
+  if (!S.settings.team && inc.team) S.settings.team = inc.team;
+  // la formazione usa i giocatori della mia rosa (riconosciuti dal nome); chi non c'è lascia il posto vuoto
+  var by = {};
+  S.settings.roster.forEach(function (n) { by[staffNorm(n)] = n; });
+  var map = function (n) { return n ? by[staffNorm(n)] || "" : ""; }, used = {};
+  var L2 = null, m = S.match, where = "";
+  if (inc.lu) {
+    var slots = inc.lu.slots.map(function (n) { var x = map(n); if (!x || used[x]) return ""; used[x] = 1; return x; });
+    var bench = inc.lu.bench.map(map).filter(function (x) { if (!x || used[x]) return false; used[x] = 1; return true; });
+    L2 = { mod: inc.lu.mod, slots: slots, bench: bench };
+    S.settings.lineupMod = L2.mod; S.settings.lineupSlots = L2.slots.slice(); S.settings.lineupBench = L2.bench.slice();
+  }
+  if (inc.k === "match" && inc.m) {
+    if (!m) { planMatch(); m = S.match; }
+    if (m.status === "planned") {
+      setOpp(m, inc.m.opp, inc.m.side);
+      Object.assign(m.plan, inc.m.plan); m.periods = inc.m.periods; m.minutes = inc.m.minutes;
+      if (L2) m.lineup = { mod: L2.mod, slots: L2.slots.slice(), bench: L2.bench.slice() };
+      if (inc.m.opp && inc.opp && inc.opp.length) {
+        var ok = oppKey(m), list = S.oppRosters[ok] || (S.oppRosters[ok] = []);
+        if (!S.oppLabels[ok]) S.oppLabels[ok] = inc.m.opp;
+        inc.opp.forEach(function (n) { if (list.indexOf(n) < 0) list.push(n); });
+      }
+      where = "plan";
+    }
+  } else if (L2 && st.apply && m && m.status === "planned") {
+    m.lineup = { mod: L2.mod, slots: L2.slots.slice(), bench: L2.bench.slice() };
+    where = "plan";
+  }
+  save();
+  ui.staff = null;
+  if (where === "plan") reset("plan", {}, [{ view: "home", p: {} }]);
+  else reset("roster", { sec: "mine" }, [{ view: "home", p: {} }, { view: "roster", p: {} }]);
+  toast(L("Ricevuto: " + (added ? "+" + added + " giocatori" : "rosa allineata") + (L2 ? ", formazione " + L2.mod : ""),
+    "Received: " + (added ? "+" + added + " players" : "squad aligned") + (L2 ? ", lineup " + L2.mod : "")), 3500);
+}
+function staffLink() {
+  var inc = staffParse(location.hash);
+  if (!inc) return false;
+  try { history.replaceState(null, "", location.href.split("#")[0]); } catch (e) {}
+  staffOpen(inc); ui.staffFromLink = true;
+  ui.view = "staff"; ui.p = { sec: "recv" }; ui.stack = [{ view: "home", p: {} }]; ui.fwd = []; ui.sheet = null;
+  return true;
+}
+window.addEventListener("hashchange", function () { if (staffLink()) { render(); window.scrollTo(0, 0); } });
+function vStaff() {
+  var sec = ui.p.sec, m = S.match, planned = m && m.status === "planned";
+  if (!sec) {
+    return topBar("Staff") + '<p class="lead">Mister e dirigente<small>Passatevi rosa, formazione o la prossima partita con un link su WhatsApp.</small></p>' +
+      '<div class="tiles">' + tile("st-go", ic("share"), "Invia allo staff", "Rosa, formazione o prossima partita", ' data-v="send"') +
+      tile("st-go", ic("folder"), "Ricevi dallo staff", "Incolla il link che ti hanno mandato", ' data-v="paste"') + "</div>";
+  }
+  if (sec === "send") {
+    var lu = myLineupForStaff(), n = S.settings.roster.length;
+    return topBar("Invia allo staff") + '<p class="lead">Cosa vuoi mandare?<small>Si apre WhatsApp (o un\'altra app) con il link da mandare.</small></p>' +
+      guideHTML("?", "Tocca cosa mandare e scegli a chi. Chi lo riceve vede prima un riepilogo: i giocatori nuovi, quelli diversi e quelli che ha solo lui, e decide cosa tenere.") +
+      '<div class="tiles">' +
+      tile("st-send", ic("shirt"), "Solo la rosa", n + " giocatori", ' data-v="rosa"', !n) +
+      tile("st-send", ic("formation"), "Rosa e formazione", lu ? L("Modulo ", "Formation ") + lu.mod + " · " + lu.slots.filter(Boolean).length + L(" titolari · ", " starters · ") + lu.bench.length + L(" in panchina", " on the bench") : L("Prepara prima la formazione", "Prepare the lineup first"), ' data-v="form"', !lu) +
+      (planned ? tile("st-send", ic("whistle"), "Tutta la prossima partita", (oppName(m) ? L("con ", "vs ") + oppName(m) + " · " : "") + L("data, ritrovo, convocati e formazione", "date, meeting, call-up and lineup"), ' data-v="match"') : "") + "</div>" +
+      '<div class="note">I nomi dei giocatori viaggiano dentro il link: mandalo solo allo staff della squadra.</div>';
+  }
+  if (sec === "paste") {
+    return topBar("Ricevi dallo staff") + '<p class="lead">Incolla il link<small>Tieni premuto sul link ricevuto su WhatsApp, copia e incolla qui.</small></p>' +
+      '<section class="panel"><textarea class="textout" id="st-text" placeholder="https://…#staff=…"></textarea></section>' +
+      '<button class="btn primary big block" data-a="st-read">Leggi il link</button>';
+  }
+  // riepilogo di ciò che arriva
+  var st = ui.staff;
+  if (!st) { ui.p = {}; return vStaff(); }
+  var inc = st.inc, df = staffDiff(inc), ch = st.ch, h = topBar("Ricevi dallo staff");
+  var what = inc.k === "match" ? L("Prossima partita", "Next match") + (inc.m && inc.m.opp ? L(" con ", " vs ") + inc.m.opp : "") : inc.k === "form" ? L("Rosa e formazione", "Squad and lineup") : L("Rosa", "Squad");
+  h += '<p class="lead">' + esc(inc.team || T("La mia squadra")) + "<small>" + esc(what + " · " + pl(inc.roster.length, L("giocatore", "player"), L("giocatori", "players"))) + "</small></p>";
+  if (ui.staffFromLink && !(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform())) {
+    h += '<div class="note">Usi l’app MisterBook su Android? Apri l’app, vai in Rosa → Staff → Ricevi dallo staff e incolla lo stesso link: così i dati vanno nell’app.</div>';
+  }
+  h += guideHTML(1, "Prima la rosa: tocca i nomi per decidere chi aggiungere o togliere. Poi la formazione usa i giocatori della tua rosa. Infine tocca <b>Ricevi</b>.");
+  var chip = function (n, on, act, pref) { return '<button class="chip" data-a="' + act + '" data-v="' + esc(n) + '" aria-pressed="' + on + '">' + (pref || "") + esc(n) + "</button>"; };
+  h += '<section class="panel"><h2>Rosa</h2>';
+  h += '<div class="cvhead"><div><b>' + df.same + "</b><span>Uguali</span></div><div><b>" + df.add.length + "</b><span>Nuovi</span></div><div><b>" + df.only.length + "</b><span>Solo tuoi</span></div></div>";
+  if (df.add.length) h += '<div class="grp"><h4>Nuovi · da aggiungere</h4><div class="chips">' + df.add.map(function (n) { return chip(n, !!ch.add[n], "st-add", ch.add[n] ? "+ " : ""); }).join("") + "</div></div>";
+  if (df.diff.length) h += '<div class="grp"><h4>Scritti in modo diverso</h4>' + df.diff.map(function (x) {
+    return '<div class="cvrow"><span class="nm">' + esc(x.theirs) + '<small class="muted" style="display:block">' + L("tu: ", "yours: ") + esc(x.mine) + '</small></span><div class="seg3 two">' +
+      '<button data-a="st-diff" data-k="' + esc(x.k) + '" data-v="mine" aria-pressed="' + (ch.diff[x.k] === "mine") + '">' + L("Il mio", "Mine") + "</button>" +
+      '<button data-a="st-diff" data-k="' + esc(x.k) + '" data-v="theirs" aria-pressed="' + (ch.diff[x.k] === "theirs") + '">' + L("Questo", "This") + "</button></div></div>";
+  }).join("") + "</div>";
+  if (df.only.length) h += '<div class="grp"><h4>Solo nella tua rosa · tocca per togliere</h4><div class="chips">' + df.only.map(function (n) { return chip(n, !!ch.only[n], "st-only", ch.only[n] ? "− " : ""); }).join("") + "</div></div>";
+  if (!df.add.length && !df.diff.length && !df.only.length) h += '<div class="note">Le due rose sono già uguali.</div>';
+  else h += '<button class="btn ghost block" data-a="st-same">Rendi la mia rosa uguale a questa</button>';
+  h += "</section>";
+  if (inc.lu) {
+    var by = {};
+    S.settings.roster.forEach(function (n) { by[staffNorm(n)] = 1; });
+    inc.roster.forEach(function (n) { if (ch.add[n]) by[staffNorm(n)] = 1; });
+    df.only.forEach(function (n) { if (ch.only[n]) delete by[staffNorm(n)]; });
+    var miss = inc.lu.slots.filter(function (n) { return n && !by[staffNorm(n)]; }).length;
+    h += '<section class="panel"><h2>Formazione · ' + esc(inc.lu.mod) + "</h2>" + pitchHTML(inc.lu.mod, inc.lu.slots, null, { mini: true }) +
+      (inc.lu.bench.length ? '<div class="bench"><span class="muted small">Panchina</span>' + inc.lu.bench.map(function (p) { return '<span class="bp">' + esc(p) + "</span>"; }).join("") + "</div>" : "");
+    if (miss) h += '<div class="note" style="color:var(--danger)">' + L(miss + (miss === 1 ? " titolare non è" : " titolari non sono") + " nella tua rosa: il posto resterà vuoto. Aggiungili sopra se vuoi.",
+      miss + (miss === 1 ? " starter is" : " starters are") + " not in your squad: the place will stay empty. Add them above if you like.") + "</div>";
+    if (inc.k === "match") h += '<div class="note">' + (m && m.status !== "planned" ? L("Hai una partita in corso: la formazione verrà usata dalla prossima.", "You have a match in progress: the lineup will be used from the next one.")
+      : L("Data, ritrovo, avversario e formazione vanno nella tua prossima partita" + (planned ? " (al posto di quelli attuali)." : "."), "Date, meeting point, opponent and lineup go into your next match" + (planned ? " (replacing the current ones)." : "."))) + "</div>";
+    else if (planned) h += '<div class="seg"><button data-a="st-apply" data-v="1" aria-pressed="' + !!st.apply + '">' + L("Usala nella prossima partita", "Use it in the next match") + '</button><button data-a="st-apply" data-v="0" aria-pressed="' + !st.apply + '">' + L("Solo da salvare", "Just save it") + "</button></div>";
+    h += "</section>";
+  }
+  return h + '<button class="btn primary big block" data-a="st-import">Ricevi</button>';
+}
+
 /* ---------- condivisione ---------- */
 // Nell'app Android usa il pannello di condivisione di sistema (plugin Share di Capacitor),
 // nel browser la Web Share API, altrimenti mostra il testo da copiare.
@@ -1327,7 +1577,7 @@ function render() {
   if ((v === "live" && (!S.match || S.match.status === "planned")) || (v === "plan" && (!S.match || S.match.status !== "planned"))) { v = ui.view = "home"; ui.p = {}; ui.stack = []; }
   ui.navNext = null;
   var html = v === "plan" ? vPlan() : v === "club" ? vClub() : v === "roster" ? vRoster() : v === "lineup" ? vLineup() : v === "live" ? vLive() :
-    v === "summary" ? vSummary() : v === "history" ? vHistory() : v === "scan" ? vScan() : vHome();
+    v === "summary" ? vSummary() : v === "history" ? vHistory() : v === "scan" ? vScan() : v === "staff" ? vStaff() : vHome();
   if (ui.view !== "home") html += navBarHTML();
   app.innerHTML = trHTML(html);
   renderLayer();
@@ -1635,6 +1885,7 @@ function vPlan() {
       return tile("p-go", '<span class="step' + (x.ok ? " ok" : "") + '">' + (x.ok ? "✓" : i + 1) + "</span>", x.t, esc(x.sub), ' data-v="' + x.k + '"');
     }).join("") + "</div>";
     return h + '<button class="btn primary big block" data-a="p-go" data-v="durata">Inizia la partita</button>' +
+      '<button class="btn ghost block" data-a="st-go" data-v="send">Invia allo staff</button>' +
       '<button class="danger-link" data-a="p-cancel">Annulla la partita</button>';
   }
   if (st === "opp") {
@@ -2005,7 +2256,8 @@ function vRoster() {
     return topBar("Rosa") + '<div class="tiles">' +
       tile("r-go", ic("shirt"), esc(S.settings.team || "La mia squadra"), S.settings.roster.length + " giocatori", ' data-v="mine"') +
       tile("r-go", ic("opp"), "Avversari", opps ? opps + " squadre" : "Nessuna squadra salvata", ' data-v="opps"') +
-      tile("r-go", ic("folder"), "Salva e carica", "Rose in un file, anche per un altro dispositivo", ' data-v="file"') + "</div>";
+      tile("r-go", ic("folder"), "Salva e carica", "Rose in un file, anche per un altro dispositivo", ' data-v="file"') +
+      tile("st-go", ic("share"), "Staff", "Invia o ricevi rosa e formazione", "") + "</div>";
   }
   if (sec === "file") {
     ui.rTab = null;
@@ -2807,6 +3059,23 @@ document.addEventListener("click", function (ev) {
       break;
     }
     case "r-del": rosterList().splice(+el.getAttribute("data-i"), 1); save(); render(); break;
+    case "st-go": { var sg = el.getAttribute("data-v"); go("staff", sg ? { sec: sg } : {}); break; }
+    case "st-send": staffSend(el.getAttribute("data-v")); break;
+    case "st-read": {
+      var sin = staffParse(document.getElementById("st-text").value);
+      if (!sin) { toast("Il link non è valido o è incompleto", 3000); break; }
+      staffOpen(sin); ui.staffFromLink = false; go("staff", { sec: "recv" }); break;
+    }
+    case "st-add": { var sa = el.getAttribute("data-v"); ui.staff.ch.add[sa] = !ui.staff.ch.add[sa]; render(); break; }
+    case "st-only": { var so = el.getAttribute("data-v"); ui.staff.ch.only[so] = !ui.staff.ch.only[so]; render(); break; }
+    case "st-diff": ui.staff.ch.diff[el.getAttribute("data-k")] = el.getAttribute("data-v"); render(); break;
+    case "st-apply": ui.staff.apply = el.getAttribute("data-v") === "1"; render(); break;
+    case "st-same": {
+      var sd = staffDiff(ui.staff.inc), sc = ui.staff.ch;
+      sd.add.forEach(function (n) { sc.add[n] = true; }); sd.diff.forEach(function (x) { sc.diff[x.k] = "theirs"; }); sd.only.forEach(function (n) { sc.only[n] = true; });
+      render(); break;
+    }
+    case "st-import": staffImport(); break;
     case "scan-open": ui.scan = { status: "idle" }; go("scan"); break;
     case "scan-paste": ui.scan = { status: "paste" }; render(); break;
     case "scan-reset": ui.scan = { status: "idle" }; render(); break;
@@ -2963,6 +3232,7 @@ document.addEventListener("keydown", function (ev) {
   if (id === "r-team" || id === "ev-minute") ev.target.blur();
 });
 
+staffLink();
 render();
 if (S.match && S.match.run) holdWake();
 // Tasto "indietro" di Android: chiude il foglio aperto o torna al menu; 0 = lascia uscire dall'app.
