@@ -606,7 +606,12 @@ var EN = {
   "Togli una squadra": "Remove a team", "Si cancellano la sua rosa e i suoi dati della società; le partite giocate restano.": "Its squad and club details are deleted; matches played stay.",
   "La squadra, la sua rosa e i suoi dati della società vengono cancellati da questo telefono.": "The team, its squad and club details are deleted from this phone.",
   "Segui anche un'altra squadra o un altro campionato": "Follow another team or another league too",
-  "Elimina la squadra": "Delete the team", "Prima chiudi o annulla la partita": "First close or cancel the match",
+  "Elimina la squadra": "Delete the team", "Svuota la rosa": "Clear the squad", "Svuotare la rosa?": "Clear the squad?", "Rosa svuotata": "Squad cleared",
+  "Prima chiudi la partita": "First close the match",
+  "Tocca cosa mandare e scegli a chi. La formazione porta con sé la rosa: chi la riceve non deve caricare niente prima, la sua rosa diventa uguale alla tua. Prima di confermare vede un riepilogo e può anche solo aggiungere i nuovi.":
+    "Tap what to send and choose who to. The lineup carries the squad with it: whoever receives it doesn't need to load anything first, their squad becomes the same as yours. Before confirming they see a summary and can also just add the new players.",
+  "La tua rosa diventa uguale a quella ricevuta, con la formazione. Se preferisci solo aggiungere i giocatori nuovi, tocca <b>Aggiungi e confronta</b>. Poi tocca <b>Ricevi</b>.":
+    "Your squad becomes the same as the one received, with the lineup. If you'd rather just add the new players, tap <b>Add and compare</b>. Then tap <b>Receive</b>.", "Prima chiudi o annulla la partita": "First close or cancel the match",
   // nuova partita
   "Partita veloce": "Quick match", "Avversario e durata, poi in campo: risultato, marcatori, cartellini e cambi": "Opponent and length, then kick-off: score, scorers, cards and substitutions",
   "Con convocazione e formazione": "With call-up and lineup", "Avversario, data e ritrovo, convocati, formazione e PDF da mandare": "Opponent, date and meeting point, call-up, lineup and PDF to send",
@@ -802,6 +807,8 @@ var ENP = [
   [/^(\d+) giocatori$/, function (_, n) { return pl(n, "player", "players"); }],
   [/^(.+) · (\d+) giocatori$/, function (_, a, n) { return a + " · " + pl(n, "player", "players"); }],
   [/^Squadra in uso · (\d+) squadre$/, "Team in use · $1 teams"],
+  [/^Tolgo tutti i (\d+) giocatori di questa squadra avversaria\.$/, "I'll remove all $1 players of this opposing team."],
+  [/^Tolgo tutti i (\d+) giocatori di (.+) e la formazione salvata\. Le partite giocate restano\.$/, "I'll remove all $1 players of $2 and the saved lineup. Matches played stay."],
   [/^(\d+) squadre · cambia o aggiungi$/, "$1 teams · switch or add"],
   [/^In preparazione · ([\s\S]+)$/, function (_, r) { return "Being prepared · " + T(r); }],
   [/^I giocatori di (.+)$/, "$1 players"],
@@ -1501,8 +1508,9 @@ function staffParse(text) {
   return out;
 }
 // Confronto tra la rosa in arrivo e la mia: nuovi, con differenze (es. numero di maglia), solo miei, uguali.
-function staffDiff(inc) {
-  var mine = S.settings.roster, byNorm = {}, seen = {}, res = { add: [], diff: [], only: [], same: 0 };
+function staffDiff(inc, mine) {
+  mine = mine || S.settings.roster;
+  var byNorm = {}, seen = {}, res = { add: [], diff: [], only: [], same: 0 };
   mine.forEach(function (n) { byNorm[staffNorm(n)] = n; });
   inc.roster.forEach(function (n) {
     var k = staffNorm(n);
@@ -1515,12 +1523,33 @@ function staffDiff(inc) {
   mine.forEach(function (n) { if (!seen[staffNorm(n)]) res.only.push(n); });
   return res;
 }
+// Cosa arriva e dove va. Una formazione (o una partita) porta con sé la sua rosa e la sostituisce a quella
+// di chi riceve: chi la riceve non deve caricare prima la rosa. Una rosa da sola invece si confronta
+// (aggiungi i nuovi, scegli chi togliere). In entrambi i casi si può cambiare modo prima di Ricevi.
 function staffOpen(inc) {
-  var df = staffDiff(inc), ch = { add: {}, diff: {}, only: {} };
+  var tid = S.settings.teamId, want = staffNorm(inc.team);
+  if (!S.teams.length) tid = "new";
+  else if (want && staffNorm(S.settings.team) !== want && !S.match) {
+    // arriva per un'altra delle mie squadre (stesso nome): la propongo già scelta
+    S.teams.forEach(function (t) { if (t.id !== S.settings.teamId && staffNorm(t.team) === want) tid = t.id; });
+  }
+  ui.staff = { inc: inc, apply: true, mode: inc.k === "rosa" ? "merge" : "replace", tid: tid };
+  staffChoices();
+}
+// Rosa della squadra che riceverà i dati (quella in uso, un'altra delle mie o una nuova).
+function staffTargetRoster() {
+  var st = ui.staff;
+  if (st.tid === "new") return [];
+  if (st.tid === S.settings.teamId) return S.settings.roster;
+  var t = teamById(S, st.tid);
+  return (t && t.roster) || [];
+}
+function staffChoices() {
+  var st = ui.staff, df = staffDiff(st.inc, staffTargetRoster()), ch = { add: {}, diff: {}, only: {} };
   df.add.forEach(function (n) { ch.add[n] = true; });
   df.diff.forEach(function (x) { ch.diff[x.k] = "theirs"; });
   df.only.forEach(function (n) { ch.only[n] = false; });
-  ui.staff = { inc: inc, ch: ch, apply: true };
+  st.ch = ch;
 }
 // Rinomina un giocatore della mia rosa anche nella formazione salvata e nella partita aperta.
 function staffRename(from, to) {
@@ -1546,10 +1575,25 @@ function staffRemove(n) {
   if (m && m.status === "planned" && m.lineup) { m.lineup.slots = drop(m.lineup.slots); m.lineup.bench = cut(m.lineup.bench); }
 }
 function staffImport() {
-  var st = ui.staff, inc = st.inc, df = staffDiff(inc), ch = st.ch, added = 0;
-  df.diff.forEach(function (x) { if (ch.diff[x.k] === "theirs") staffRename(x.mine, x.theirs); });
-  df.add.forEach(function (n) { if (ch.add[n]) { S.settings.roster.push(n); added++; } });
-  df.only.forEach(function (n) { if (ch.only[n]) staffRemove(n); });
+  var st = ui.staff, inc = st.inc, ch = st.ch, added = 0, removed = 0;
+  // prima la squadra giusta: una nuova (anche al primo avvio) o un'altra delle mie
+  if (st.tid === "new") addTeam(inc.team || T("La mia squadra"), "");
+  else if (st.tid && st.tid !== S.settings.teamId && !S.match) useTeam(st.tid);
+  if (!S.settings.role) S.settings.role = "coach";
+  var df = staffDiff(inc);
+  if (st.mode === "replace") {
+    // la rosa diventa quella ricevuta, nello stesso ordine; i nomi scritti diversamente vengono corretti
+    // anche nella formazione salvata e nella partita, chi non c'è più esce da formazione e panchina
+    df.diff.forEach(function (x) { staffRename(x.mine, x.theirs); });
+    df.only.forEach(function (n) { staffRemove(n); removed++; });
+    var seen = {};
+    S.settings.roster = inc.roster.filter(function (n) { var k = staffNorm(n); if (!k || seen[k]) return false; seen[k] = 1; return true; });
+    added = df.add.length;
+  } else {
+    df.diff.forEach(function (x) { if (ch.diff[x.k] === "theirs") staffRename(x.mine, x.theirs); });
+    df.add.forEach(function (n) { if (ch.add[n]) { S.settings.roster.push(n); added++; } });
+    df.only.forEach(function (n) { if (ch.only[n]) staffRemove(n); });
+  }
   if (!S.settings.team && inc.team) S.settings.team = inc.team;
   // la formazione usa i giocatori della mia rosa (riconosciuti dal nome); chi non c'è lascia il posto vuoto
   var by = {};
@@ -1583,7 +1627,9 @@ function staffImport() {
   ui.staff = null;
   if (where === "plan") reset("plan", {}, [{ view: "home", p: {} }]);
   else reset("roster", { sec: "mine" }, [{ view: "home", p: {} }, { view: "roster", p: {} }]);
-  toast(L("Ricevuto: " + (added ? "+" + added + " giocatori" : "rosa allineata") + (L2 ? ", formazione " + L2.mod : ""),
+  var rn = S.settings.roster.length;
+  toast(st.mode === "replace" ? L("Ricevuto: rosa sostituita (" + rn + " giocatori)" + (L2 ? ", formazione " + L2.mod : ""), "Received: squad replaced (" + rn + " players)" + (L2 ? ", lineup " + L2.mod : ""))
+    : L("Ricevuto: " + (added ? "+" + added + " giocatori" : "rosa allineata") + (L2 ? ", formazione " + L2.mod : ""),
     "Received: " + (added ? "+" + added + " players" : "squad aligned") + (L2 ? ", lineup " + L2.mod : "")), 3500);
 }
 function staffLink() {
@@ -1621,7 +1667,7 @@ function vStaff() {
   if (sec === "send") {
     var lu = myLineupForStaff(), n = S.settings.roster.length;
     return topBar("Invia allo staff") + '<p class="lead">Cosa vuoi mandare?<small>Scegli WhatsApp e la persona: arriva un file da aprire con MisterBook.</small></p>' +
-      guideHTML("?", "Tocca cosa mandare e scegli a chi. Chi lo riceve vede prima un riepilogo: i giocatori nuovi, quelli diversi e quelli che ha solo lui, e decide cosa tenere.") +
+      guideHTML("?", "Tocca cosa mandare e scegli a chi. La formazione porta con sé la rosa: chi la riceve non deve caricare niente prima, la sua rosa diventa uguale alla tua. Prima di confermare vede un riepilogo e può anche solo aggiungere i nuovi.") +
       '<div class="tiles">' +
       tile("st-send", ic("shirt"), "Solo la rosa", n + " giocatori", ' data-v="rosa"', !n) +
       tile("st-send", ic("formation"), "Rosa e formazione", lu ? L("Modulo ", "Formation ") + lu.mod + " · " + lu.slots.filter(Boolean).length + L(" titolari · ", " starters · ") + lu.bench.length + L(" in panchina", " on the bench") : L("Prepara prima la formazione", "Prepare the lineup first"), ' data-v="form"', !lu) +
@@ -1641,15 +1687,33 @@ function vStaff() {
   // riepilogo di ciò che arriva
   var st = ui.staff;
   if (!st) { ui.p = {}; return vStaff(); }
-  var inc = st.inc, df = staffDiff(inc), ch = st.ch, h = topBar("Ricevi dallo staff");
+  var inc = st.inc, tgt = staffTargetRoster(), df = staffDiff(inc, tgt), ch = st.ch, h = topBar("Ricevi dallo staff"), rep = st.mode === "replace";
   var what = inc.k === "match" ? L("Partita in preparazione", "Match being prepared") + (inc.m && inc.m.opp ? L(" con ", " vs ") + inc.m.opp : "") : inc.k === "form" ? L("Rosa e formazione", "Squad and lineup") : L("Rosa", "Squad");
   h += '<p class="lead">' + esc(inc.team || T("La mia squadra")) + "<small>" + esc(what + " · " + pl(inc.roster.length, L("giocatore", "player"), L("giocatori", "players"))) + "</small></p>";
   if (ui.staffFromLink && !(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform())) {
     h += '<div class="note">Usi l’app MisterBook su Android? Apri l’app, vai in Rosa → Staff → Ricevi dallo staff e incolla lo stesso link: così i dati vanno nell’app.</div>';
   }
-  h += guideHTML(1, "Prima la rosa: tocca i nomi per decidere chi aggiungere o togliere. Poi la formazione usa i giocatori della tua rosa. Infine tocca <b>Ricevi</b>.");
+  // per quale delle mie squadre (se ne ho più d'una, o se il nome è diverso, o al primo avvio)
+  var tname = inc.team || T("La mia squadra"), diffName = inc.team && staffNorm(inc.team) !== staffNorm(S.settings.team);
+  if (!S.teams.length) h += '<div class="note" style="color:var(--on-field-muted)">' + L("Creo la squadra " + tname + " con questa rosa.", "I'll create the team " + tname + " with this squad.") + "</div>";
+  else if (S.teams.length > 1 || diffName) {
+    h += '<section class="panel"><h2>' + L("Per quale squadra?", "For which team?") + '</h2><div class="chips">' + S.teams.map(function (t) {
+      var lock = S.match && t.id !== S.settings.teamId;
+      return '<button class="chip" data-a="st-tid" data-v="' + t.id + '" aria-pressed="' + (st.tid === t.id) + '"' + (lock ? " disabled" : "") + ">" + esc(teamLabel(t)) + "</button>";
+    }).join("") + (canAddTeam() ? '<button class="chip" data-a="st-tid" data-v="new" aria-pressed="' + (st.tid === "new") + '"' + (S.match ? " disabled" : "") + ">+ " + esc(L("Nuova: ", "New: ") + tname) + "</button>" : "") + "</div>" +
+      (S.match ? '<div class="note">' + L("C'è una partita aperta: i dati vanno nella squadra in uso.", "A match is open: the data goes to the team in use.") + "</div>" : "") + "</section>";
+  }
+  h += guideHTML(1, rep ? "La tua rosa diventa uguale a quella ricevuta, con la formazione. Se preferisci solo aggiungere i giocatori nuovi, tocca <b>Aggiungi e confronta</b>. Poi tocca <b>Ricevi</b>."
+    : "Prima la rosa: tocca i nomi per decidere chi aggiungere o togliere. Poi la formazione usa i giocatori della tua rosa. Infine tocca <b>Ricevi</b>.");
   var chip = function (n, on, act, pref) { return '<button class="chip" data-a="' + act + '" data-v="' + esc(n) + '" aria-pressed="' + on + '">' + (pref || "") + esc(n) + "</button>"; };
   h += '<section class="panel"><h2>Rosa</h2>';
+  h += '<div class="seg"><button data-a="st-mode" data-v="replace" aria-pressed="' + rep + '">' + L("Sostituisci la mia rosa", "Replace my squad") + '</button>' +
+    '<button data-a="st-mode" data-v="merge" aria-pressed="' + !rep + '">' + L("Aggiungi e confronta", "Add and compare") + "</button></div>";
+  if (rep) {
+    h += '<div class="cvhead"><div><b>' + inc.roster.length + "</b><span>" + L("Giocatori", "Players") + "</span></div><div><b>" + df.add.length + "</b><span>Nuovi</span></div><div><b>" + df.only.length + "</b><span>" + L("Tolti", "Removed") + "</span></div></div>" +
+      '<div class="muted small">' + inc.roster.map(esc).join(", ") + "</div>" +
+      (df.only.length ? '<div class="note">' + L("Escono dalla tua rosa: ", "Leaving your squad: ") + df.only.map(esc).join(", ") + "</div>" : "") + "</section>";
+  } else {
   h += '<div class="cvhead"><div><b>' + df.same + "</b><span>Uguali</span></div><div><b>" + df.add.length + "</b><span>Nuovi</span></div><div><b>" + df.only.length + "</b><span>Solo tuoi</span></div></div>";
   if (df.add.length) h += '<div class="grp"><h4>Nuovi · da aggiungere</h4><div class="chips">' + df.add.map(function (n) { return chip(n, !!ch.add[n], "st-add", ch.add[n] ? "+ " : ""); }).join("") + "</div></div>";
   if (df.diff.length) h += '<div class="grp"><h4>Scritti in modo diverso</h4>' + df.diff.map(function (x) {
@@ -1659,13 +1723,16 @@ function vStaff() {
   }).join("") + "</div>";
   if (df.only.length) h += '<div class="grp"><h4>Solo nella tua rosa · tocca per togliere</h4><div class="chips">' + df.only.map(function (n) { return chip(n, !!ch.only[n], "st-only", ch.only[n] ? "− " : ""); }).join("") + "</div></div>";
   if (!df.add.length && !df.diff.length && !df.only.length) h += '<div class="note">Le due rose sono già uguali.</div>';
-  else h += '<button class="btn ghost block" data-a="st-same">Rendi la mia rosa uguale a questa</button>';
   h += "</section>";
+  }
   if (inc.lu) {
     var by = {};
-    S.settings.roster.forEach(function (n) { by[staffNorm(n)] = 1; });
-    inc.roster.forEach(function (n) { if (ch.add[n]) by[staffNorm(n)] = 1; });
-    df.only.forEach(function (n) { if (ch.only[n]) delete by[staffNorm(n)]; });
+    if (rep) inc.roster.forEach(function (n) { by[staffNorm(n)] = 1; });
+    else {
+      tgt.forEach(function (n) { by[staffNorm(n)] = 1; });
+      inc.roster.forEach(function (n) { if (ch.add[n]) by[staffNorm(n)] = 1; });
+      df.only.forEach(function (n) { if (ch.only[n]) delete by[staffNorm(n)]; });
+    }
     var miss = inc.lu.slots.filter(function (n) { return n && !by[staffNorm(n)]; }).length;
     h += '<section class="panel"><h2>Formazione · ' + esc(inc.lu.mod) + "</h2>" + pitchHTML(inc.lu.mod, inc.lu.slots, null, { mini: true }) +
       (inc.lu.bench.length ? '<div class="bench"><span class="muted small">Panchina</span>' + inc.lu.bench.map(function (p) { return '<span class="bp">' + esc(p) + "</span>"; }).join("") + "</div>" : "");
@@ -2577,7 +2644,7 @@ function vRoster() {
   else {
     h += '<div class="list">';
     r.forEach(function (p, i) { h += '<div class="item"><span class="grow t">' + esc(p) + '</span><button class="link danger" data-a="r-del" data-i="' + i + '" aria-label="Rimuovi ' + esc(p) + '">Rimuovi</button></div>'; });
-    h += "</div>";
+    h += '</div><button class="link danger" data-a="r-clear" style="display:block;margin:16px auto 4px;font-weight:700">Svuota la rosa</button>';
   }
   return h + "</section>" + '<div class="controls"><button class="btn ghost" data-a="r-save"' + (r.length ? "" : " disabled") + ">Salva su file</button>" +
     '<label class="btn ghost" for="r-file">Carica da file</label></div><input type="file" id="r-file" accept=".json,.txt,.csv,application/json,text/plain" hidden>';
@@ -3397,6 +3464,20 @@ document.addEventListener("click", function (ev) {
       break;
     }
     case "r-del": rosterList().splice(+el.getAttribute("data-i"), 1); save(); render(); break;
+    // Svuota la rosa: tutti i giocatori, e con loro la formazione salvata (e quella della partita in preparazione)
+    case "r-clear": {
+      if (ui.rTab === "mine" && m && m.status !== "planned") { toast("Prima chiudi la partita", 3000); break; }
+      var rl = rosterList();
+      ask("Svuotare la rosa?", ui.rTab === "mine" ? "Tolgo tutti i " + rl.length + " giocatori di " + (S.settings.team || T("La mia squadra")) + " e la formazione salvata. Le partite giocate restano."
+        : "Tolgo tutti i " + rl.length + " giocatori di questa squadra avversaria.", "Svuota la rosa", function () {
+        if (ui.rTab === "mine") {
+          S.settings.roster.slice().forEach(staffRemove);
+          S.settings.lineupSlots = null; S.settings.lineupBench = [];
+        } else rl.length = 0;
+        save(); render(); toast("Rosa svuotata");
+      }, true);
+      break;
+    }
     case "st-go": { var sg = el.getAttribute("data-v"); go("staff", sg ? { sec: sg } : {}); break; }
     case "st-send": staffSend(el.getAttribute("data-v")); break;
     case "st-read": {
@@ -3408,11 +3489,8 @@ document.addEventListener("click", function (ev) {
     case "st-only": { var so = el.getAttribute("data-v"); ui.staff.ch.only[so] = !ui.staff.ch.only[so]; render(); break; }
     case "st-diff": ui.staff.ch.diff[el.getAttribute("data-k")] = el.getAttribute("data-v"); render(); break;
     case "st-apply": ui.staff.apply = el.getAttribute("data-v") === "1"; render(); break;
-    case "st-same": {
-      var sd = staffDiff(ui.staff.inc), sc = ui.staff.ch;
-      sd.add.forEach(function (n) { sc.add[n] = true; }); sd.diff.forEach(function (x) { sc.diff[x.k] = "theirs"; }); sd.only.forEach(function (n) { sc.only[n] = true; });
-      render(); break;
-    }
+    case "st-mode": ui.staff.mode = el.getAttribute("data-v"); render(); break;
+    case "st-tid": ui.staff.tid = el.getAttribute("data-v"); staffChoices(); render(); break;
     case "st-import": staffImport(); break;
     case "scan-open": ui.scan = { status: "idle" }; go("scan"); break;
     case "scan-paste": ui.scan = { status: "paste" }; render(); break;
