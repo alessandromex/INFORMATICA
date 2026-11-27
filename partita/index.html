@@ -310,6 +310,13 @@ textarea.field { padding: 10px 12px; min-height: 76px; font: 16px/1.35 var(--fon
 .langs { display: flex; justify-content: center; gap: 8px; margin-top: 6px; }
 .langs button { padding: 8px 16px; border-radius: 999px; color: var(--on-field); border: 1px solid rgba(255,255,255,.35); font-weight: 600; }
 .langs button[aria-pressed="true"] { background: var(--surface); color: var(--ink); border-color: transparent; }
+/* squadra in uso (Home) e le mie squadre */
+.teambar { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 12px; background: rgba(0,0,0,.22); color: var(--on-field); text-align: left; width: 100%; }
+.teambar .grow { min-width: 0; }
+.teambar b { display: block; font: 700 20px/1.1 var(--font-display); text-transform: uppercase; letter-spacing: .02em; overflow-wrap: anywhere; }
+.teambar small { display: block; font-size: 13px; color: var(--on-field-muted); }
+.teambar .chg { flex: none; padding: 6px 12px; border-radius: 999px; background: var(--brand); color: var(--brand-ink); font-weight: 700; font-size: 14px; }
+.tile .inuse { flex: none; padding: 4px 10px; border-radius: 999px; background: var(--accent); color: #fff; font: 700 13px var(--font-body); text-transform: none; letter-spacing: 0; }
 .danger-link { align-self: center; color: #ffd9de; font-weight: 600; padding: 12px; text-decoration: underline; }
 
 /* tabellone essenziale della partita */
@@ -462,8 +469,15 @@ textarea.field { padding: 10px 12px; min-height: 76px; font: 16px/1.35 var(--fon
 
 /* ---------- dati ---------- */
 var KEY = "bordocampo-v1";
+// Dati di ogni mia squadra (rosa, società, ultima formazione, durata delle partite): con più squadre
+// (es. due campionati) quella in uso è in S.settings e le altre aspettano in S.teams.
+var TEAM_FIELDS = ["team", "roster", "conv", "lineupMod", "lineupSlots", "lineupBench", "side", "periods", "minutes"];
+// Quante squadre si possono seguire: per ora senza limite. Un'eventuale versione gratuita
+// con una sola squadra cambierà solo questo numero (vedi canAddTeam).
+var MAX_TEAMS = 0;
 var S = load();
-function fresh() { return { settings: { team: "", roster: [], periods: 2, minutes: 45, side: "home" }, match: null, history: [], oppRosters: {}, oppLabels: {}, oppLineups: {}, oppInfo: {} }; }
+if (S.teams.length) store();  // salva subito il passaggio dei vecchi dati a "le mie squadre"
+function fresh() { return { settings: { team: "", roster: [], periods: 2, minutes: 45, side: "home" }, match: null, history: [], oppRosters: {}, oppLabels: {}, oppLineups: {}, oppInfo: {}, teams: [] }; }
 function load() {
   var d = fresh();
   try {
@@ -477,13 +491,62 @@ function load() {
       if (raw.oppLabels) d.oppLabels = raw.oppLabels;
       if (raw.oppLineups) d.oppLineups = raw.oppLineups;
       if (raw.oppInfo) d.oppInfo = raw.oppInfo;
+      if (Array.isArray(raw.teams)) d.teams = raw.teams;
     }
   } catch (e) {}
+  // Chi usava già l'app (una sola rosa): la sua squadra diventa la prima delle "mie squadre".
+  var s = d.settings, used = d.history.length || d.match || s.roster.length || s.team;
+  if (!d.teams.length && used) { s.teamId = uid(); d.teams = [{ id: s.teamId }]; }
+  if (d.teams.length && !teamById(d, s.teamId)) s.teamId = d.teams[0].id;
   return d;
 }
-function store() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+// I dati salvati sono solo di questo telefono: la squadra in uso sta in S.settings, le altre in S.teams
+// (della squadra in uso S.teams tiene solo id e nome, per non salvare due volte rosa e logo).
+function store() {
+  var t = teamById(S, S.settings.teamId);
+  if (t) TEAM_FIELDS.forEach(function (k) { delete t[k]; });
+  if (t) { t.team = S.settings.team; t.n = S.settings.roster.length; }
+  try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {}
+}
 function save() { store(); liveSchedule(); }
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+/* ---------- le mie squadre ---------- */
+function teamById(d, id) { for (var i = 0; i < d.teams.length; i++) if (d.teams[i].id === id) return d.teams[i]; return null; }
+function canAddTeam() { return !MAX_TEAMS || S.teams.length < MAX_TEAMS; }
+function teamLabel(t) { return (t.id === S.settings.teamId ? S.settings.team : t.team) || T("La mia squadra"); }
+function teamCount(t) { return t.id === S.settings.teamId ? S.settings.roster.length : (t.roster || []).length; }
+function teamCat(t) { var c = t.id === S.settings.teamId ? S.settings.conv : t.conv; return (c && c.categoria) || ""; }
+// Porta nelle impostazioni la squadra scelta: quella in uso torna in S.teams con tutti i suoi dati.
+function useTeam(id) {
+  var cur = teamById(S, S.settings.teamId), nx = teamById(S, id);
+  if (!nx || nx === cur) return;
+  if (cur) TEAM_FIELDS.forEach(function (k) { cur[k] = S.settings[k]; });
+  TEAM_FIELDS.forEach(function (k) { S.settings[k] = nx[k]; delete nx[k]; });
+  if (!Array.isArray(S.settings.roster)) S.settings.roster = [];
+  S.settings.conv = Object.assign({}, S.settings.conv);
+  S.settings.team = S.settings.team || "";
+  S.settings.periods = S.settings.periods || 2; S.settings.minutes = S.settings.minutes || 45; S.settings.side = S.settings.side || "home";
+  S.settings.teamId = id;
+  save();
+}
+// Nuova squadra: rosa vuota; della società tiene nome, logo, colori e testi della convocazione
+// (chi segue due squadre di solito è nella stessa società), non categoria e competizione.
+function addTeam(name, cat) {
+  var c = Object.assign({}, S.settings.conv);
+  delete c.categoria; delete c.competizione;
+  if (cat) c.categoria = cat;
+  var t = { id: uid(), team: name, roster: [], conv: c, periods: S.settings.periods || 2, minutes: S.settings.minutes || 45, side: "home" };
+  S.teams.push(t);
+  if (S.teams.length === 1) { TEAM_FIELDS.forEach(function (k) { S.settings[k] = t[k]; delete t[k]; }); S.settings.teamId = t.id; save(); }
+  else useTeam(t.id);
+  return t;
+}
+function dropTeam(id) {
+  if (id === S.settings.teamId) return;
+  S.teams = S.teams.filter(function (t) { return t.id !== id; });
+  save();
+}
 function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
 
 /* ---------- lingua: italiano (testi nel codice) e inglese (dizionario qui sotto) ---------- */
@@ -507,7 +570,55 @@ var EN = {
   // home
   "Prossima partita": "Next match", "Riprendi la partita": "Resume the match", "Nuova partita": "New match", "Convocazione, formazione e via": "Call-up, lineup and kick-off",
   "Rosa": "Squad", "Partite giocate": "Matches played", "Ancora nessuna": "None yet", "Società": "Club", "Logo e testi della convocazione": "Logo and call-up texts",
-  "da preparare": "to prepare", "Lingua": "Language",
+  "da preparare": "to prepare", "da completare": "to complete", "Lingua": "Language",
+  "Risultato, marcatori e cartellini": "Score, scorers and cards", "Partita veloce o con convocazione e formazione": "Quick match, or with call-up and lineup",
+  "La tua squadra": "Your team", "Cambia": "Change", "Squadre": "Teams",
+  // primo avvio e le mie squadre
+  "Benvenuto in MisterBook": "Welcome to MisterBook",
+  "L'app per seguire le partite dal bordo campo: risultato, marcatori, cartellini e cambi, con convocazione e formazione per chi allena.":
+    "The app to follow matches from the touchline: score, scorers, cards and substitutions, with call-up and lineup for coaches.",
+  "Per iniziare dimmi come la userai. Potrai sempre fare tutto: cambia solo da dove partire.": "To start, tell me how you'll use it. You can always do everything: this only changes where you start.",
+  "Alleno o seguo una squadra": "I coach or manage a team", "Allenatore o dirigente: convocazione, formazione e partita": "Coach or team manager: call-up, lineup and match",
+  "Guardo la partita": "I watch the match", "Genitore o tifoso: risultato, marcatori e cartellini": "Parent or fan: score, scorers and cards",
+  "Per che squadra fai il tifo?": "Which team do you support?", "Come si chiama la squadra?": "What's the team called?",
+  "Per seguire un'altra squadra o un altro campionato: avrà la sua rosa": "To follow another team or another league: it gets its own squad",
+  "Passo 2 di 3": "Step 2 of 3",
+  "Scrivi il nome come vuoi vederlo sul tabellone. La categoria è facoltativa e ti aiuta a distinguere le squadre (es. Under 15 e Under 17).":
+    "Type the name as you want it on the scoreboard. The age group is optional and helps you tell teams apart (e.g. Under 15 and Under 17).",
+  "Es. Pontelungo": "e.g. Riverside", "Categoria (facoltativa)": "Age group (optional)", "Scrivi il nome della squadra": "Type the team name",
+  "Puoi anche farlo dopo, da Rosa": "You can also do it later, from Squad", "Passo 3 di 3 · puoi anche farlo dopo, da Rosa": "Step 3 of 3 · you can also do it later, from Squad",
+  "Se li scrivi adesso, quando qualcuno segna lo scegli con un tocco. Se preferisci, scrivi i nomi solo quando servono, durante la partita.":
+    "If you type them now, when someone scores you pick them with one tap. If you prefer, type names only when needed, during the match.",
+  "Scrivi i nomi uno per riga o separati da virgola (con il numero di maglia davanti, se vuoi: 10 Rossi Mario), oppure fotografa la distinta.":
+    "Type the names one per line or separated by commas (with the shirt number first if you like: 10 Smith John), or take a photo of the team sheet.",
+  "Scrivi i nomi": "Type the names", "Aggiungi alla rosa": "Add to the squad",
+  "Una rosa salvata, anche dall'app Convocazioni": "A saved squad, also from the Convocazioni app", "Ancora nessuno.": "Nobody yet.", "Lo faccio dopo": "I'll do it later",
+  "Tutto pronto": "All set",
+  "Tocca <b>Nuova partita</b> quando inizia: scrivi l'avversario e vai in campo.": "Tap <b>New match</b> when it starts: type the opponent and go to the pitch.",
+  "Tocca <b>Nuova partita</b>: scegli la <b>partita veloce</b> per tenere solo il risultato, oppure quella <b>con convocazione e formazione</b>.":
+    "Tap <b>New match</b>: choose the <b>quick match</b> to keep just the score, or the one <b>with call-up and lineup</b>.",
+  "Segui più squadre o più campionati? In Home tocca <b>Squadre</b> e aggiungine un'altra: ognuna ha la sua rosa.":
+    "Following more teams or leagues? On Home tap <b>Teams</b> and add another one: each has its own squad.",
+  "Vai alla Home": "Go to Home", "Nuova squadra": "New team", "Le mie squadre": "My teams", "Quale squadra segui?": "Which team are you following?",
+  "Ogni squadra ha la sua rosa, la sua società e la sua ultima formazione": "Each team has its own squad, club details and last lineup",
+  "In uso": "In use", "+ Aggiungi una squadra": "+ Add a team",
+  "Gli avversari salvati e le partite giocate restano gli stessi per tutte le squadre.": "Saved opponents and matches played are shared by all teams.",
+  "Togli una squadra": "Remove a team", "Si cancellano la sua rosa e i suoi dati della società; le partite giocate restano.": "Its squad and club details are deleted; matches played stay.",
+  "La squadra, la sua rosa e i suoi dati della società vengono cancellati da questo telefono.": "The team, its squad and club details are deleted from this phone.",
+  "Segui anche un'altra squadra o un altro campionato": "Follow another team or another league too",
+  "Elimina la squadra": "Delete the team", "Prima chiudi o annulla la partita": "First close or cancel the match",
+  // nuova partita
+  "Partita veloce": "Quick match", "Avversario e durata, poi in campo: risultato, marcatori, cartellini e cambi": "Opponent and length, then kick-off: score, scorers, cards and substitutions",
+  "Con convocazione e formazione": "With call-up and lineup", "Avversario, data e ritrovo, convocati, formazione e PDF da mandare": "Opponent, date and meeting point, call-up, lineup and PDF to send",
+  "Come vuoi seguirla?": "How do you want to follow it?", "In tutte e due tieni cronometro, gol, cartellini e cambi": "Both keep the clock, goals, cards and substitutions",
+  "Anche nella partita veloce puoi preparare la formazione quando vuoi, dalla schermata della partita.": "In the quick match too you can set up the lineup whenever you like, from the match screen.",
+  "Tre cose e si va in campo": "Three things and kick-off",
+  "Scrivi la squadra avversaria (o toccane una già salvata) e scegli se giocate in casa o in trasferta.": "Type the opposing team (or tap one you saved) and choose home or away.",
+  "Quanti tempi e quanti minuti per tempo: tocca un valore o usa + e −.": "How many periods and how many minutes each: tap a value or use + and −.",
+  "Tocca <b>Vai in campo</b>. Quando qualcuno segna scegli il nome dalla rosa con un tocco.": "Tap <b>Go to the pitch</b>. When someone scores pick the name from the squad with one tap.",
+  "Tocca <b>Vai in campo</b>. La rosa è vuota: quando qualcuno segna scrivi il suo nome, e resta salvato per la volta dopo.":
+    "Tap <b>Go to the pitch</b>. The squad is empty: when someone scores type their name, and it's saved for next time.",
+  "Partita in preparazione": "Match being prepared", "Valori proposti per ogni partita": "Defaults for every match",
   "Qui trovi i risultati finali con marcatori e minuti, appena chiudi la prima partita.": "Final scores with scorers and minutes appear here as soon as you finish your first match.",
   // colori e logo
   "Granata": "Maroon", "Rosso": "Red", "Arancione": "Orange", "Giallo": "Yellow", "Verde": "Green", "Azzurro": "Sky blue", "Blu": "Blue", "Viola": "Purple",
@@ -658,7 +769,7 @@ var EN = {
   "Nessuna connessione: riprovo tra poco. La partita resta salvata sul telefono.": "No connection: retrying shortly. The match stays saved on the phone.",
   "Invio aggiornamento…": "Sending update…", "Maglia": "Shirt", "Tinta unita": "Plain", "Strisce": "Stripes", "Righe": "Hoops", "Metà": "Halves",
   "Ultimi eventi": "Latest events", "Staff": "Staff", "Mister e dirigente": "Coach and team manager",
-  "Passatevi rosa, formazione o la prossima partita con un file su WhatsApp.": "Pass each other the squad, lineup or next match with a file on WhatsApp.",
+  "Passatevi rosa, formazione o la partita in preparazione con un file su WhatsApp.": "Pass each other the squad, lineup or the match being prepared with a file on WhatsApp.",
   "Apri il file che ti hanno mandato": "Open the file you were sent", "Scegli WhatsApp e la persona: arriva un file da aprire con MisterBook.": "Choose WhatsApp and the person: they get a file to open with MisterBook.",
   "Il file contiene i nomi dei giocatori: mandalo solo allo staff della squadra.": "The file contains the players' names: send it to the team staff only.",
   "Apri il file": "Open the file", "Il file che ti hanno mandato su WhatsApp.": "The file you were sent on WhatsApp.",
@@ -668,13 +779,13 @@ var EN = {
     "On iPhone: on WhatsApp tap the file, then Share → <b>Save to Files</b>. Come back here and tap <b>Choose the file</b>.",
   "Scegli il file": "Choose the file", "Il file MisterBook ricevuto": "The MisterBook file you received", "Oppure incolla il link": "Or paste the link",
   "Questo file non è di MisterBook": "This is not a MisterBook file",
-  "Passatevi rosa, formazione o la prossima partita con un link su WhatsApp.": "Pass each other the squad, lineup or next match with a WhatsApp link.",
-  "Invia allo staff": "Send to staff", "Rosa, formazione o prossima partita": "Squad, lineup or next match", "Ricevi dallo staff": "Receive from staff",
+  "Passatevi rosa, formazione o la partita in preparazione con un link su WhatsApp.": "Pass each other the squad, lineup or the match being prepared with a WhatsApp link.",
+  "Invia allo staff": "Send to staff", "Rosa, formazione o partita in preparazione": "Squad, lineup or match being prepared", "Ricevi dallo staff": "Receive from staff",
   "Incolla il link che ti hanno mandato": "Paste the link you were sent", "Invia o ricevi rosa e formazione": "Send or receive squad and lineup",
   "Cosa vuoi mandare?": "What do you want to send?", "Si apre WhatsApp (o un'altra app) con il link da mandare.": "WhatsApp (or another app) opens with the link to send.",
   "Tocca cosa mandare e scegli a chi. Chi lo riceve vede prima un riepilogo: i giocatori nuovi, quelli diversi e quelli che ha solo lui, e decide cosa tenere.":
     "Tap what to send and choose who gets it. The receiver first sees a summary: new players, different ones and the ones only they have, and decides what to keep.",
-  "Solo la rosa": "Squad only", "Rosa e formazione": "Squad and lineup", "Tutta la prossima partita": "The whole next match",
+  "Solo la rosa": "Squad only", "Rosa e formazione": "Squad and lineup", "Tutta la partita in preparazione": "The whole match being prepared",
   "I nomi dei giocatori viaggiano dentro il link: mandalo solo allo staff della squadra.": "Player names travel inside the link: send it to the team staff only.",
   "Incolla il link": "Paste the link", "Tieni premuto sul link ricevuto su WhatsApp, copia e incolla qui.": "Press and hold the link you got on WhatsApp, copy it and paste it here.",
   "Leggi il link": "Read the link", "Il link non è valido o è incompleto": "The link is not valid or is incomplete",
@@ -689,6 +800,17 @@ var EN = {
 // Frasi con parti variabili (nomi, numeri, minuti): espressione regolare → traduzione.
 var ENP = [
   [/^(\d+) giocatori$/, function (_, n) { return pl(n, "player", "players"); }],
+  [/^(.+) · (\d+) giocatori$/, function (_, a, n) { return a + " · " + pl(n, "player", "players"); }],
+  [/^Squadra in uso · (\d+) squadre$/, "Team in use · $1 teams"],
+  [/^(\d+) squadre · cambia o aggiungi$/, "$1 teams · switch or add"],
+  [/^In preparazione · ([\s\S]+)$/, function (_, r) { return "Being prepared · " + T(r); }],
+  [/^I giocatori di (.+)$/, "$1 players"],
+  [/^(.+) contro…$/, "$1 against…"],
+  [/^Hai una partita in preparazione con (.+): per cambiare squadra prima avviala e chiudila, oppure annullala\.$/, "You have a match being prepared with $1: to switch team, first play and close it, or cancel it."],
+  [/^C'è una partita in corso con (.+): per cambiare squadra prima chiudila\.$/, "There is a match in progress with $1: to switch team, close it first."],
+  [/^Ora usi (.+)$/, "Now using $1"],
+  [/^Eliminare la squadra (.+)\?$/, "Delete the team $1?"],
+  [/^(\d+) aggiunti alla rosa$/, function (_, n) { return pl(n, "player", "players") + " added to the squad"; }],
   [/^(\d+) giocatori · (\d+) avversari$/, function (_, n, o) { return pl(n, "player", "players") + " · " + pl(o, "opponent", "opponents"); }],
   [/^(\d+) partite$/, function (_, n) { return pl(n, "match", "matches"); }],
   [/^(\d+) squadre$/, function (_, n) { return pl(n, "team", "teams"); }],
@@ -909,11 +1031,12 @@ function nextSaturday() {
   var d = new Date(); d.setDate(d.getDate() + ((6 - d.getDay() + 7) % 7));
   return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2);
 }
-// Nuova partita: nasce "in preparazione" con i dati della convocazione; il cronometro parte solo con Inizia la partita.
+// Nuova partita con convocazione: nasce "in preparazione" con i dati della convocazione; il cronometro parte solo
+// con Inizia la partita. La partita veloce (q-start) passa di qui e parte subito, senza convocazione.
 function planMatch() {
   var c = conv(), side = S.settings.side || "home", mine = S.settings.team || T("La mia squadra");
   S.match = {
-    id: uid(), date: new Date().toISOString(),
+    id: uid(), date: new Date().toISOString(), teamId: S.settings.teamId,
     home: side === "home" ? mine : "", away: side === "home" ? "" : mine, mySide: side,
     periods: S.settings.periods || 2, minutes: S.settings.minutes || 45, period: 1, acc: 0, run: null, status: "planned", started: false,
     events: [], opp: [], seq: 0, lineup: null, oppLineup: null,
@@ -1340,7 +1463,7 @@ function staffSend(kind) {
   var d = staffPayload(kind), team = d.team || T("La mia squadra"), url = staffURL(d);
   var what = kind === "rosa" ? L("la rosa di " + team + " (" + d.roster.length + " giocatori)", "the " + team + " squad (" + d.roster.length + " players)")
     : kind === "form" ? L("rosa e formazione di " + team, team + " squad and lineup")
-    : L("la prossima partita di " + team + (d.m && d.m.opp ? " con " + d.m.opp : ""), team + "'s next match" + (d.m && d.m.opp ? " vs " + d.m.opp : ""));
+    : L("la partita di " + team + (d.m && d.m.opp ? " con " + d.m.opp : ""), team + "'s match" + (d.m && d.m.opp ? " vs " + d.m.opp : ""));
   // un file da mandare su WhatsApp: su Android si apre con MisterBook con un tocco; il link resta dentro come riserva
   var file = { app: "misterbook", tipo: "staff", link: url }, k;
   for (k in d) file[k] = d[k];
@@ -1491,8 +1614,8 @@ window.addEventListener("hashchange", function () { if (staffLink()) { render();
 function vStaff() {
   var sec = ui.p.sec, m = S.match, planned = m && m.status === "planned";
   if (!sec) {
-    return topBar("Staff") + '<p class="lead">Mister e dirigente<small>Passatevi rosa, formazione o la prossima partita con un file su WhatsApp.</small></p>' +
-      '<div class="tiles">' + tile("st-go", ic("share"), "Invia allo staff", "Rosa, formazione o prossima partita", ' data-v="send"') +
+    return topBar("Staff") + '<p class="lead">Mister e dirigente<small>Passatevi rosa, formazione o la partita in preparazione con un file su WhatsApp.</small></p>' +
+      '<div class="tiles">' + tile("st-go", ic("share"), "Invia allo staff", "Rosa, formazione o partita in preparazione", ' data-v="send"') +
       tile("st-go", ic("folder"), "Ricevi dallo staff", "Apri il file che ti hanno mandato", ' data-v="paste"') + "</div>";
   }
   if (sec === "send") {
@@ -1502,7 +1625,7 @@ function vStaff() {
       '<div class="tiles">' +
       tile("st-send", ic("shirt"), "Solo la rosa", n + " giocatori", ' data-v="rosa"', !n) +
       tile("st-send", ic("formation"), "Rosa e formazione", lu ? L("Modulo ", "Formation ") + lu.mod + " · " + lu.slots.filter(Boolean).length + L(" titolari · ", " starters · ") + lu.bench.length + L(" in panchina", " on the bench") : L("Prepara prima la formazione", "Prepare the lineup first"), ' data-v="form"', !lu) +
-      (planned ? tile("st-send", ic("whistle"), "Tutta la prossima partita", (oppName(m) ? L("con ", "vs ") + oppName(m) + " · " : "") + L("data, ritrovo, convocati e formazione", "date, meeting, call-up and lineup"), ' data-v="match"') : "") + "</div>" +
+      (planned ? tile("st-send", ic("whistle"), "Tutta la partita in preparazione", (oppName(m) ? L("con ", "vs ") + oppName(m) + " · " : "") + L("data, ritrovo, convocati e formazione", "date, meeting, call-up and lineup"), ' data-v="match"') : "") + "</div>" +
       '<div class="note">Il file contiene i nomi dei giocatori: mandalo solo allo staff della squadra.</div>';
   }
   if (sec === "paste") {
@@ -1519,7 +1642,7 @@ function vStaff() {
   var st = ui.staff;
   if (!st) { ui.p = {}; return vStaff(); }
   var inc = st.inc, df = staffDiff(inc), ch = st.ch, h = topBar("Ricevi dallo staff");
-  var what = inc.k === "match" ? L("Prossima partita", "Next match") + (inc.m && inc.m.opp ? L(" con ", " vs ") + inc.m.opp : "") : inc.k === "form" ? L("Rosa e formazione", "Squad and lineup") : L("Rosa", "Squad");
+  var what = inc.k === "match" ? L("Partita in preparazione", "Match being prepared") + (inc.m && inc.m.opp ? L(" con ", " vs ") + inc.m.opp : "") : inc.k === "form" ? L("Rosa e formazione", "Squad and lineup") : L("Rosa", "Squad");
   h += '<p class="lead">' + esc(inc.team || T("La mia squadra")) + "<small>" + esc(what + " · " + pl(inc.roster.length, L("giocatore", "player"), L("giocatori", "players"))) + "</small></p>";
   if (ui.staffFromLink && !(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform())) {
     h += '<div class="note">Usi l’app MisterBook su Android? Apri l’app, vai in Rosa → Staff → Ricevi dallo staff e incolla lo stesso link: così i dati vanno nell’app.</div>';
@@ -1548,9 +1671,9 @@ function vStaff() {
       (inc.lu.bench.length ? '<div class="bench"><span class="muted small">Panchina</span>' + inc.lu.bench.map(function (p) { return '<span class="bp">' + esc(p) + "</span>"; }).join("") + "</div>" : "");
     if (miss) h += '<div class="note" style="color:var(--danger)">' + L(miss + (miss === 1 ? " titolare non è" : " titolari non sono") + " nella tua rosa: il posto resterà vuoto. Aggiungili sopra se vuoi.",
       miss + (miss === 1 ? " starter is" : " starters are") + " not in your squad: the place will stay empty. Add them above if you like.") + "</div>";
-    if (inc.k === "match") h += '<div class="note">' + (m && m.status !== "planned" ? L("Hai una partita in corso: la formazione verrà usata dalla prossima.", "You have a match in progress: the lineup will be used from the next one.")
-      : L("Data, ritrovo, avversario e formazione vanno nella tua prossima partita" + (planned ? " (al posto di quelli attuali)." : "."), "Date, meeting point, opponent and lineup go into your next match" + (planned ? " (replacing the current ones)." : "."))) + "</div>";
-    else if (planned) h += '<div class="seg"><button data-a="st-apply" data-v="1" aria-pressed="' + !!st.apply + '">' + L("Usala nella prossima partita", "Use it in the next match") + '</button><button data-a="st-apply" data-v="0" aria-pressed="' + !st.apply + '">' + L("Solo da salvare", "Just save it") + "</button></div>";
+    if (inc.k === "match") h += '<div class="note">' + (m && m.status !== "planned" ? L("Hai una partita in corso: la formazione verrà usata dalla nuova partita.", "You have a match in progress: the lineup will be used in the next new match.")
+      : L("Data, ritrovo, avversario e formazione vanno " + (planned ? "nella partita in preparazione (al posto di quelli attuali)." : "in una nuova partita, pronta da completare."), "Date, meeting point, opponent and lineup go into "+(planned ? "the match being prepared" : "a new match, ready to complete") + (planned ? " (replacing the current ones)." : "."))) + "</div>";
+    else if (planned) h += '<div class="seg"><button data-a="st-apply" data-v="1" aria-pressed="' + !!st.apply + '">' + L("Usala nella partita in preparazione", "Use it in the match being prepared") + '</button><button data-a="st-apply" data-v="0" aria-pressed="' + !st.apply + '">' + L("Solo da salvare", "Just save it") + "</button></div>";
     h += "</section>";
   }
   return h + '<button class="btn primary big block" data-a="st-import">Ricevi</button>';
@@ -1617,10 +1740,13 @@ var app = document.getElementById("app"), layer = document.getElementById("layer
 function render() {
   var v = ui.view;
   if ((v === "live" && (!S.match || S.match.status === "planned")) || (v === "plan" && (!S.match || S.match.status !== "planned"))) { v = ui.view = "home"; ui.p = {}; ui.stack = []; }
+  // Primo avvio: finché non c'è una squadra si resta nella procedura guidata (la distinta e lo staff si aprono da lì).
+  if (!S.teams.length && !/^(start|scan|staff)$/.test(v)) { v = ui.view = "start"; ui.p = {}; ui.stack = []; }
   ui.navNext = null;
   var html = v === "plan" ? vPlan() : v === "club" ? vClub() : v === "roster" ? vRoster() : v === "lineup" ? vLineup() : v === "live" ? vLive() :
-    v === "summary" ? vSummary() : v === "history" ? vHistory() : v === "scan" ? vScan() : v === "staff" ? vStaff() : vHome();
-  if (ui.view !== "home") html += navBarHTML();
+    v === "summary" ? vSummary() : v === "history" ? vHistory() : v === "scan" ? vScan() : v === "staff" ? vStaff() :
+    v === "start" ? vStart() : v === "teams" ? vTeams() : v === "newmatch" ? vNewMatch() : vHome();
+  if (ui.view !== "home" && !(ui.view === "start" && !ui.p.add)) html += navBarHTML();
   app.innerHTML = trHTML(html);
   renderLayer();
   filterAll();
@@ -1702,18 +1828,131 @@ function logoHTML(small) {
 }
 
 /* ---------- schermate principali ---------- */
+function langsHTML() {
+  return '<div class="langs" role="group" aria-label="Lingua">' + [["it", "Italiano"], ["en", "English"]].map(function (x) {
+    return '<button data-a="lang" data-v="' + x[0] + '" aria-pressed="' + (LANG === x[0]) + '">' + x[1] + "</button>";
+  }).join("") + "</div>";
+}
+// Riga "La tua squadra": quale rosa sta usando l'app, con Cambia per passare a un'altra o aggiungerne una.
+function teamBarHTML() {
+  var t = teamById(S, S.settings.teamId);
+  if (!t) return "";
+  var cat = teamCat(t), n = S.teams.length;
+  return '<button class="teambar" data-a="teams"><span class="grow"><small>' + (n > 1 ? "Squadra in uso · " + n + " squadre" : "La tua squadra") + "</small><b>" + esc(teamLabel(t)) + "</b>" +
+    (cat ? "<small>" + esc(cat) + "</small>" : "") + '</span><span class="chg">' + (n > 1 ? "Cambia" : "Squadre") + "</span></button>";
+}
 function vHome() {
-  var m = S.match, h = logoHTML(), opps = Object.keys(S.oppRosters).length;
+  var m = S.match, h = logoHTML(), opps = Object.keys(S.oppRosters).length, fan = S.settings.role === "fan";
+  h += teamBarHTML();
   h += '<div class="tiles">';
-  if (m && m.status === "planned") h += tile("plan", ic("whistle"), "Prossima partita", esc((oppName(m) ? "con " + oppName(m) + " · " : "") + (m.plan.data ? dateLabel(m.plan.data) : "da preparare")));
+  if (m && m.status === "planned") h += tile("plan", ic("whistle"), "Nuova partita", esc("In preparazione · " + (oppName(m) ? "con " + oppName(m) + " · " : "") + (m.plan.data ? dateLabel(m.plan.data) : "da completare")));
   else if (m) h += tile("resume", ic("play"), "Riprendi la partita", esc(m.home + " " + score(m, "home") + " - " + score(m, "away") + " " + m.away) + " · " + periodName(m.period, m.periods));
-  else h += tile("setup", ic("plus"), "Nuova partita", "Convocazione, formazione e via");
+  else h += tile("newmatch", ic("plus"), "Nuova partita", fan ? "Risultato, marcatori e cartellini" : "Partita veloce o con convocazione e formazione");
   h += tile("roster", ic("shirt"), "Rosa", S.settings.roster.length + " giocatori" + (opps ? " · " + opps + " avversari" : ""));
   h += tile("history", ic("cal"), "Partite giocate", S.history.length ? S.history.length + " partite" : "Ancora nessuna");
   h += tile("club", ic("doc"), "Società", "Logo e testi della convocazione");
-  return h + "</div>" + '<div class="langs" role="group" aria-label="Lingua">' + [["it", "Italiano"], ["en", "English"]].map(function (x) {
-    return '<button data-a="lang" data-v="' + x[0] + '" aria-pressed="' + (LANG === x[0]) + '">' + x[1] + "</button>";
+  return h + "</div>" + langsHTML();
+}
+
+// Primo avvio (e Aggiungi squadra): poche domande, una per schermata, poi si arriva alla Home pronti a giocare.
+// Passi: chi sei → la squadra → i giocatori → pronto. Da "Aggiungi squadra" si parte dalla squadra.
+function vStart() {
+  var st = ui.p.step || "hello", add = !!ui.p.add, fan = S.settings.role === "fan";
+  var top = add ? topBar("Squadra") : '<div style="min-height:8px"></div>';
+  if (st === "hello") {
+    return logoHTML() + '<p class="lead">Benvenuto in MisterBook<small>L\'app per seguire le partite dal bordo campo: risultato, marcatori, cartellini e cambi, con convocazione e formazione per chi allena.</small></p>' +
+      guideHTML(1, "Per iniziare dimmi come la userai. Potrai sempre fare tutto: cambia solo da dove partire.") +
+      '<div class="tiles">' +
+      tile("st-role", ic("whistle"), "Alleno o seguo una squadra", "Allenatore o dirigente: convocazione, formazione e partita", ' data-v="coach"', false, "big") +
+      tile("st-role", ic("ball"), "Guardo la partita", "Genitore o tifoso: risultato, marcatori e cartellini", ' data-v="fan"', false, "big") +
+      "</div>" + langsHTML();
+  }
+  if (st === "team") {
+    var again = ui.startTid && ui.startTid === S.settings.teamId;  // tornato indietro: la squadra c'è già
+    var nm = ui.p.name || (again ? S.settings.team : ""), cat = ui.p.cat || (again ? S.settings.conv.categoria || "" : "");
+    return top + '<p class="lead">' + (fan && !add ? "Per che squadra fai il tifo?" : "Come si chiama la squadra?") + "<small>" + (add ? "Per seguire un'altra squadra o un altro campionato: avrà la sua rosa" : "Passo 2 di 3") + "</small></p>" +
+      guideHTML(add ? 1 : 2, "Scrivi il nome come vuoi vederlo sul tabellone. La categoria è facoltativa e ti aiuta a distinguere le squadre (es. Under 15 e Under 17).") +
+      '<section class="panel"><label class="f">Nome della squadra<input type="text" id="st-name" autocomplete="off" value="' + esc(nm) + '" placeholder="Es. Pontelungo"></label>' +
+      '<label class="f">Categoria (facoltativa)<input type="text" id="st-cat" autocomplete="off" value="' + esc(cat) + '" placeholder="Es. Under 17"></label></section>' +
+      '<button class="btn primary big block" data-a="st-team">Avanti</button>' +
+      (add ? "" : '<button class="btn ghost block" data-a="st-step" data-v="hello">‹ Indietro</button>');
+  }
+  if (st === "players") {
+    ui.rTab = "mine";
+    var r = S.settings.roster;
+    return top + '<p class="lead">I giocatori di ' + esc(S.settings.team) + "<small>" + (add ? "Puoi anche farlo dopo, da Rosa" : "Passo 3 di 3 · puoi anche farlo dopo, da Rosa") + "</small></p>" +
+      guideHTML(add ? 2 : 3, fan ? "Se li scrivi adesso, quando qualcuno segna lo scegli con un tocco. Se preferisci, scrivi i nomi solo quando servono, durante la partita."
+        : "Scrivi i nomi uno per riga o separati da virgola (con il numero di maglia davanti, se vuoi: 10 Rossi Mario), oppure fotografa la distinta.") +
+      '<section class="panel"><h2>Scrivi i nomi</h2><textarea class="textout" id="st-names" style="min-height:120px" placeholder="10 Rossi Mario&#10;7 Bianchi Luca&#10;…"></textarea>' +
+      '<button class="btn primary block" data-a="st-names">Aggiungi alla rosa</button></section>' +
+      '<div class="tiles compact">' + tile("scan-open", ic("camera"), "Leggi dalla distinta", "Dalla foto della distinta, o dal testo copiato") +
+      '<label class="tile" for="r-file"><span class="ti">' + ic("list") + '</span><span class="tlab">Carica da file<small>Una rosa salvata, anche dall\'app Convocazioni</small></span><span class="chev">' + CHEV + "</span></label></div>" +
+      '<input type="file" id="r-file" accept=".json,.txt,.csv,application/json,text/plain" hidden>' +
+      '<section class="panel"><h2>' + r.length + " giocatori</h2>" + (r.length ? '<div class="muted">' + r.map(esc).join(", ") + "</div>" : '<div class="empty">Ancora nessuno.</div>') + "</section>" +
+      '<button class="btn primary big block" data-a="st-step" data-v="ready">' + (r.length ? "Avanti" : "Lo faccio dopo") + "</button>" +
+      (add ? "" : '<button class="btn ghost block" data-a="st-step" data-v="team">‹ Indietro</button>');
+  }
+  // pronto
+  return top + '<p class="lead">Tutto pronto<small>' + esc(S.settings.team) + " · " + S.settings.roster.length + " giocatori</small></p>" +
+    guideHTML("✓", fan ? "Tocca <b>Nuova partita</b> quando inizia: scrivi l'avversario e vai in campo."
+      : "Tocca <b>Nuova partita</b>: scegli la <b>partita veloce</b> per tenere solo il risultato, oppure quella <b>con convocazione e formazione</b>.") +
+    (S.teams.length > 1 ? "" : '<div class="note" style="color:var(--on-field-muted)">Segui più squadre o più campionati? In Home tocca <b>Squadre</b> e aggiungine un\'altra: ognuna ha la sua rosa.</div>') +
+    '<button class="btn primary big block" data-a="newmatch">Nuova partita</button>' +
+    '<button class="btn ghost block" data-a="home">Vai alla Home</button>';
+}
+
+// Le mie squadre: quale rosa usare, aggiungerne o toglierne una.
+function vTeams() {
+  var cur = S.settings.teamId, busy = S.match;
+  var h = topBar("Squadre", "Home") + '<p class="lead">Quale squadra segui?<small>Ogni squadra ha la sua rosa, la sua società e la sua ultima formazione</small></p>';
+  if (busy) h += '<div class="guide"><b class="gn">!</b><span>' + T(busy.status === "planned" ? "Hai una partita in preparazione con " + esc(S.settings.team) + ": per cambiare squadra prima avviala e chiudila, oppure annullala."
+    : "C'è una partita in corso con " + esc(S.settings.team) + ": per cambiare squadra prima chiudila.") + "</span></div>";
+  h += '<div class="tiles">' + S.teams.map(function (t) {
+    var on = t.id === cur, cat = teamCat(t);
+    return '<button class="tile" data-a="team-use" data-v="' + t.id + '"' + (busy && !on ? " disabled" : "") + '><span class="ti">' + ic("shirt") + '</span><span class="tlab">' + esc(teamLabel(t)) +
+      "<small>" + esc((cat ? cat + " · " : "") + teamCount(t) + " giocatori") + "</small></span>" + (on ? '<span class="inuse">In uso</span>' : '<span class="chev">' + CHEV + "</span>") + "</button>";
   }).join("") + "</div>";
+  if (canAddTeam()) h += '<button class="btn primary big block" data-a="team-add"' + (busy ? " disabled" : "") + ">+ Aggiungi una squadra</button>";
+  h += '<div class="note" style="color:var(--on-field-muted)">Gli avversari salvati e le partite giocate restano gli stessi per tutte le squadre.</div>';
+  var others = S.teams.filter(function (t) { return t.id !== cur; });
+  if (others.length) h += '<section class="panel"><h2>Togli una squadra</h2><div class="list">' + others.map(function (t) {
+    return '<div class="item"><span class="grow t">' + esc(teamLabel(t)) + '</span><button class="link danger" data-a="team-del" data-v="' + t.id + '">Elimina</button></div>';
+  }).join("") + '</div><div class="note">Si cancellano la sua rosa e i suoi dati della società; le partite giocate restano.</div></section>';
+  return h;
+}
+
+// Nuova partita: due strade. Veloce = avversario, durata e via (per chi tiene solo risultato e marcatori);
+// Completa = convocazione, formazione e PDF, con i passi della preparazione.
+function vNewMatch() {
+  var fan = S.settings.role === "fan";
+  if (ui.p.sec !== "quick") {
+    var quick = tile("nm-quick", ic("ball"), "Partita veloce", "Avversario e durata, poi in campo: risultato, marcatori, cartellini e cambi");
+    var full = tile("setup", ic("whistle"), "Con convocazione e formazione", "Avversario, data e ritrovo, convocati, formazione e PDF da mandare");
+    return topBar("Nuova partita", "Home") + teamBarHTML() + '<p class="lead">Come vuoi seguirla?<small>In tutte e due tieni cronometro, gol, cartellini e cambi</small></p>' +
+      '<div class="tiles">' + (fan ? quick + full : full + quick) + "</div>" +
+      '<div class="note" style="color:var(--on-field-muted)">Anche nella partita veloce puoi preparare la formazione quando vuoi, dalla schermata della partita.</div>';
+  }
+  if (!form) form = { periods: S.settings.periods || 2, minutes: S.settings.minutes || 45, side: S.settings.side || "home", opp: "" };
+  var keys = Object.keys(S.oppRosters).sort(), cur = form.opp.trim().toLowerCase(), presets = [10, 15, 20, 25, 30, 35, 40, 45];
+  return topBar("Nuova partita") + '<p class="lead">' + esc(S.settings.team || T("La mia squadra")) + " contro…<small>Tre cose e si va in campo</small></p>" +
+    guideHTML(1, "Scrivi la squadra avversaria (o toccane una già salvata) e scegli se giocate in casa o in trasferta.") +
+    '<section class="panel"><label class="f">Squadra avversaria<input type="text" id="q-opp" autocomplete="off" value="' + esc(form.opp) + '" placeholder="Es. Virtus"></label>' +
+    (keys.length ? '<div class="chips">' + keys.map(function (k) {
+      return '<button class="chip" data-a="q-opp-pick" data-v="' + esc(S.oppLabels[k] || k) + '" aria-pressed="' + (k === cur) + '">' + esc(S.oppLabels[k] || k) + "</button>";
+    }).join("") + "</div>" : "") +
+    '<div class="seg"><button data-a="q-side" data-v="home" aria-pressed="' + (form.side === "home") + '">In casa</button>' +
+    '<button data-a="q-side" data-v="away" aria-pressed="' + (form.side === "away") + '">In trasferta</button></div></section>' +
+    guideHTML(2, "Quanti tempi e quanti minuti per tempo: tocca un valore o usa + e −.") +
+    '<section class="panel"><h2>Numero di tempi</h2><div class="stepper">' +
+    '<button data-a="f-per" data-d="-1" aria-label="Meno tempi">−</button><span class="v tabnum">' + form.periods + '</span><button data-a="f-per" data-d="1" aria-label="Più tempi">+</button>' +
+    '<span class="muted">' + (form.periods === 1 ? "tempo unico" : "tempi") + "</span></div>" +
+    '<h2>Minuti per tempo</h2><div class="stepper">' +
+    '<button data-a="f-min" data-d="-1" aria-label="Meno minuti">−</button><span class="v tabnum">' + form.minutes + '′</span><button data-a="f-min" data-d="1" aria-label="Più minuti">+</button></div>' +
+    '<div class="chips">' + presets.map(function (q) { return '<button class="chip" data-a="f-preset" data-v="' + q + '" aria-pressed="' + (form.minutes === q) + '">' + q + "′</button>"; }).join("") + "</div>" +
+    '<div class="muted small">Durata totale: ' + (form.periods * form.minutes) + " minuti</div></section>" +
+    guideHTML(3, S.settings.roster.length ? "Tocca <b>Vai in campo</b>. Quando qualcuno segna scegli il nome dalla rosa con un tocco."
+      : "Tocca <b>Vai in campo</b>. La rosa è vuota: quando qualcuno segna scrivi il suo nome, e resta salvato per la volta dopo.") +
+    '<button class="btn primary big block" data-a="q-start">Vai in campo</button>';
 }
 function vHistory() {
   var h = topBar("Partite giocate", "Home");
@@ -1921,7 +2160,7 @@ function nextBtn(step, label) { ui.navNext = { a: "p-next", attrs: ' data-v="' +
 function vPlan() {
   var m = S.match, st = ui.p.step, pl = m.plan, c = conv();
   if (!st) {
-    var steps = planSteps(m), h = topBar("Prossima partita", "Home");
+    var steps = planSteps(m), h = topBar("Nuova partita", "Home");
     h += '<p class="lead">' + esc(oppName(m) ? "con " + oppName(m) : "Prepara la partita") + "<small>" + esc(pl.data ? dateLabel(pl.data) + (pl.inizioOra ? " · inizio " + pl.inizioOra : "") : "Segui i passi: avversario, convocazione, formazione") + "</small></p>";
     h += '<div class="tiles compact">' + steps.map(function (x, i) {
       return tile("p-go", '<span class="step' + (x.ok ? " ok" : "") + '">' + (x.ok ? "✓" : i + 1) + "</span>", x.t, esc(x.sub), ' data-v="' + x.k + '"');
@@ -2171,7 +2410,7 @@ function vClub() {
     '<section class="panel"><div class="fields">' + fld("club", "Società", "Es. A.S.D. Polisportiva") + fld("categoria", "Categoria", "Es. Under 17") +
     "</div></section>" +
     logoPanelHTML("c", c.logo) + colorsHTML("c", c) +
-    '<section class="panel"><h2>Valori proposti per la prossima partita</h2><div class="fields">' + fld("competizione", "Competizione") +
+    '<section class="panel"><h2>Valori proposti per ogni partita</h2><div class="fields">' + fld("competizione", "Competizione") +
     '<label class="f">Ritrovo alle<input type="time" id="c-ritrovoOra" value="' + esc(c.ritrovoOra) + '"></label>' +
     '<label class="f">Inizio gara<input type="time" id="c-inizioOra" value="' + esc(c.inizioOra) + '"></label>' +
     fld("ritrovoLuogo", "Ritrovo presso") + fld("impianto", "Impianto di gioco") + "</div></section>" +
@@ -2300,6 +2539,7 @@ function vRoster() {
     var opps = Object.keys(S.oppRosters).length;
     return topBar("Rosa") + '<div class="tiles">' +
       tile("r-go", ic("shirt"), esc(S.settings.team || "La mia squadra"), S.settings.roster.length + " giocatori", ' data-v="mine"') +
+      tile("teams", ic("list"), "Le mie squadre", S.teams.length > 1 ? S.teams.length + " squadre · cambia o aggiungi" : "Segui anche un'altra squadra o un altro campionato") +
       tile("r-go", ic("opp"), "Avversari", opps ? opps + " squadre" : "Nessuna squadra salvata", ' data-v="opps"') +
       tile("r-go", ic("folder"), "Salva e carica", "Rose in un file, anche per un altro dispositivo", ' data-v="file"') +
       tile("st-go", ic("share"), "Staff", "Invia o ricevi rosa e formazione", "") + "</div>";
@@ -2978,7 +3218,60 @@ document.addEventListener("click", function (ev) {
     case "fwd": forward(); break;
     case "lang": S.settings.lang = el.getAttribute("data-v"); setLang(S.settings.lang); save(); render(); break;
     case "home": reset("home"); break;
-    case "setup": planMatch(); go("plan"); break;
+    // Nuova partita: si sceglie tra veloce e con convocazione; se ce n'è già una in preparazione si riapre quella.
+    case "newmatch":
+      if (m) { reset(m.status === "planned" ? "plan" : "live", {}, [{ view: "home", p: {} }]); break; }
+      form = null; reset("newmatch", {}, [{ view: "home", p: {} }]); break;
+    case "setup": planMatch(); reset("plan", {}, [{ view: "home", p: {} }]); break;
+    case "nm-quick": form = null; go("newmatch", { sec: "quick" }); break;
+    case "q-opp-pick": form.opp = el.getAttribute("data-v"); render(); break;
+    case "q-side": form.opp = document.getElementById("q-opp").value; form.side = el.getAttribute("data-v"); render(); break;
+    case "q-start": {
+      var qo = document.getElementById("q-opp").value.trim();
+      planMatch();
+      var qm = S.match;
+      qm.lineup = null; qm.quick = true;  // niente convocazione: la formazione si prepara solo se serve, dalla partita
+      setOpp(qm, qo || T("Avversari"), form.side);
+      startMatch(qm, form.periods, form.minutes);
+      form = null; reset("live", {}, [{ view: "home", p: {} }]); break;
+    }
+    // le mie squadre
+    case "teams": go("teams"); break;
+    case "team-use": {
+      var tu = el.getAttribute("data-v");
+      if (tu === S.settings.teamId) { reset("home"); break; }
+      if (m) { toast("Prima chiudi o annulla la partita", 3000); break; }
+      useTeam(tu); reset("home"); toast("Ora usi " + S.settings.team, 2500); break;
+    }
+    case "team-add":
+      if (m) { toast("Prima chiudi o annulla la partita", 3000); break; }
+      ui.startTid = null; go("start", { add: true, step: "team" }); break;
+    case "team-del": {
+      var td = el.getAttribute("data-v"), tdt = teamById(S, td);
+      ask("Eliminare la squadra " + teamLabel(tdt) + "?", "La squadra, la sua rosa e i suoi dati della società vengono cancellati da questo telefono.", "Elimina la squadra", function () {
+        dropTeam(td); render();
+      }, true);
+      break;
+    }
+    // primo avvio guidato
+    case "st-role": S.settings.role = el.getAttribute("data-v"); ui.startTid = null; save(); go("start", { step: "team" }); break;
+    case "st-step": go("start", { step: el.getAttribute("data-v"), add: ui.p.add }); break;
+    case "st-team": {
+      var sn = document.getElementById("st-name").value.trim(), sc2 = document.getElementById("st-cat").value.trim();
+      if (!sn) { toast("Scrivi il nome della squadra"); document.getElementById("st-name").focus(); break; }
+      if (ui.startTid && ui.startTid === S.settings.teamId) {
+        // tornato indietro dalla rosa: correggo la squadra appena creata invece di crearne un'altra
+        S.settings.team = sn; S.settings.conv = Object.assign({}, S.settings.conv, { categoria: sc2 }); save();
+      } else ui.startTid = addTeam(sn, sc2).id;
+      go("start", { step: "players", add: ui.p.add, name: sn, cat: sc2 }); break;
+    }
+    case "st-names": {
+      var sl = splitNames(document.getElementById("st-names").value), sb = S.settings.roster.length;
+      sl.forEach(function (n) { addToRoster(S.settings.roster, n); });
+      save(); render();
+      if (sl.length) toast((S.settings.roster.length - sb) + " aggiunti alla rosa");
+      break;
+    }
     case "plan": go("plan"); break;
     case "club": go("club"); break;
     case "resume": go("live"); break;
@@ -3238,6 +3531,7 @@ document.addEventListener("input", function (ev) {
   if (/^new-/.test(id)) { ui.newPlayer[id.slice(4)] = ev.target.value; filterChips(id.slice(4), ev.target.value); }
   if (id === "lu-q") { ui.luQ = ev.target.value; filterChips("lu", ev.target.value); }
   if (id === "wz-q") { ui.wzQ = ev.target.value; filterChips("wz", ev.target.value); }
+  if (id === "q-opp" && form) form.opp = ev.target.value;
   if (/^p-f-/.test(id) && S.match && S.match.plan) { S.match.plan[id.slice(4)] = ev.target.value; save(); }
   if (/^c-/.test(id) && id !== "c-logo-file" && !/^col-/.test(id)) { var cs = {}; cs[id.slice(2)] = ev.target.value; S.settings.conv = Object.assign({}, S.settings.conv, cs); save(); }
 });
